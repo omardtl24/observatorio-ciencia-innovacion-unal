@@ -61,7 +61,8 @@ class AuthService:
                 "access_token": access_token,
                 "email": email,
                 "names": user.names,
-                "last_names": user.last_names
+                "last_names": user.last_names,
+                "picture": user_info.get("picture")
             }
 
         except Exception as e:
