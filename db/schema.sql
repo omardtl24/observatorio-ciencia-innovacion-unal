@@ -14,11 +14,11 @@ CREATE TABLE users (
     email VARCHAR(120) PRIMARY KEY,
     names VARCHAR(120) NOT NULL,
     last_names VARCHAR(120) NOT NULL,
-    role_id INTEGER NOT NULL REFERENCES roles(id),
     last_login_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
 
 -- ==========================
 -- CENTRALIZED FILE STORAGE
@@ -114,4 +114,10 @@ CREATE TABLE role_simulators (
     role_id INTEGER REFERENCES roles(id),
     simulator_id INTEGER REFERENCES simulators(id),
     PRIMARY KEY (role_id, simulator_id)
+);
+
+CREATE TABLE user_roles (
+    email VARCHAR(120) REFERENCES users(email) ON DELETE CASCADE,
+    role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (email, role_id)
 );
