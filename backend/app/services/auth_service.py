@@ -31,15 +31,15 @@ class AuthService:
             user_info = token.get('userinfo') or self.auth0.parse_id_token(token)
 
             if not user_info:
-                raise ValueError("Cannot retrieve user profile from Auth0")
+                raise ValueError("No se pudo obtener el perfil del usuario desde Auth0")
 
             email = user_info.get("email")
             if not email:
-                raise ValueError("Email not provided by identity provider")
+                raise ValueError("El proveedor de identidad no proporcionó un correo electrónico")
 
             required_domain = current_app.config.get("RESTRICTED_EMAIL_DOMAIN", "unal.edu.co")
             if not email.endswith(f"@{required_domain}"):
-                raise ValueError(f"Only @{required_domain} accounts are allowed")
+                raise ValueError(f"Solo se permiten cuentas con dominio @{required_domain}")
 
             # Load or create user
             user = User.query.get(email)
@@ -73,6 +73,3 @@ class AuthService:
         # Build redirect URL
         redirect_url = f"{frontend_url}/auth/callback?{urlencode(query_params)}"
         return redirect_url
-
-
-

@@ -12,7 +12,9 @@ def login():
     """Redirect user to Auth0 login."""
     auth_service = AuthService(current_app)
     redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL")
-    return auth_service.auth0.authorize_redirect(redirect_uri=redirect_uri, prompt='login')
+    return auth_service.auth0.authorize_redirect(redirect_uri=redirect_uri,
+                                                 prompt='login',
+                                                 connection="google-oauth2",)
 
 
 @auth_bp.get("/callback")
