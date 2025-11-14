@@ -1,55 +1,59 @@
-export default function Dashboard() {
-  const accessToken = localStorage.getItem("access_token");
-  const email = localStorage.getItem("email");
-  const names = localStorage.getItem("names");
-  const lastNames = localStorage.getItem("last_names");
-  const picture = localStorage.getItem("picture");
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated, logout } from "../services/authService";
 
-  if (!accessToken) return <p>Unauthorized</p>;
+export default function Dashboard() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  // Retrieve localStorage data
+  const name = localStorage.getItem("names") || "Invitado";
+  const lastName = localStorage.getItem("last_names") || "";
+  const email = localStorage.getItem("email") || "desconocido";
+  const image =
+    localStorage.getItem("picture") || "https://via.placeholder.com/150";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "1.5rem",
-        padding: "1rem",
-      }}
-    >
-      {picture && (
-        <img
-          src={decodeURIComponent(picture)}
-          alt="Foto de perfil"
-          style={{
-            width: "90px",
-            height: "90px",
-            borderRadius: "50%",
-            objectFit: "cover",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-          }}
-        />
-      )}
+    <div className="p-10 flex flex-col items-center">
+      {/* USER INFO BLOCK */}
+      <div className="flex flex-col md:flex-row items-center justify-center mt-12 gap-10 text-center md:text-left">
 
-      <div>
-        <h1>Bienvenido,</h1>
-        <h1>{names} {lastNames}</h1>
-        <p>Correo: {email}</p>
+        {/* LEFT — IMAGE */}
+        <div className="flex flex-col items-center md:items-start">
+          <img
+            src={image}
+            alt="User Avatar"
+            className="w-32 h-32 rounded-full mb-4 object-cover"
+          />
+        </div>
 
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.href = "/login";
-          }}
-          style={{
-            marginTop: "1rem",
-            padding: "0.5rem 1rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
+        {/* RIGHT — INFO */}
+        <div className="flex flex-col items-center md:items-start text-lg">
+          <p>Bienvenido,</p>
+          <p className="font-semibold">
+            {name} {lastName}!
+          </p>
+          <p>Email: {email}</p>
+        </div>
       </div>
+
+      {/* LOGOUT BUTTON (red, below the info) */}
+      <button
+        onClick={handleLogout}
+        className="mt-10 bg-red-500 text-white px-6 py-3 rounded-xl text-lg shadow-md hover:bg-red-600 transition"
+      >
+        Logout
+      </button>
     </div>
   );
 }
