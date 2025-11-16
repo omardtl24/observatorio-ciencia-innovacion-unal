@@ -1,5 +1,6 @@
 export default function Visors() {
-  const visorUrl = import.meta.env.VITE_TEST_BI_DAHBOARD;
+  const visorUrl = import.meta.env.VITE_API_URL + "/visor/1/";
+  console.log("Visor URL:", visorUrl);
 
   return (
     <div className="w-full flex justify-center mt-10">
