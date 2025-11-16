@@ -35,3 +35,5 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
 
     FRONTEND_URL = os.getenv("FRONTEND_URL")
+    TEST_BI_DASHBOARD = os.getenv("TEST_BI_DASHBOARD")
+    PROXY_RESSOURCE = os.getenv("PROXY_RESSOURCE")

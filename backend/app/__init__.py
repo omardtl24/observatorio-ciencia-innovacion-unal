@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from app.api.auth_routes import auth_bp
+from app.api.bi_test_route import visor_bp
 from app.models.base import db
 from app.config import Config
 import logging
@@ -39,5 +40,6 @@ def create_app():
         return jsonify({"status": "ok", "message": "Backend is running"}), 200
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(visor_bp)
 
     return app
