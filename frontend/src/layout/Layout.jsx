@@ -5,7 +5,7 @@ export default function Layout({ children, backgroundClass, backgroundImage }) {
   const backgroundStyle = backgroundImage
     ? {
         backgroundImage: `url(${backgroundImage})`,
-        backgroundRepeat: "no-repeat",
+        backgroundRepeat: "repeat",
         backgroundPosition: "top left",
         backgroundSize: "100% auto"
       }
@@ -14,7 +14,7 @@ export default function Layout({ children, backgroundClass, backgroundImage }) {
   return (
     <div className={`min-h-screen flex flex-col bg-gray font-ancizar ${backgroundClass || ""}`} style={backgroundStyle}>
       <Navbar />
-      <main className="mb-32">{children}</main>
+      <main className="flex-1 mb-32">{children}</main>
       <Footer />
     </div>
   );

@@ -43,7 +43,7 @@ const teamMembers = [
   {
     name: "Juan Andres",
     lastname: "Valero Sierra",
-    position: "Estudiante de Ingeniería de Sistemas y Computación",
+    position: "Doctor en Matemáticas",
     role: "Asesor del Observatorio de Gestión y Análisis de indicaciones para la Ciencia y la Innovación.",
     email: "email_to_know@unal.edu.co",
     picture: juan_pic,
@@ -81,16 +81,17 @@ export default function About() {
         </div>
 
         {/* Team Section */}
-        <div className="max-w-screen-lg my-8 px-4">
+        <div className="max-w-screen-xl my-8 px-4 md:px-0 mx-auto ">
             {/* Heading */}
-            <h2 className="font-ancizarItalic font-bold text-3xl md:text-6xl bg-white text-primary-blue inline-block px-4 mb-8">
+            <h2 className="font-ancizarItalic font-bold text-7xl md:text-7xl bg-white text-primary-blue inline-block px-4 mb-8">
                 ¡Conoce a nuestro equipo!
             </h2>
 
-            <div className="flex flex-col gap-8 w-2/3 mx-auto">
-                    {teamMembers.map((member, index) => (
-                        <TeamCard key={index} {...member} />
-                    ))}
+            {/*<div className="flex flex-col gap-8 w-2/3 mx-auto">*/}
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-8 w-2/3  auto-rows-fr">
+                {teamMembers.map((member, index) => (
+                  <TeamCard key={index} {...member} />
+                ))}
             </div>
         </div>
 
