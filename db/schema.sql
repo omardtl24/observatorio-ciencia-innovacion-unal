@@ -43,6 +43,8 @@ CREATE TABLE simulators (
     name TEXT NOT NULL,
     description TEXT,
     specs_file_id INTEGER REFERENCES files(id)
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE visors (
@@ -51,6 +53,8 @@ CREATE TABLE visors (
     description TEXT,
     type TEXT CHECK (type IN ('bi','looker')),
     visor_url TEXT
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE reports (
@@ -58,7 +62,19 @@ CREATE TABLE reports (
     name TEXT NOT NULL,
     description TEXT,
     document_file_id INTEGER REFERENCES files(id)
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE documents_presentations (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    file_id INTEGER REFERENCES files(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 
 -- ==========================
 -- DATA SOURCES & LINKS
@@ -120,4 +136,10 @@ CREATE TABLE user_roles (
     email VARCHAR(120) REFERENCES users(email) ON DELETE CASCADE,
     role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (email, role_id)
+);
+
+CREATE TABLE role_documents_presentations (
+    role_id INTEGER REFERENCES roles(id),
+    documents_presentation_id INTEGER REFERENCES documents_presentations(id),
+    PRIMARY KEY (role_id, socuments_presentation_id)
 );
