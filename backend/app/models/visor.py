@@ -6,7 +6,7 @@ class Visor(db.Model, TimestampMixin, BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
-    type = db.Column(db.Text)  # CHECK constraint handled by DB
+    type = db.Column(db.Text)
     visor_url = db.Column(db.Text)
 
     data_sources = db.relationship(

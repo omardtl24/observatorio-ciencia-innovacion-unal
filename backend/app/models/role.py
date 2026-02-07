@@ -23,6 +23,11 @@ class Role(db.Model, TimestampMixin, BaseModel):
     simulators = db.relationship("Simulator",
                                  secondary="role_simulators",
                                  back_populates="roles")
+    documents_presentations = db.relationship(
+        "DocumentPresentation",
+        secondary="role_documents_presentations",
+        back_populates="roles"
+    )
 
     def __repr__(self):
         return f"<Role {self.name}>"
