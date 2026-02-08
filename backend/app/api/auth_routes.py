@@ -14,7 +14,7 @@ def login():
     redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL")
     return auth_service.auth0.authorize_redirect(redirect_uri=redirect_uri,
                                                  prompt='login',
-                                                 connection="google-oauth2",)
+                                                 connection="google-oauth2")
 
 
 @auth_bp.get("/callback")
@@ -25,13 +25,9 @@ def callback():
     Frontend consumes this endpoint directly.
     """
     auth_service = AuthService(current_app)
-    try:
-        redirect_url = auth_service.process_callback_for_redirect()
-        return redirect(redirect_url)
-    except Exception as e:
-        current_app.logger.error("Callback processing failed", exc_info=e)
-        frontend_login_url = app.config.get("FRONTEND_URL") + "/login"
-        return redirect(f"{frontend_login_url}?error=unauthorized")
+    # Errors are handled inside the service and propagated to frontend via query params
+    redirect_url = auth_service.process_callback_for_redirect()
+    return redirect(redirect_url)
 
 
 @auth_bp.get("/me")

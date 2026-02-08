@@ -7,13 +7,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        ancizar: ["AncizarSans", "sans-serif"],
-        ancizarItalic: ["AncizarSansItalic", "sans-serif"],
+        ancizar: ["AncizarSans"],
+        ancizarItalic: ["AncizarSansItalic"],
       },
-      colors: {
-        primary: colors.primary,
-        secondary: colors.secondary
-      }
+      colors: colors
     },
   },
   plugins: [],

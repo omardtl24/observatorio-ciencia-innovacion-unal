@@ -7,7 +7,7 @@ from app.models.base import db
 from app.config import Config
 import logging
 import traceback
-from app.errors.handlers import register_error_handlers
+#from app.errors.handlers import register_error_handlers
 
 
 jwt = JWTManager()
@@ -15,6 +15,7 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.secret_key = app.config.get("FLASK_SECRET_KEY")
 
     logging.basicConfig(level=logging.INFO)
     app.logger.setLevel(logging.INFO)
@@ -27,10 +28,6 @@ def create_app():
     def log_response(response):
         app.logger.info(f"Response: {response.status} {request.method} {request.path}")
         return response
-
-    
-    register_error_handlers(app)
-
 
     db.init_app(app)
     jwt.init_app(app)

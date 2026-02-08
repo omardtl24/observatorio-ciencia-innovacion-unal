@@ -12,10 +12,10 @@ class AuthService:
         self.oauth = OAuth(app)
         self.auth0 = self.oauth.register(
             'auth0',
-            client_id=os.getenv("AUTH0_CLIENT_ID"),
-            client_secret=os.getenv("AUTH0_CLIENT_SECRET"),
+            client_id=current_app.config.get("AUTH0_CLIENT_ID"),
+            client_secret=current_app.config.get("AUTH0_CLIENT_SECRET"),
             client_kwargs={'scope': 'openid profile email'},
-            server_metadata_url=f'https://{os.getenv("AUTH0_DOMAIN")}/.well-known/openid-configuration'
+            server_metadata_url=f'https://{current_app.config.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
         )
 
     def process_callback_for_redirect(self):
@@ -37,7 +37,7 @@ class AuthService:
             if not email:
                 raise ValueError("El proveedor de identidad no proporcionó un correo electrónico")
 
-            required_domain = current_app.config.get("RESTRICTED_EMAIL_DOMAIN", "unal.edu.co")
+            required_domain = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
             if not email.endswith(f"@{required_domain}"):
                 raise ValueError(f"Solo se permiten cuentas con dominio @{required_domain}")
 
@@ -64,6 +64,8 @@ class AuthService:
                 "last_names": user.last_names,
                 "picture": user_info.get("picture")
             }
+
+            current_app.logger.info(f"Auth callback successful for user: {email}")
 
         except Exception as e:
             # Instead of raising, propagate error to frontend

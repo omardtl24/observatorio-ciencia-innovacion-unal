@@ -6,6 +6,7 @@ from app.models.simulator import Simulator
 from app.models.visor import Visor
 from app.models.report import Report
 from app.models.data_source import DataSource
+from app.models.documents_presentation import DocumentPresentation
 from app.models.relations import (
     report_data_sources,
     visor_data_sources,
