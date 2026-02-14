@@ -38,7 +38,27 @@ class ForbiddenError(DomainError):
     error_code = "forbidden"
     default_message = "Operation not allowed"
 
+class UnauthorizedError(DomainError):
+    code = 401
+    error_code = "unauthorized"
+    default_message = "Operation not authorized"
+
+
+class SchemaValidationError(DomainError):
+    code = 400
+    error_code = "schema_validation_error"
+    default_message = "Request validation failed"
+
+
+class DatabaseConnectionError(DomainError):
+    code = 503
+    error_code = "database_connection_error"
+    default_message = "Database service unavailable. Please try again later."
+
 
 IllegalOperation = IllegalOperationError
 NotFound = NotFoundError
 Forbidden = ForbiddenError
+Unauthorized = UnauthorizedError
+SchemaValidation = SchemaValidationError
+DatabaseConnection = DatabaseConnectionError
