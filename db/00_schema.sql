@@ -51,7 +51,7 @@ CREATE TABLE visors (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
-    type TEXT CHECK (type IN ('bi','looker')),
+    type TEXT,
     visor_url TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()

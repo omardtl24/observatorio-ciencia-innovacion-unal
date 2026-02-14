@@ -17,7 +17,7 @@ Relationship / join tables are intentionally omitted here for clarity and are de
 | **users** | Stores users identified by email, including first and last names, last login timestamp, and creation/update timestamps. |
 | **files** | Centralized storage metadata for all uploaded files, including filename, storage path, type, size, checksum, and upload timestamp. |
 | **simulators** | Represents simulators available in the system, with name, description, and an optional reference to a specifications file. |
-| **visors** | Represents data visualization tools, including name, description, type (`bi` or `looker`), and an optional external URL. |
+| **visors** | Represents data visualization tools, including name, description, type and an optional external URL. |
 | **reports** | Represents reports with name, description, and an optional reference to a document file. |
 | **documents_presentations** | Stores general documents or presentations, linked to a single stored file. |
 | **data_sources** | Represents data sources used by reports, visors, and simulators; each data source references exactly one stored file and includes timestamps. |
@@ -63,7 +63,6 @@ Many-to-many relationships are implemented using join tables in the database but
 - `users.email` is used as the primary key for users instead of a numeric ID.
 - Many-to-many relationships are implemented using dedicated join tables with composite primary keys.
 - Timestamps commonly default to `NOW()` (`created_at`, `updated_at`, `uploaded_at`).
-- `visors.type` is constrained to a fixed set of values (`bi`, `looker`).
 - The `files` table centralizes all file metadata, avoiding duplication and simplifying file lifecycle management.
 - The E-R diagram represents the **conceptual model**, not the physical implementation of join tables.
 
