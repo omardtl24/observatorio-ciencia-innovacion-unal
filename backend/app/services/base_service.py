@@ -1,5 +1,5 @@
 from app.models.base import db
-from app.services.exceptions import NotFoundError, IllegalOperationError
+from app.domain.exceptions import NotFoundError, IllegalOperationError
 
 class BaseService:
     model = None  # must be set by child class
@@ -38,7 +38,6 @@ class BaseService:
     @classmethod
     def delete(cls, resource_id):
         instance = cls.get_by_id(resource_id)
-
         try:
             instance.delete()
             return True

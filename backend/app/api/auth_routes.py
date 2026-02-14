@@ -1,8 +1,9 @@
-from flask import Blueprint, jsonify, current_app, redirect, app
+from urllib.parse import urlencode
+from flask import Blueprint, jsonify, current_app, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
 from app.models.user import User
-import os
+from app.domain.exceptions import DomainError
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -21,13 +22,22 @@ def login():
 def callback():
     """
     Auth0 sends users here after login.
-    Backend returns JSON with JWT & profile.
-    Frontend consumes this endpoint directly.
+    Backend redirects to frontend with query params and tokens or error.
     """
     auth_service = AuthService(current_app)
-    # Errors are handled inside the service and propagated to frontend via query params
-    redirect_url = auth_service.process_callback_for_redirect()
-    return redirect(redirect_url)
+    frontend_url = current_app.config.get("FRONTEND_URL")
+    
+    try:
+        query_params = auth_service.process_callback_for_redirect()
+        redirect_url = f"{frontend_url}/login?{urlencode(query_params)}"
+        return redirect(redirect_url)
+    except DomainError as exc:
+        params = {
+            "error_code": exc.error_code,
+            "message": exc.message
+        }
+        redirect_url = f"{frontend_url}/login?{urlencode(params)}"
+        return redirect(redirect_url)
 
 
 @auth_bp.get("/me")

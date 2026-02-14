@@ -1,28 +1,50 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
+import { startLogin, saveTokensFromPayload } from "../services/authService";
 
 const ERROR_MESSAGES = {
-  unauthorized: "No estás autorizado para acceder a esta aplicación.",
   session_expired: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-  domain_not_allowed: "Por favor, usa tu correo institucional para iniciar sesión.",
 };
 
 export default function Login() {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const error = searchParams.get("error");
-    if (error) {
-      setErrorMessage(ERROR_MESSAGES[error] || error);
+    const params = new URLSearchParams(location.search);
+
+    // Handle callback from Auth0/backend
+    if (params.has("access_token")) {
+      const payload = Object.fromEntries(params);
+      const success = saveTokensFromPayload(payload);
+      if (success) {
+        navigate("/dashboard");
+        return;
+      }
     }
-  }, [searchParams]);
+
+    // Handle error from callback
+    if (params.has("error_code")) {
+      const errorCode = params.get("error_code");
+      const message = params.get("message");
+      setErrorMessage(message || `Error: ${errorCode}`);
+      return;
+    }
+
+    // Handle session expired
+    const error = params.get("error");
+    if (error === "session_expired") {
+      setErrorMessage(ERROR_MESSAGES.session_expired);
+    }
+  }, [location, navigate]);
 
   const handleLogin = () => {
     setLoading(true);
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/login`;
+    setErrorMessage(null);
+    startLogin();
   };
 
   if (loading) return <Loading message="Redirigiendo a Google..." />;

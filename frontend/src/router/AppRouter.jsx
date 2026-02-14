@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "../layout/Layout";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
-import AuthCallback from "../pages/AuthCallback";
 
 
 import Bg1 from "../assets/backgrounds/bg-pattern-1.svg?react";
@@ -21,8 +20,6 @@ const routeConfig = [
     backgroundSVGImage: Bg3, 
     svgFillClass: "text-primary-cyan-strong",
     backgroundClass: "bg-gray-100" },
-  { path: "/auth/callback", 
-    component: AuthCallback },
 ];
 
 export default function AppRouter() {

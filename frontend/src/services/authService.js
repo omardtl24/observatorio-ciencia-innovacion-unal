@@ -12,6 +12,18 @@ export function saveTokensFromUrlParams(params) {
   return true;
 }
 
+export function saveTokensFromPayload(payload) {
+  if (!payload || !payload.access_token) return false;
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      localStorage.setItem(key, String(value));
+    }
+  });
+
+  return true;
+}
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -43,6 +55,10 @@ export function expired() {
 export function logout() {
   localStorage.clear();
   window.location.href = "/login";
+}
+
+export function startLogin() {
+  window.location.href = `${import.meta.env.VITE_API_URL}/auth/login`;
 }
 
 

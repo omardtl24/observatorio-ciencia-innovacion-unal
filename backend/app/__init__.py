@@ -1,10 +1,12 @@
 from flask import Flask, jsonify, request, session
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from app.api.auth_routes import auth_bp
 from app.api.bi_test_route import visor_bp
 from app.models.base import db
 from app.config import Config
+from app.domain.exceptions import DomainError
 import logging
 import traceback
 #from app.errors.handlers import register_error_handlers
@@ -29,8 +31,15 @@ def create_app():
         app.logger.info(f"Response: {response.status} {request.method} {request.path}")
         return response
 
+    @app.errorhandler(DomainError)
+    def handle_domain_error(error):
+        response = jsonify(error.to_dict())
+        response.status_code = error.code
+        return response
+
     db.init_app(app)
     jwt.init_app(app)
+    CORS(app)
 
     @app.route("/", methods=["GET"])
     def index():
