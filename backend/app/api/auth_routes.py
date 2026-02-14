@@ -2,8 +2,8 @@ from urllib.parse import urlencode
 from flask import Blueprint, jsonify, current_app, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
-from app.models.user import User
-from app.domain.exceptions import DomainError
+from app.services.user_service import UserService
+from app.domain.exceptions import DomainError, UnauthorizedError
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -45,12 +45,8 @@ def callback():
 def me():
     email = get_jwt_identity()
     if not email:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    user = User.query.get(email)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
+        raise UnauthorizedError("Invalid token: missing email")
+    user = UserService.get_by_id(email)
     return jsonify({
         "email": user.email,
         "names": user.names,

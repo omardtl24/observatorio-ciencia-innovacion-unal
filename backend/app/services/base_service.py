@@ -18,20 +18,27 @@ class BaseService:
             IllegalOperationError: If the creation fails or data validation errors occur.
         """
         try:
+            if hasattr(cls.model, 'created_at'):
+                data['created_at'] = db.func.now()
             instance = cls.model.create(**data)
             return instance
         except Exception as e:
             db.session.rollback()
             raise IllegalOperationError(str(e))
-
+    
     @classmethod
-    def get_all(cls):
+    def get_all(cls, include=None, exclude=None):
         """Retrieve all instances of the resource.
-        
-        Returns:
-            list: A list of all model instances.
         """
         return cls.model.query.all()
+
+    @classmethod
+    def get_all_dict(cls, include=None, exclude=None):
+        """Retrieve all instances of the resource as a list of dictionaries.
+        """
+        instances = cls.model.query.all()
+        instances_dict = [instance.to_dict(include=include, exclude=exclude) for instance in instances]
+        return instances_dict
 
     @classmethod
     def get_by_id(cls, resource_id):
@@ -90,6 +97,9 @@ class BaseService:
             IllegalOperationError: If the deletion fails.
         """
         instance = cls.get_by_id(resource_id)
+        instance = cls.model.query.get(resource_id)
+        if not instance:
+            raise NotFoundError(f"{cls.model.__name__} with id={resource_id} not found")
         try:
             instance.delete()
             return True

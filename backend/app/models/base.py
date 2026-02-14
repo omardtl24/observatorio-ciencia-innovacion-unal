@@ -36,6 +36,11 @@ class BaseModel:
         db.session.commit()
     
 
-    def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    def to_dict(self, include=None, exclude=None):
+        columns = [c.name for c in self.__table__.columns]
+        if include:
+            columns = [col for col in columns if col in include]
+        if exclude:
+            columns = [col for col in columns if col not in exclude]
+        return {col: getattr(self, col) for col in columns}
 
