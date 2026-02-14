@@ -1,12 +1,13 @@
 const TOKEN_KEY = "access_token";
 import {jwtDecode} from "jwt-decode";
+import { setCookie, getCookie, deleteCookie } from "./cookiesManager";
 
 export function saveTokensFromUrlParams(params) {
   const token = params.get("access_token");
   if (!token) return false;
 
   for (const [key, value] of params.entries()) {
-    localStorage.setItem(key, value);
+    setCookie(key, value);
   }
 
   return true;
@@ -17,7 +18,7 @@ export function saveTokensFromPayload(payload) {
 
   Object.entries(payload).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      localStorage.setItem(key, String(value));
+      setCookie(key, String(value));
     }
   });
 
@@ -25,7 +26,7 @@ export function saveTokensFromPayload(payload) {
 }
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  return getCookie(TOKEN_KEY);
 }
 
 export function isAuthenticated() {
@@ -48,12 +49,20 @@ export function isAuthenticated() {
 }
 
 export function expired() {
-  localStorage.clear();
+  deleteCookie(TOKEN_KEY);
+  deleteCookie("email");
+  deleteCookie("names");
+  deleteCookie("last_names");
+  deleteCookie("picture");
   window.location.href = "/login?error=session_expired";
 }
 
 export function logout() {
-  localStorage.clear();
+  deleteCookie(TOKEN_KEY);
+  deleteCookie("email");
+  deleteCookie("names");
+  deleteCookie("last_names");
+  deleteCookie("picture");
   window.location.href = "/login";
 }
 
