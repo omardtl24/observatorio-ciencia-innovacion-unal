@@ -4,7 +4,8 @@ class Report(db.Model, TimestampMixin, BaseModel):
     __tablename__ = 'reports'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text, nullable=False)
+    main_title = db.Column(db.Text, nullable=False)
+    auxiliary_title = db.Column(db.Text)
     description = db.Column(db.Text)
 
     document_file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
@@ -23,4 +24,4 @@ class Report(db.Model, TimestampMixin, BaseModel):
     )
 
     def __repr__(self):
-        return f"<Report {self.name}>"
+        return f"<Report {self.main_title}>"

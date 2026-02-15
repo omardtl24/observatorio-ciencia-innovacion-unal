@@ -13,7 +13,7 @@ class TestSimulatorDataSourceRelationAdd:
     def test_add_data_source_to_simulator(self, app, test_file):
         """Test adding a data source to a simulator."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Budget Simulator")
+            simulator = SimulatorService.create(main_title="Budget Simulator")
             data_source = DataSourceService.create(name="API Source", file_id=test_file.id)
             
             sim_result, ds_result = SimulatorDataSourceRelation.add_data_source_to_simulator(simulator.id, data_source.id)
@@ -25,7 +25,7 @@ class TestSimulatorDataSourceRelationAdd:
     def test_add_duplicate_data_source_raises_error(self, app, test_file):
         """Test that adding duplicate data source raises error."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Test Simulator")
+            simulator = SimulatorService.create(main_title="Test Simulator")
             data_source = DataSourceService.create(name="DB Source", file_id=test_file.id)
             
             SimulatorDataSourceRelation.add_data_source_to_simulator(simulator.id, data_source.id)
@@ -44,7 +44,7 @@ class TestSimulatorDataSourceRelationAdd:
     def test_add_nonexistent_data_source_to_simulator_raises_error(self, app):
         """Test that adding nonexistent data source raises error."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Simulator")
+            simulator = SimulatorService.create(main_title="Simulator")
             
             with pytest.raises(NotFoundError):
                 SimulatorDataSourceRelation.add_data_source_to_simulator(simulator.id, 9999)
@@ -56,7 +56,7 @@ class TestSimulatorDataSourceRelationRemove:
     def test_remove_data_source_from_simulator(self, app, test_file):
         """Test removing a data source from a simulator."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Simulator")
+            simulator = SimulatorService.create(main_title="Simulator")
             data_source = DataSourceService.create(name="Source", file_id=test_file.id)
             SimulatorDataSourceRelation.add_data_source_to_simulator(simulator.id, data_source.id)
             
@@ -67,7 +67,7 @@ class TestSimulatorDataSourceRelationRemove:
     def test_remove_nonexistent_data_source_from_simulator_raises_error(self, app, test_file):
         """Test that removing unassigned data source raises error."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Simulator")
+            simulator = SimulatorService.create(main_title="Simulator")
             data_source = DataSourceService.create(name="Source", file_id=test_file.id)
             
             with pytest.raises(IllegalOperationError):
@@ -80,7 +80,7 @@ class TestSimulatorDataSourceRelationGet:
     def test_get_all_data_sources_for_simulator(self, app, test_file):
         """Test getting all data sources for a simulator."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Multi-source Simulator")
+            simulator = SimulatorService.create(main_title="Multi-source Simulator")
             ds1 = DataSourceService.create(name="Source 1", file_id=test_file.id)
             ds2 = DataSourceService.create(name="Source 2", file_id=test_file.id)
             
@@ -96,8 +96,8 @@ class TestSimulatorDataSourceRelationGet:
     def test_get_all_simulators_for_data_source(self, app, test_file):
         """Test getting all simulators for a data source."""
         with app.app_context():
-            sim1 = SimulatorService.create(name="Simulator 1")
-            sim2 = SimulatorService.create(name="Simulator 2")
+            sim1 = SimulatorService.create(main_title="Simulator 1")
+            sim2 = SimulatorService.create(main_title="Simulator 2")
             data_source = DataSourceService.create(name="Shared Source", file_id=test_file.id)
             
             SimulatorDataSourceRelation.add_data_source_to_simulator(sim1.id, data_source.id)
@@ -116,7 +116,7 @@ class TestSimulatorDataSourceRelationRemoveAll:
     def test_remove_all_data_sources_for_simulator(self, app, test_file):
         """Test removing all data sources from a simulator."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Simulator")
+            simulator = SimulatorService.create(main_title="Simulator")
             ds1 = DataSourceService.create(name="DS1", file_id=test_file.id)
             ds2 = DataSourceService.create(name="DS2", file_id=test_file.id)
             
@@ -131,8 +131,8 @@ class TestSimulatorDataSourceRelationRemoveAll:
     def test_remove_all_simulators_for_data_source(self, app, test_file):
         """Test removing all simulators from a data source."""
         with app.app_context():
-            sim1 = SimulatorService.create(name="S1")
-            sim2 = SimulatorService.create(name="S2")
+            sim1 = SimulatorService.create(main_title="S1")
+            sim2 = SimulatorService.create(main_title="S2")
             data_source = DataSourceService.create(name="DS", file_id=test_file.id)
             
             SimulatorDataSourceRelation.add_data_source_to_simulator(sim1.id, data_source.id)
@@ -150,7 +150,7 @@ class TestSimulatorDataSourceRelationIntegration:
     def test_complete_relationship_lifecycle(self, app, test_file):
         """Test complete lifecycle of simulator-datasource relationship."""
         with app.app_context():
-            simulator = SimulatorService.create(name="Forecast Model")
+            simulator = SimulatorService.create(main_title="Forecast Model")
             ds1 = DataSourceService.create(name="API", file_id=test_file.id)
             ds2 = DataSourceService.create(name="DB", file_id=test_file.id)
             

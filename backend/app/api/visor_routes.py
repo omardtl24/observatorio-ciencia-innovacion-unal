@@ -40,9 +40,9 @@ def create_visor():
 def get_visor():
     """Retreive all visors available for preview
     Returns:
-        list: A list of visors with their basic information (id, name, type, updated_at).
+        list: A list of visors with their basic information (id, main_title, auxiliary_title, type, updated_at).
     """
-    visors = VisorService.get_all_dict(include=["id", "name", "type", "updated_at"])
+    visors = VisorService.get_all_dict(include=["id", "main_title", "auxiliary_title","type", "updated_at"])
     return jsonify(visors), 200
 
 @visor_bp.get("/all/full")
@@ -58,10 +58,10 @@ def get_visor_full():
 def get_visor_by_id(visor_id):
     """Retreive specific information of visor by id
     Returns:
-        list: A list of visors with their basic information (id, name, type, updated_at).
+        list: A list of visors with their basic information (id, main_title, auxiliary_title, description, visor_url).
     """
     visor = VisorService.get_by_id(visor_id)
-    include = ["name", "description", "visor_url"]
+    include = ["id", "main_title", "auxiliary_title", "description", "visor_url"]
     return jsonify(visor.to_dict(include=include)), 200
 
 @visor_bp.delete("/<int:visor_id>")

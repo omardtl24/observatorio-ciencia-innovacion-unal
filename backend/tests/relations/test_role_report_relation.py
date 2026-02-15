@@ -14,7 +14,7 @@ class TestRoleReportRelationAdd:
         """Test adding a report to a role."""
         with app.app_context():
             role = RoleService.create(name="Admin")
-            report = ReportService.create(name="Sales Report")
+            report = ReportService.create(main_title="Sales Report")
             
             role_result, report_result = RoleReportRelation.add_report_to_role(role.id, report.id)
             
@@ -26,7 +26,7 @@ class TestRoleReportRelationAdd:
         """Test that adding duplicate report raises error."""
         with app.app_context():
             role = RoleService.create(name="Editor")
-            report = ReportService.create(name="Monthly Report")
+            report = ReportService.create(main_title="Monthly Report")
             
             RoleReportRelation.add_report_to_role(role.id, report.id)
             
@@ -36,7 +36,7 @@ class TestRoleReportRelationAdd:
     def test_add_report_to_nonexistent_role_raises_error(self, app):
         """Test that adding report to nonexistent role raises error."""
         with app.app_context():
-            report = ReportService.create(name="Test Report")
+            report = ReportService.create(main_title="Test Report")
             
             with pytest.raises(NotFoundError):
                 RoleReportRelation.add_report_to_role(9999, report.id)
@@ -57,7 +57,7 @@ class TestRoleReportRelationRemove:
         """Test removing a report from a role."""
         with app.app_context():
             role = RoleService.create(name="Manager")
-            report = ReportService.create(name="Annual Report")
+            report = ReportService.create(main_title="Annual Report")
             RoleReportRelation.add_report_to_role(role.id, report.id)
             
             role_result, report_result = RoleReportRelation.remove_report_from_role(role.id, report.id)
@@ -68,7 +68,7 @@ class TestRoleReportRelationRemove:
         """Test that removing unassigned report raises error."""
         with app.app_context():
             role = RoleService.create(name="Support")
-            report = ReportService.create(name="Support Report")
+            report = ReportService.create(main_title="Support Report")
             
             with pytest.raises(IllegalOperationError):
                 RoleReportRelation.remove_report_from_role(role.id, report.id)
@@ -81,8 +81,8 @@ class TestRoleReportRelationGet:
         """Test getting all reports for a role."""
         with app.app_context():
             role = RoleService.create(name="Analyst")
-            report1 = ReportService.create(name="Report 1")
-            report2 = ReportService.create(name="Report 2")
+            report1 = ReportService.create(main_title="Report 1")
+            report2 = ReportService.create(main_title="Report 2")
             
             RoleReportRelation.add_report_to_role(role.id, report1.id)
             RoleReportRelation.add_report_to_role(role.id, report2.id)
@@ -98,7 +98,7 @@ class TestRoleReportRelationGet:
         with app.app_context():
             role1 = RoleService.create(name="Role1")
             role2 = RoleService.create(name="Role2")
-            report = ReportService.create(name="Shared Report")
+            report = ReportService.create(main_title="Shared Report")
             
             RoleReportRelation.add_report_to_role(role1.id, report.id)
             RoleReportRelation.add_report_to_role(role2.id, report.id)
@@ -117,8 +117,8 @@ class TestRoleReportRelationRemoveAll:
         """Test removing all reports from a role."""
         with app.app_context():
             role = RoleService.create(name="Admin")
-            report1 = ReportService.create(name="R1")
-            report2 = ReportService.create(name="R2")
+            report1 = ReportService.create(main_title="R1")
+            report2 = ReportService.create(main_title="R2")
             
             RoleReportRelation.add_report_to_role(role.id, report1.id)
             RoleReportRelation.add_report_to_role(role.id, report2.id)
@@ -133,7 +133,7 @@ class TestRoleReportRelationRemoveAll:
         with app.app_context():
             role1 = RoleService.create(name="R1")
             role2 = RoleService.create(name="R2")
-            report = ReportService.create(name="Team Report")
+            report = ReportService.create(main_title="Team Report")
             
             RoleReportRelation.add_report_to_role(role1.id, report.id)
             RoleReportRelation.add_report_to_role(role2.id, report.id)
@@ -151,8 +151,8 @@ class TestRoleReportRelationIntegration:
         """Test complete lifecycle of role-report relationship."""
         with app.app_context():
             role = RoleService.create(name="Data Analyst")
-            report1 = ReportService.create(name="Q1 Report")
-            report2 = ReportService.create(name="Q2 Report")
+            report1 = ReportService.create(main_title="Q1 Report")
+            report2 = ReportService.create(main_title="Q2 Report")
             
             # Add reports
             RoleReportRelation.add_report_to_role(role.id, report1.id)

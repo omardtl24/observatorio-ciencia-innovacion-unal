@@ -14,7 +14,7 @@ class TestRoleVisorRelationAdd:
         """Test adding a visor to a role."""
         with app.app_context():
             role = RoleService.create(name="Analyst")
-            visor = VisorService.create(name="Sales Visor")
+            visor = VisorService.create(main_title="Sales Visor")
             
             role_result, visor_result = RoleVisorRelation.add_visor_to_role(role.id, visor.id)
             
@@ -26,7 +26,7 @@ class TestRoleVisorRelationAdd:
         """Test that adding duplicate visor raises error."""
         with app.app_context():
             role = RoleService.create(name="Manager")
-            visor = VisorService.create(name="Marketing Visor")
+            visor = VisorService.create(main_title="Marketing Visor")
             
             RoleVisorRelation.add_visor_to_role(role.id, visor.id)
             
@@ -36,7 +36,7 @@ class TestRoleVisorRelationAdd:
     def test_add_visor_to_nonexistent_role_raises_error(self, app):
         """Test that adding visor to nonexistent role raises error."""
         with app.app_context():
-            visor = VisorService.create(name="Data Visor")
+            visor = VisorService.create(main_title="Data Visor")
             
             with pytest.raises(NotFoundError):
                 RoleVisorRelation.add_visor_to_role(9999, visor.id)
@@ -57,7 +57,7 @@ class TestRoleVisorRelationRemove:
         """Test removing a visor from a role."""
         with app.app_context():
             role = RoleService.create(name="Viewer")
-            visor = VisorService.create(name="Dashboard")
+            visor = VisorService.create(main_title="Dashboard")
             RoleVisorRelation.add_visor_to_role(role.id, visor.id)
             
             role_result, visor_result = RoleVisorRelation.remove_visor_from_role(role.id, visor.id)
@@ -68,7 +68,7 @@ class TestRoleVisorRelationRemove:
         """Test that removing unassigned visor raises error."""
         with app.app_context():
             role = RoleService.create(name="Guest")
-            visor = VisorService.create(name="Public Visor")
+            visor = VisorService.create(main_title="Public Visor")
             
             with pytest.raises(IllegalOperationError):
                 RoleVisorRelation.remove_visor_from_role(role.id, visor.id)
@@ -81,8 +81,8 @@ class TestRoleVisorRelationGet:
         """Test getting all visors for a role."""
         with app.app_context():
             role = RoleService.create(name="Power User")
-            visor1 = VisorService.create(name="Visor 1")
-            visor2 = VisorService.create(name="Visor 2")
+            visor1 = VisorService.create(main_title="Visor 1")
+            visor2 = VisorService.create(main_title="Visor 2")
             
             RoleVisorRelation.add_visor_to_role(role.id, visor1.id)
             RoleVisorRelation.add_visor_to_role(role.id, visor2.id)
@@ -98,7 +98,7 @@ class TestRoleVisorRelationGet:
         with app.app_context():
             role1 = RoleService.create(name="Role 1")
             role2 = RoleService.create(name="Role 2")
-            visor = VisorService.create(name="Shared Visor")
+            visor = VisorService.create(main_title="Shared Visor")
             
             RoleVisorRelation.add_visor_to_role(role1.id, visor.id)
             RoleVisorRelation.add_visor_to_role(role2.id, visor.id)
@@ -117,8 +117,8 @@ class TestRoleVisorRelationRemoveAll:
         """Test removing all visors from a role."""
         with app.app_context():
             role = RoleService.create(name="Test Role")
-            visor1 = VisorService.create(name="V1")
-            visor2 = VisorService.create(name="V2")
+            visor1 = VisorService.create(main_title="V1")
+            visor2 = VisorService.create(main_title="V2")
             
             RoleVisorRelation.add_visor_to_role(role.id, visor1.id)
             RoleVisorRelation.add_visor_to_role(role.id, visor2.id)
@@ -133,7 +133,7 @@ class TestRoleVisorRelationRemoveAll:
         with app.app_context():
             role1 = RoleService.create(name="R1")
             role2 = RoleService.create(name="R2")
-            visor = VisorService.create(name="V")
+            visor = VisorService.create(main_title="V")
             
             RoleVisorRelation.add_visor_to_role(role1.id, visor.id)
             RoleVisorRelation.add_visor_to_role(role2.id, visor.id)
@@ -151,8 +151,8 @@ class TestRoleVisorRelationIntegration:
         """Test complete lifecycle of role-visor relationship."""
         with app.app_context():
             role = RoleService.create(name="SuperUser")
-            visor1 = VisorService.create(name="Dashboard 1")
-            visor2 = VisorService.create(name="Dashboard 2")
+            visor1 = VisorService.create(main_title="Dashboard 1")
+            visor2 = VisorService.create(main_title="Dashboard 2")
             
             # Add visors
             RoleVisorRelation.add_visor_to_role(role.id, visor1.id)

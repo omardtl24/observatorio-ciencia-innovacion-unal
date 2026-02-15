@@ -13,26 +13,29 @@ class TestReportServiceCreate:
         """Test creating a report with all fields provided."""
         with app.app_context():
             report = ReportService.create(
-                name="Sales Report",
+                main_title="Sales Report",
+                auxiliary_title="Aux Report",
                 description="Monthly sales metrics"
             )
             
             assert report.id is not None
-            assert report.name == "Sales Report"
+            assert report.main_title == "Sales Report"
+            assert report.auxiliary_title == "Aux Report"
             assert report.description == "Monthly sales metrics"
             assert report.created_at is not None
     
     def test_create_report_with_minimal_fields(self, app):
-        """Test creating a report with only required field (name)."""
+        """Test creating a report with only required field (main_title)."""
         with app.app_context():
-            report = ReportService.create(name="Quick Report")
+            report = ReportService.create(main_title="Quick Report")
             
             assert report.id is not None
-            assert report.name == "Quick Report"
+            assert report.main_title == "Quick Report"
+            assert report.auxiliary_title is None
             assert report.description is None
     
     def test_create_report_without_name_fails(self, app):
-        """Test that creating a report without a name raises an error."""
+        """Test that creating a report without a main_title raises an error."""
         with app.app_context():
             with pytest.raises(IllegalOperationError):
                 ReportService.create(description="No name report")
@@ -41,7 +44,7 @@ class TestReportServiceCreate:
         """Test that created_at is automatically set."""
         with app.app_context():
             before = datetime.utcnow()
-            report = ReportService.create(name="Timestamp Report")
+            report = ReportService.create(main_title="Timestamp Report")
             report = ReportService.get_by_id(report.id)
             after = datetime.utcnow()
             before = before.replace(microsecond=0)
@@ -63,8 +66,8 @@ class TestReportServiceRead:
     def test_get_all_reports(self, app):
         """Test getting all reports."""
         with app.app_context():
-            report1 = ReportService.create(name="Report 1")
-            report2 = ReportService.create(name="Report 2", description="Second report")
+            report1 = ReportService.create(main_title="Report 1")
+            report2 = ReportService.create(main_title="Report 2", description="Second report")
             
             reports = ReportService.get_all()
             
@@ -75,22 +78,22 @@ class TestReportServiceRead:
     def test_get_all_reports_as_dict(self, app):
         """Test getting all reports as dictionaries."""
         with app.app_context():
-            ReportService.create(name="Dict Report", description="Test description")
+            ReportService.create(main_title="Dict Report", description="Test description")
             
             reports_dict = ReportService.get_all_dict()
             
             assert len(reports_dict) == 1
-            assert reports_dict[0]["name"] == "Dict Report"
+            assert reports_dict[0]["main_title"] == "Dict Report"
     
     def test_get_report_by_id(self, app):
         """Test getting a report by its ID."""
         with app.app_context():
-            report = ReportService.create(name="Get By ID Report")
+            report = ReportService.create(main_title="Get By ID Report")
             
             retrieved = ReportService.get_by_id(report.id)
             
             assert retrieved.id == report.id
-            assert retrieved.name == "Get By ID Report"
+            assert retrieved.main_title == "Get By ID Report"
     
     def test_get_report_by_nonexistent_id_raises_error(self, app):
         """Test that getting a nonexistent report raises NotFoundError."""
@@ -105,40 +108,40 @@ class TestReportServiceUpdate:
     def test_update_report_name(self, app):
         """Test updating a report's name."""
         with app.app_context():
-            report = ReportService.create(name="Old Name", description="Test")
+            report = ReportService.create(main_title="Old Name", description="Test")
             
-            updated = ReportService.update(report.id, name="New Name")
+            updated = ReportService.update(report.id, main_title="New Name")
             
-            assert updated.name == "New Name"
+            assert updated.main_title == "New Name"
             assert updated.description == "Test"
     
     def test_update_report_multiple_fields(self, app):
         """Test updating multiple fields."""
         with app.app_context():
-            report = ReportService.create(name="Original")
+            report = ReportService.create(main_title="Original")
             
             updated = ReportService.update(
                 report.id,
-                name="Updated Report",
+                main_title="Updated Report",
                 description="Updated description"
             )
             
-            assert updated.name == "Updated Report"
+            assert updated.main_title == "Updated Report"
             assert updated.description == "Updated description"
     
     def test_update_nonexistent_report_raises_error(self, app):
         """Test that updating a nonexistent report raises NotFoundError."""
         with app.app_context():
             with pytest.raises(NotFoundError):
-                ReportService.update(9999, name="New")
+                ReportService.update(9999, main_title="New")
     
     def test_update_preserves_created_at(self, app):
         """Test that updating preserves created_at timestamp."""
         with app.app_context():
-            report = ReportService.create(name="Test Report")
+            report = ReportService.create(main_title="Test Report")
             original_created_at = report.created_at
             
-            ReportService.update(report.id, name="Updated Report")
+            ReportService.update(report.id, main_title="Updated Report")
             updated = ReportService.get_by_id(report.id)
             
             assert updated.created_at == original_created_at
@@ -150,7 +153,7 @@ class TestReportServiceDelete:
     def test_delete_report(self, app):
         """Test deleting a report."""
         with app.app_context():
-            report = ReportService.create(name="Temp Report")
+            report = ReportService.create(main_title="Temp Report")
             report_id = report.id
             
             result = ReportService.delete(report_id)
@@ -168,8 +171,8 @@ class TestReportServiceDelete:
     def test_delete_removes_from_database(self, app):
         """Test that deleting removes the report from the database."""
         with app.app_context():
-            report1 = ReportService.create(name="Report 1")
-            report2 = ReportService.create(name="Report 2")
+            report1 = ReportService.create(main_title="Report 1")
+            report2 = ReportService.create(main_title="Report 2")
             
             ReportService.delete(report1.id)
             
@@ -185,20 +188,20 @@ class TestReportServiceIntegration:
         """Test a complete CRUD cycle."""
         with app.app_context():
             # Create
-            report = ReportService.create(name="CRUD Report", description="For testing")
+            report = ReportService.create(main_title="CRUD Report", description="For testing")
             report_id = report.id
             
             # Read
             retrieved = ReportService.get_by_id(report_id)
-            assert retrieved.name == "CRUD Report"
+            assert retrieved.main_title == "CRUD Report"
             
             # Update
-            updated = ReportService.update(report_id, name="Updated Report")
-            assert updated.name == "Updated Report"
+            updated = ReportService.update(report_id, main_title="Updated Report")
+            assert updated.main_title == "Updated Report"
             
             # Verify update
             verified = ReportService.get_by_id(report_id)
-            assert verified.name == "Updated Report"
+            assert verified.main_title == "Updated Report"
             
             # Delete
             ReportService.delete(report_id)
@@ -209,7 +212,7 @@ class TestReportServiceIntegration:
         """Test creating and managing multiple reports."""
         with app.app_context():
             reports = [
-                ReportService.create(name=f"Report {i}", description=f"Description {i}")
+                ReportService.create(main_title=f"Report {i}", description=f"Description {i}")
                 for i in range(1, 4)
             ]
             
@@ -218,5 +221,5 @@ class TestReportServiceIntegration:
             ReportService.delete(reports[0].id)
             assert len(ReportService.get_all()) == 2
             
-            ReportService.create(name="New Report")
+            ReportService.create(main_title="New Report")
             assert len(ReportService.get_all()) == 3

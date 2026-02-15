@@ -7,7 +7,8 @@ class VisorCreateRequest(BaseModel):
     """Schema for creating a new visor.
     
     Attributes:
-        name: The name of the visor (required).
+        main_title: The main title of the visor (required).
+        auxiliary_title: The auxiliary title of the visor (required).
         type: The type of the visor (required).
         description: The description of the visor (required).
         visor_url: The URL of the visor (required).
@@ -18,7 +19,8 @@ class VisorCreateRequest(BaseModel):
         validate_default=True,
         json_schema_extra={
             "example": {
-                "name": "Main Visor",
+                "main_title": "Main Visor title",
+                "auxiliary_title": "Auxiliary Visor title",
                 "description": "Primary data visualization visor",
                 "type": "dashboard",
                 "visor_url": "https://example.com/visor",
@@ -27,7 +29,8 @@ class VisorCreateRequest(BaseModel):
         }
     )
     
-    name: str = Field(..., min_length=1, description="The name of the visor")
+    main_title: str = Field(..., min_length=1, description="The main title of the visor")
+    auxiliary_title: str = Field(..., min_length=1, description="The auxiliary title of the visor")
     type: str = Field(..., min_length=1, description="The type of the visor")
     description: str = Field(..., min_length=1, description="The description of the visor")
     visor_url: str = Field(..., min_length=1, description="The URL of the visor")
