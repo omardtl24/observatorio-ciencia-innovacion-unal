@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import reportIcon from "../assets/icons/resources/report-blue.svg";
 import simulatorIcon from "../assets/icons/resources/simulator-blue.svg";
 import visorIcon from "../assets/icons/resources/visor-blue.svg";
@@ -5,6 +6,7 @@ import calendarIcon from "../assets/icons/resources/calendar-blue.svg";
 import imageIcon from "../assets/icons/resources/image-blue.svg";
 
 export default function ResourceCard({
+  id,
   main_title,
   auxiliar_title,
   type,
@@ -12,6 +14,7 @@ export default function ResourceCard({
   coverImage,
   resourceType = "report",
 }) {
+  const navigate = useNavigate();
   const symbol =
     {
       report: reportIcon,
@@ -21,8 +24,15 @@ export default function ResourceCard({
       image: imageIcon,
     }[resourceType] || reportIcon;
 
+  const handleClick = () => {
+    navigate(`/resource/${resourceType}/${id}`);
+  };
+
   return (
-    <div className="flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-2xl border border-blue-300 bg-primary-cyan-soft overflow-hidden">
+    <div 
+      onClick={handleClick}
+      className="flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-2xl border border-blue-300 bg-primary-cyan-soft overflow-hidden cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-200"
+    >
 
       {/* LEFT IMAGE */}
       <div className="md:w-[500px] w-full h-full py-1 px-1 pr-2 pl-3 flex items-center justify-center">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import ResourceCard from "../components/RessourceCard";
+import ResourceCard from "../components/ResourceCard";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
 
 export default function Resources() {
@@ -60,6 +60,7 @@ export default function Resources() {
         {data_mapper.map((item, index) => (
           <ResourceCard
             key={item.id}
+            id={item.id}
             title={item.main_title}
             main_title={item.main_title}
             auxiliar_title={item.auxiliar_title}
