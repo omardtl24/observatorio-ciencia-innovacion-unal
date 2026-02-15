@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     # DB CONFIG
@@ -11,7 +12,7 @@ class Config:
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-    # PostgreSQL URI
+    # ---- POSTGRESQL URI --------
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
@@ -22,6 +23,11 @@ class Config:
     AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID")
     AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
     AUTH0_CALLBACK_URL = os.getenv("AUTH0_CALLBACK_URL")
+
+    # ---- FILE STORAGE ----
+    FILE_STORAGE_ROOT = os.path.join(
+        BASE_DIR, os.getenv("FILE_STORAGE_ROOT")
+    )
 
     # ---- SECURITY ----
     RESTRICTED_EMAIL_DOMAIN = os.getenv("RESTRICTED_EMAIL_DOMAIN")

@@ -5,13 +5,14 @@ from flask_jwt_extended import JWTManager
 from sqlalchemy.exc import OperationalError
 from app.api.auth_routes import auth_bp
 from app.api.visor_routes import visor_bp
+from app.api.file_routes import file_bp
+from app.api.report_routes import report_bp
 from app.models.base import db
 from app.config import Config, TestingConfig
 from app.domain.exceptions import DomainError, DatabaseConnectionError
 import logging
 import traceback
-#from app.errors.handlers import register_error_handlers
-
+import os
 
 jwt = JWTManager()
 
@@ -24,7 +25,7 @@ def create_app(config_name="production"):
     Returns:
         Flask: The configured Flask application instance.
     """
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
     
     if config_name == "testing":
         app.config.from_object(TestingConfig)
@@ -72,4 +73,9 @@ def create_app(config_name="production"):
     #Include all blueprints (API routes)
     app.register_blueprint(auth_bp)
     app.register_blueprint(visor_bp)
+    app.register_blueprint(file_bp)
+    app.register_blueprint(report_bp)
+
+    os.makedirs(app.config["FILE_STORAGE_ROOT"], exist_ok=True)
+
     return app
