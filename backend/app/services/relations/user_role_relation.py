@@ -52,7 +52,7 @@ class UserRoleRelation(BaseRelation):
         if role in user.roles:
             raise IllegalOperationError(f"Role {role_id} is already assigned to user {user_email}")
         
-        return cls.add(user.id, role_id)
+        return cls.add(user.email, role_id)
     
     @classmethod
     def remove_role_from_user(cls, user_email, role_id):
@@ -70,4 +70,4 @@ class UserRoleRelation(BaseRelation):
             IllegalOperationError: If not assigned or operation fails.
         """
         user = cls.get_user_by_email(user_email)
-        return cls.remove(user.id, role_id)
+        return cls.remove(user.email, role_id)
