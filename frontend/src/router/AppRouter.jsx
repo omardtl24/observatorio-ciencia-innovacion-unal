@@ -3,6 +3,7 @@ import Layout from "../layout/Layout";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import Landing from "../pages/Landing";
+import Resources from "../pages/Resources";
 
 import Bg1 from "../assets/backgrounds/bg-pattern-1.svg?react";
 import Bg2 from "../assets/backgrounds/bg-pattern-2.svg?react";
@@ -20,6 +21,11 @@ const routeConfig = [
     component: Dashboard, 
     backgroundSVGImage: Bg3, 
     svgFillClass: "text-primary-cyan-strong",
+    backgroundClass: "bg-gray-100" },
+  { path: "/resources/:type", 
+    component: Resources, 
+    backgroundSVGImage: Bg1, 
+    svgFillClass: "text-primary-cyan-base",
     backgroundClass: "bg-gray-100" },
   { path: "/", 
     component: Landing, 

@@ -1,0 +1,81 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import ResourceCard from "../components/RessourceCard";
+import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
+
+export default function Resources() {
+  const { type } = useParams();
+  const [data_mapper, setDataMapper] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const images = [
+    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1491895200222-0fc4a4c35e18?auto=format&fit=crop&w=800&q=80",
+  ];
+
+  useEffect(() => {
+    if (!type) {
+      setError("Resource type not specified");
+      setLoading(false);
+      return;
+    }
+
+    const loadResources = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const jsonData = await fetchResources(type);
+        const parsedData = parseResourcesForCards(type, jsonData);
+        setDataMapper(parsedData);
+      } catch (err) {
+        setError(err.message + ' Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadResources();
+  }, [type]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen px-6 py-12 flex items-center justify-center">
+        <p className="text-lg text-gray-600">Loading resources...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen px-6 py-12 flex items-center justify-center">
+        <p className="text-lg text-red-600">Error: {error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen px-6 py-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        {data_mapper.map((item, index) => (
+          <ResourceCard
+            key={item.id}
+            title={item.main_title}
+            main_title={item.main_title}
+            auxiliar_title={item.auxiliar_title}
+            type={item.type}
+            updatedAt={new Date(item.update_at)
+                    .toLocaleDateString("es-ES", {
+                        year: "numeric",
+                        month: "long",
+                    })
+                    .replace(/^\w/, (c) => c.toUpperCase())
+                }
+            coverImage={images[index % images.length]}
+            resourceType={type}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

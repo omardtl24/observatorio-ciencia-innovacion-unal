@@ -4,14 +4,14 @@
 
 @font-face {
   font-family: "AncizarSans";
-  src: url("fonts/AncizarSans-VariableFont_wght.ttf") format("truetype");
+  src: url("/fonts/AncizarSans-VariableFont_wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
 }
 
 @font-face {
   font-family: "AncizarSansItalic";
-  src: url("fonts/AncizarSans-Italic-VariableFont_wght.ttf") format("truetype");
+  src: url("/fonts/AncizarSans-Italic-VariableFont_wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: italic;
 }
