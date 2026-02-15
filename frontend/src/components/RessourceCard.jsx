@@ -25,7 +25,7 @@ export default function ResourceCard({
     <div className="flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-2xl border border-blue-300 bg-primary-cyan-soft overflow-hidden">
 
       {/* LEFT IMAGE */}
-      <div className="md:w-[400px] w-full h-full py-1 px-1 pr-3 pl-3 flex items-center justify-center">
+      <div className="md:w-[500px] w-full h-full py-1 px-1 pr-2 pl-3 flex items-center justify-center">
         <div className="w-full aspect-[16/10] rounded-xl border-2 border-blue-400 bg-white flex items-center justify-center">
           <img
             src={coverImage}

@@ -12,7 +12,7 @@ export default function Landing() {
       type: "PDF", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
       { main_title: "Impacto del Curso de Nivelación Matermáticas Básicas",
       auxiliar_title: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
-      type: "PDF", update_at: "2024-06-01T00:00:00Z", resourceType: "simulator" }
+      type: "PDF", update_at: "2024-10-01T00:00:00Z", resourceType: "simulator" }
     
   ];
 
