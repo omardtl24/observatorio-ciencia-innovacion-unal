@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 from app.api.auth_routes import auth_bp
 from app.api.visor_routes import visor_bp
 from app.models.base import db
-from app.config import Config
+from app.config import Config, TestingConfig
 from app.domain.exceptions import DomainError, DatabaseConnectionError
 import logging
 import traceback
@@ -15,10 +15,23 @@ import traceback
 
 jwt = JWTManager()
 
-def create_app():
+def create_app(config_name="production"):
+    """Create and configure the Flask app.
+    
+    Args:
+        config_name (str): The configuration to use ('production' or 'testing').
+    
+    Returns:
+        Flask: The configured Flask application instance.
+    """
     app = Flask(__name__)
-    app.config.from_object(Config)
-    app.secret_key = app.config.get("FLASK_SECRET_KEY")
+    
+    if config_name == "testing":
+        app.config.from_object(TestingConfig)
+    else:
+        app.config.from_object(Config)
+    
+    app.secret_key = app.config.get("FLASK_SECRET_KEY", "dev-secret-key")
 
     logging.basicConfig(level=logging.INFO)
     app.logger.setLevel(logging.INFO)

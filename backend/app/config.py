@@ -27,3 +27,10 @@ class Config:
     RESTRICTED_EMAIL_DOMAIN = os.getenv("RESTRICTED_EMAIL_DOMAIN")
     FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
     FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+
+class TestingConfig(Config):
+    """Configuration for testing."""
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    TESTING = True
+    JWT_SECRET_KEY = "test-secret-key"
