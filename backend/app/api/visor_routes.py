@@ -42,31 +42,38 @@ def get_visor():
     Returns:
         list: A list of visors with their basic information (id, main_title, auxiliary_title, type, updated_at).
     """
-    visors = VisorService.get_all_dict(include=["id", "main_title", "auxiliary_title","type", "updated_at"])
-    return jsonify(visors), 200
-
-@visor_bp.get("/all/full")
-def get_visor_full():
-    """Retreive all visors available with full information
-    Returns:
-        list: A list of visors with their full information.
-    """
-    visors = VisorService.get_all_dict()
+    full = request.args.get("full") == "true"
+    visors = VisorService.get_all_dict(include=["id",
+                                                "main_title",
+                                                "auxiliary_title",
+                                                "type", 
+                                                "updated_at"]) if not full else VisorService.get_all_dict()
     return jsonify(visors), 200
 
 @visor_bp.get("/<int:visor_id>")
+#@jwt_required()
 def get_visor_by_id(visor_id):
     """Retreive specific information of visor by id
     Returns:
         list: A list of visors with their basic information (id, main_title, auxiliary_title, description, visor_url).
     """
+
+    #TODO: validate user permissions to delete files
+
     visor = VisorService.get_by_id(visor_id)
-    include = ["id", "main_title", "auxiliary_title", "description", "visor_url"]
-    return jsonify(visor.to_dict(include=include)), 200
+
+    return jsonify(visor.to_dict(include=["id",
+                                          "main_title",
+                                          "auxiliary_title",
+                                          "description",
+                                          "visor_url"])), 200
 
 @visor_bp.delete("/<int:visor_id>")
 #@jwt_required()
 def delete_visor(visor_id):
+    
+    #TODO: validate user permissions to delete files
+
     cascade = request.args.get("cascade", "false").lower() == "true"
     
     if cascade:
@@ -74,6 +81,7 @@ def delete_visor(visor_id):
         RoleVisorRelation.remove_all_a_for_b(visor_id)
         
     VisorService.delete(visor_id)
+
     return "" , 204
 
 
