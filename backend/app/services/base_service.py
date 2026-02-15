@@ -53,7 +53,7 @@ class BaseService:
         Raises:
             NotFoundError: If no instance with the given ID exists.
         """
-        instance = cls.model.query.get(resource_id)
+        instance = db.session.get(cls.model, resource_id)
         if not instance:
             raise NotFoundError(f"{cls.model.__name__} with id={resource_id} not found")
         return instance
@@ -97,7 +97,7 @@ class BaseService:
             IllegalOperationError: If the deletion fails.
         """
         instance = cls.get_by_id(resource_id)
-        instance = cls.model.query.get(resource_id)
+        instance = db.session.get(cls.model, resource_id)
         if not instance:
             raise NotFoundError(f"{cls.model.__name__} with id={resource_id} not found")
         try:

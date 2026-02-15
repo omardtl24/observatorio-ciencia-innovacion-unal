@@ -20,7 +20,7 @@ class BaseRelation:
     @classmethod
     def get_a_by_id(cls, resource_id):
         """Get an instance of model_a by its ID."""
-        instance = cls.model_a.query.get(resource_id)
+        instance = db.session.get(cls.model_a, resource_id)
         if not instance:
             raise NotFoundError(f"{cls.model_a.__name__} with id={resource_id} not found")
         return instance
@@ -28,7 +28,7 @@ class BaseRelation:
     @classmethod
     def get_b_by_id(cls, resource_id):
         """Get an instance of model_b by its ID."""
-        instance = cls.model_b.query.get(resource_id)
+        instance = db.session.get(cls.model_b, resource_id)
         if not instance:
             raise NotFoundError(f"{cls.model_b.__name__} with id={resource_id} not found")
         return instance
