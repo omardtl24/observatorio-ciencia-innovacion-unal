@@ -1,4 +1,3 @@
-"""Unit tests for SimulatorService."""
 
 import pytest
 from datetime import datetime

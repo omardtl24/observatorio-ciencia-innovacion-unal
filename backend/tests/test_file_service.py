@@ -1,4 +1,3 @@
-"""Unit tests for FileService."""
 
 import pytest
 from datetime import datetime

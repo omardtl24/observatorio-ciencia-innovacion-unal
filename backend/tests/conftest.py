@@ -1,4 +1,3 @@
-"""Fixtures and test configuration."""
 
 import pytest
 import os

@@ -1,4 +1,3 @@
-"""Unit tests for RoleService."""
 
 import pytest
 from datetime import datetime
