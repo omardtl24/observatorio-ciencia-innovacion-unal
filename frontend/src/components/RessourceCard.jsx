@@ -5,7 +5,8 @@ import calendarIcon from "../assets/icons/resources/calendar-blue.svg";
 import imageIcon from "../assets/icons/resources/image-blue.svg";
 
 export default function ResourceCard({
-  title,
+  main_title,
+  auxiliar_title,
   type,
   updatedAt,
   coverImage,
@@ -14,7 +15,7 @@ export default function ResourceCard({
   const symbol =
     {
       report: reportIcon,
-      visor: reportIcon,
+      visor: visorIcon,
       simulator: simulatorIcon,
       doc_presentation: reportIcon,
       image: imageIcon,
@@ -24,31 +25,37 @@ export default function ResourceCard({
     <div className="flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-2xl border border-blue-300 bg-primary-cyan-soft overflow-hidden">
 
       {/* LEFT IMAGE */}
-      <div className="md:w-[300px] w-full  py-4 px-4 pr-3 pl-3 flex items-center justify-center">
+      <div className="md:w-[400px] w-full h-full py-1 px-1 pr-3 pl-3 flex items-center justify-center">
         <div className="w-full aspect-[16/10] rounded-xl border-2 border-blue-400 bg-white flex items-center justify-center">
           <img
             src={coverImage}
-            alt={title}
             className=" w-full h-full object-cover rounded-xl"
           />
         </div>
       </div>
 
       {/* RIGHT CONTENT */}
-      <div className="flex flex-col justify-center gap-2.5 py-6 pr-6 pl-0 md:ml-0">
+      <div className="flex flex-col justify-center gap-2.5 py-6 pr-5 pl-0 md:ml-0">
 
         {/* TITLE */}
         <div className="flex items-start gap-1">
           <img src={symbol} alt="" className="w-10 h-10" />
-          <h2 className="
-            text-primary-blue
-            font-bold
-            text-xl
-            md:text-2xl
-            leading-snug
-          ">
-            {title}
-          </h2>
+          <div className="flex flex-col">
+            <span className="
+              text-slg
+              text-primary-cyan-strong
+              font-medium
+            ">
+              {main_title}
+            </span>
+            <span className="
+              text-sm
+              text-primary-blue-strong
+              font-semibold
+            ">
+              {auxiliar_title}
+            </span>
+          </div>
         </div>
 
         {/* TYPE */}
@@ -64,7 +71,7 @@ export default function ResourceCard({
             </span>
             <span className="
               text-sm
-              text-primary-blue
+              text-primary-blue-strong
               font-semibold
             ">
               {type}
@@ -85,7 +92,7 @@ export default function ResourceCard({
             </span>
             <span className="
               text-sm
-              text-primary-blue
+              text-primary-blue-strong
               font-semibold
             ">
               {updatedAt}

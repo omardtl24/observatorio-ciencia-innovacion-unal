@@ -7,14 +7,13 @@ export default function Landing() {
   ];
 
   const datta_mapper = [
-    { name: "Visor 1", type: "Dashboard", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 2", type: "Dashboard Power BI", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 3", type: "Dashboard Power BI", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 4", type: "Dashboard Power BI", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 1", type: "Dashboard", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 2", type: "Dashboard Power BI", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 3", type: "Dashboard Power BI", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-    { name: "Visor 4", type: "Dashboard Power BI", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" }
+    { main_title: "Impacto del Curso de Nivelación Matermáticas Básicas",
+      auxiliar_title: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
+      type: "PDF", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
+      { main_title: "Impacto del Curso de Nivelación Matermáticas Básicas",
+      auxiliar_title: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
+      type: "PDF", update_at: "2024-06-01T00:00:00Z", resourceType: "simulator" }
+    
   ];
 
   return (
@@ -24,6 +23,8 @@ export default function Landing() {
           <ResourceCard
             key={index}
             title={item.name}
+            main_title={item.main_title}
+            auxiliar_title={item.auxiliar_title}
             type={item.type}
             updatedAt={new Date(item.update_at)
                     .toLocaleDateString("es-ES", {
