@@ -4,6 +4,7 @@ import simulatorIcon from "../assets/icons/resources/simulator-blue.svg";
 import visorIcon from "../assets/icons/resources/visor-blue.svg";
 import calendarIcon from "../assets/icons/resources/calendar-blue.svg";
 import imageIcon from "../assets/icons/resources/image-blue.svg";
+import { stripColorMarkers } from "../services/stringServices.jsx";
 
 export default function ResourceCard({
   id,
@@ -56,14 +57,14 @@ export default function ResourceCard({
               text-primary-cyan-strong
               font-medium
             ">
-              {main_title}
+              {stripColorMarkers(main_title)}
             </span>
             <span className="
               text-sm
               text-primary-blue-strong
               font-semibold
             ">
-              {auxiliar_title}
+              {stripColorMarkers(auxiliar_title)}
             </span>
           </div>
         </div>

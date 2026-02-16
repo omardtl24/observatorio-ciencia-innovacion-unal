@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ResourceDisplay from "../components/ResourceDisplay";
 import { fetchResource, parseResourcesText } from "../services/resourcesServices";
-import { parseRichText } from "../services/stringServices.jsx";
+import { parseRichText, parseColor } from "../services/stringServices.jsx";
 export default function Resource() {
   const { type, id } = useParams();
   const [resource, setResource] = useState(null);
@@ -61,13 +61,8 @@ export default function Resource() {
     <div className="min-h-screen px-6 py-12">
       <div className="max-w-4xl mx-auto">
         {/* Main Title */}
-        <h1 className="text-4xl font-bold text-primary-cyan-strong mb-2">
-          {resource.main_title}
-        </h1>
-
-        {/* Auxiliary Title */}
-        <h2 className="text-2xl font-semibold text-primary-blue-strong mb-6">
-          {resource.auxiliary_title}
+        <h2 className="text-3xl font-ancizarItalic font-bold italic text-primary-blue-strong mb-4">
+          {parseColor(`${resource.main_title} ${resource.auxiliary_title}`, "text-primary-cyan-base")}
         </h2>
 
         {/* Description */}
