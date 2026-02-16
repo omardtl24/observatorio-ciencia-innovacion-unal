@@ -10,6 +10,7 @@ from app.api.report_routes import report_bp
 from app.models.base import db
 from app.config import Config, TestingConfig
 from app.domain.exceptions import DomainError, DatabaseConnectionError
+from app.services.bootstrap_service import BootstrapService
 import logging
 import traceback
 import os
@@ -75,6 +76,9 @@ def create_app(config_name="production"):
     app.register_blueprint(visor_bp)
     app.register_blueprint(file_bp)
     app.register_blueprint(report_bp)
+
+    with app.app_context():
+        BootstrapService.initialize_minimals()
 
     os.makedirs(app.config["FILE_STORAGE_ROOT"], exist_ok=True)
 

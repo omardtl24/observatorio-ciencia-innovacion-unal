@@ -33,6 +33,7 @@ class Config:
     RESTRICTED_EMAIL_DOMAIN = os.getenv("RESTRICTED_EMAIL_DOMAIN")
     FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
     FRONTEND_URL = os.getenv("FRONTEND_URL")
+    DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL")
 
 
 class TestingConfig(Config):

@@ -10,3 +10,18 @@ class RoleService(BaseService):
     circular service dependencies.
     """
     model = Role
+
+    @staticmethod
+    def get_by_name(name):
+        """Retrieve a role by its name.
+        
+        Args:
+            name (str): The name of the role to retrieve.
+        
+        Returns:
+            Role: The Role instance with the specified name, or None if not found.
+        """
+        instance = Role.query.filter_by(name=name).first()
+        if not instance:
+            raise NotFoundError(f"Role with name={name} not found")
+        return instance

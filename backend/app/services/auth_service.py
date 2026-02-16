@@ -3,6 +3,8 @@ from authlib.integrations.flask_client import OAuth
 from app.models import db
 from flask_jwt_extended import create_access_token
 from app.services.user_service import UserService
+from app.services.role_service import RoleService
+from app.services.relations.user_role_relation import UserRoleRelation
 from app.domain.exceptions import ForbiddenError, IllegalOperationError, NotFoundError
 
 class AuthService:
@@ -32,11 +34,6 @@ class AuthService:
         if not email:
             raise NotFoundError("El proveedor de identidad no proporcionó un correo electrónico")
 
-        required_domain = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
-        if not email.endswith(f"@{required_domain}"):
-            raise ForbiddenError(f"Solo se permiten cuentas con dominio @{required_domain}")
-
-
         try:
             user = UserService.create(
                 email=email,
@@ -46,9 +43,24 @@ class AuthService:
         except IllegalOperationError:
             user = UserService.get_by_id(email)
 
-        user = UserService.update(email, last_login_at=db.func.now())
+        user = UserService.update(user.email,
+                                  names=user_info.get("given_name", ""),
+                                  last_names=user_info.get("family_name", ""),
+                                  last_login_at=db.func.now())
+
         access_token = create_access_token(identity=email)
 
+        #If user email belongs to the community domain, ensure they have the "community" role
+        email_community = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
+        if email_community and email.endswith(f"@{email_community}"):
+            try:
+                community_rol = RoleService.get_by_name("community")
+                if community_rol not in user.roles:
+                    UserRoleRelation.add_role_to_user(user_email=email,
+                                                      role_id=community_rol.id)
+            except NotFoundError:
+                pass
+            
         # Success query params
         query_params = {
             "access_token": access_token,

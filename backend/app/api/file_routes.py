@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, current_app, send_file, request
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.file_service import FileService
-from app.domain.exceptions import IllegalOperationError
+from app.domain.exceptions import IllegalOperationError, SchemaValidationError
 
 file_bp = Blueprint("file", __name__, url_prefix="/file")
 
