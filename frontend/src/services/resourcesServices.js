@@ -31,3 +31,19 @@ export function parseResourcesForCards(type, data) {
         }
     })
 }
+
+export function parseResourcesText(type, data) {
+    let resource = null;
+    if (type==='report') resource = data.document_file_id
+    console.log(data)
+    console.log(type, resource)
+    return {
+        id: data.id,
+        main_title: data.main_title,
+        auxiliary_title: data.auxiliary_title,
+        description: data.description,
+        resource_type: data.type,
+        type: type,
+        resource_displayable: resource
+    }
+}

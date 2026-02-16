@@ -1,4 +1,4 @@
-import ResourceCard from "../components/RessourceCard";
+import ResourceCard from "../components/ResourceCard";
 
 export default function Landing() {
   const images = [

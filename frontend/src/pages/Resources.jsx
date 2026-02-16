@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ResourceCard from "../components/ResourceCard";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
+import { datetoString } from "../services/stringServices.jsx";
 
 export default function Resources() {
   const { type } = useParams();
@@ -64,14 +65,8 @@ export default function Resources() {
             title={item.main_title}
             main_title={item.main_title}
             auxiliar_title={item.auxiliar_title}
-            type={item.type}
-            updatedAt={new Date(item.update_at)
-                    .toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "long",
-                    })
-                    .replace(/^\w/, (c) => c.toUpperCase())
-                }
+            type={item.type || 'PDF'}
+            updatedAt={datetoString(item.update_at)}
             coverImage={images[index % images.length]}
             resourceType={type}
           />
