@@ -4,8 +4,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.report_service import ReportService
 from app.services.relations.report_data_source_relation import ReportDataSourceRelation
 from app.services.relations.role_report_relation import RoleReportRelation
-from app.domain.exceptions import DomainError
-from app.schemas.report_schema import ReportCreateRequest
+from app.domain.exceptions import DomainError, SchemaValidationError
+from app.schemas.report_schema import ReportCreateRequest, ReportUpdateRequest
 from app.middleware import schema_validator
 
 report_bp = Blueprint("report", __name__, url_prefix="/report")
@@ -80,6 +80,48 @@ def get_report_by_id(report_id):
                                            "auxiliary_title",
                                            "description",
                                            "document_file_id"])), 200
+
+@report_bp.patch("/<int:report_id>")
+#@jwt_required()
+@schema_validator(ReportUpdateRequest)
+def update_report(report_id):
+    """Update an existing report with a partial payload.
+    
+    Only the fields provided in the payload will be updated.
+    
+    Path Parameters:
+        report_id (int): The ID of the report to update.
+    
+    Payload:
+        main_title (str, optional): The main title of the report.
+        auxiliary_title (str, optional): The auxiliary title of the report.
+        description (str, optional): The description of the report.
+        document_file_id (int, optional): The ID of the associated document file.
+        updated_at (datetime, optional): The last update timestamp.
+    
+    Returns:
+        dict: The updated report with status code 200.
+    
+    Raises:
+        400: If validation fails or payload is empty.
+        401: If not authenticated (when JWT is enabled).
+        404: If report_id does not exist.
+    """
+
+    #TODO: validate user permissions to update reports
+
+    update_data = request.validated_data.dict(exclude_unset=True)
+    if not update_data:
+        raise SchemaValidationError("At least one field must be provided")
+
+    report = ReportService.update(report_id, **update_data)
+
+    return jsonify(report.to_dict(include=["id",
+                                           "main_title",
+                                           "auxiliary_title",
+                                           "description",
+                                           "document_file_id",
+                                           "updated_at"])), 200
 
 @report_bp.delete("/<int:report_id>")
 #@jwt_required()
