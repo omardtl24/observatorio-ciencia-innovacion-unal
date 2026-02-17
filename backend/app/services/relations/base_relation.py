@@ -132,6 +132,26 @@ class BaseRelation:
         return getattr(instance_b, cls.relationship_b)
     
     @classmethod
+    def exists(cls, a_id, b_id):
+        """Check if a relationship exists between a model_a instance and a model_b instance.
+        
+        Args:
+            a_id: The ID of the model_a instance.
+            b_id: The ID of the model_b instance.
+        
+        Returns:
+            bool: True if the relationship exists, False otherwise.
+        
+        Raises:
+            NotFoundError: If either instance does not exist.
+        """
+        instance_a = cls.get_a_by_id(a_id)
+        instance_b = cls.get_b_by_id(b_id)
+        
+        relationship_collection = getattr(instance_a, cls.relationship_a)
+        return instance_b in relationship_collection
+    
+    @classmethod
     def remove_all_b_for_a(cls, a_id):
         """Remove all instances of model_b associated with an instance of model_a.
         

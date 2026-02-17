@@ -5,7 +5,8 @@ from flask import Blueprint, jsonify, current_app, send_file, request
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.file_service import FileService
-from app.domain.exceptions import IllegalOperationError, SchemaValidationError
+from app.domain.exceptions import IllegalOperationError, SchemaValidationError, UnauthorizedError
+from app.api.utils.check_roles import AccessChecker
 
 file_bp = Blueprint("file", __name__, url_prefix="/file")
 
@@ -29,7 +30,7 @@ def validate_sha256(path, expected_checksum):
 
 
 @file_bp.post("/upload")
-#@jwt_required()
+@jwt_required()
 def upload():
     """Upload a new file to the system.
     
@@ -48,7 +49,9 @@ def upload():
         401: If not authenticated (when JWT is enabled).
     """
 
-    #TODO: validate user permissions to upload files
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para cargar archivos")
 
     if "file" not in request.files:
         raise SchemaValidationError("file is required")
@@ -56,7 +59,7 @@ def upload():
     uploaded = request.files["file"]
 
     if uploaded.filename == "":
-        raise SchemaValidationError("filename is required")
+        raise SchemaValidationError("El nombre del archivo es requerido")
 
     original_filename = secure_filename(uploaded.filename)
     file_type = os.path.splitext(original_filename)[1].lower().lstrip(".")
@@ -87,7 +90,7 @@ def upload():
 
 
 @file_bp.put("/update/<file_id>")
-#@jwt_required()
+@jwt_required()
 def update(file_id):
     """Update an existing file by replacing it with a new one.
     
@@ -109,15 +112,17 @@ def update(file_id):
         404: If file_id does not exist.
     """
 
-    #TODO: validate user permissions to upload files
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar archivos")
 
     if "file" not in request.files:
-        raise SchemaValidationError("file is required")
+        raise SchemaValidationError("El archivo es requerido")
 
     uploaded = request.files["file"]
 
     if uploaded.filename == "":
-        raise SchemaValidationError("filename is required")
+        raise SchemaValidationError("El nombre del archivo es requerido")
 
     file = FileService.get_by_id(file_id)
 
@@ -158,7 +163,7 @@ def update(file_id):
     
 
 @file_bp.get("/download/<file_id>")
-#@jwt_required()
+@jwt_required()
 def download(file_id):
     """Download a file or display it in the browser.
     
@@ -186,22 +191,26 @@ def download(file_id):
     resource_id = request.args.get("id")
     display = request.args.get("display", "false").lower() == "true"
     if not resource_origin or not resource_id or not display:
-        raise IllegalOperationError("Missing query parameters: resource, id and display are required")
+        raise IllegalOperationError("Faltan parámetros de consulta: resource, id y display son requeridos")
     
-    #TODO: validate that the user has access to the resource and that resource is linked to the file
+    user_email = get_jwt_identity()
+    if not AccessChecker.check_access(user_email, resource_id, resource_origin):
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este recurso")
+    
+    #TODO: validate that resource is linked to the file
     
     file = FileService.get_by_id(file_id)
     file_path = file.storage_path
 
     if not validate_sha256(file.storage_path, file.checksum_sha256):
         raise IllegalOperationError(
-            "File integrity check failed (checksum mismatch)"
+            "Error en la verificación de integridad del archivo (suma de comprobación no coincide)"
         )
 
     return send_file(file_path, as_attachment=not display)
 
 @file_bp.get("/metadata/<file_id>")
-#@jwt_required()
+@jwt_required()
 def metadata(file_id):
     """Get metadata for a specific file.
     
@@ -218,14 +227,16 @@ def metadata(file_id):
         404: If file_id does not exist.
     """
     
-    #TODO: validate user permissions to get files
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para ver los metadatos del archivo")
 
     file = FileService.get_by_id(file_id)
 
     return jsonify(file.to_dict(include=["id", "filename", "file_type", "size_bytes"])), 200
 
 @file_bp.get("/all")
-#@jwt_required()
+@jwt_required()
 def all_files():
     """Retrieve all files in the system.
     
@@ -238,7 +249,9 @@ def all_files():
         401: If not authenticated (when JWT is enabled).
     """
 
-    #TODO: validate user permissions to get files
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para ver todos los archivos")
 
     files = FileService.get_all_dict(include=["id",
                                               "filename", 
@@ -248,7 +261,7 @@ def all_files():
     return jsonify(files), 200
 
 @file_bp.delete("/<file_id>")
-#@jwt_required()
+@jwt_required()
 def delete(file_id):
     """Delete a file from the system.
     
@@ -265,7 +278,8 @@ def delete(file_id):
         404: If file_id does not exist.
     """
 
-    #TODO: validate user permissions to delete files
+    if not AccessChecker.is_admin(get_jwt_identity()):
+        raise UnauthorizedError("El usuario no tiene permiso para eliminar archivos")
 
     file = FileService.get_by_id(file_id)
     storage_path = file.storage_path

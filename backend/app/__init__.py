@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from sqlalchemy.exc import OperationalError
-from app.api.auth_routes import auth_bp
+from app.api.auth_routes import auth_bp, test_auth_bp
 from app.api.visor_routes import visor_bp
 from app.api.file_routes import file_bp
 from app.api.report_routes import report_bp
@@ -72,7 +72,12 @@ def create_app(config_name="production"):
         return jsonify({"status": "ok", "message": "Backend is running"}), 200
 
     #Include all blueprints (API routes)
-    app.register_blueprint(auth_bp)
+    #Include auth or mock auth
+    if app.config.get("TEST"):
+        app.register_blueprint(test_auth_bp)
+    else:
+        app.register_blueprint(auth_bp)
+    app.logger.info(f'TEST MODE: {app.config.get("TEST")}')
     app.register_blueprint(visor_bp)
     app.register_blueprint(file_bp)
     app.register_blueprint(report_bp)

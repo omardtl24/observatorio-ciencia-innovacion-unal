@@ -48,8 +48,6 @@ class AuthService:
                                   last_names=user_info.get("family_name", ""),
                                   last_login_at=db.func.now())
 
-        access_token = create_access_token(identity=email)
-
         #If user email belongs to the community domain, ensure they have the "community" role
         email_community = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
         if email_community and email.endswith(f"@{email_community}"):
@@ -60,15 +58,38 @@ class AuthService:
                                                       role_id=community_rol.id)
             except NotFoundError:
                 pass
+        
+        access_token = create_access_token(
+            identity=email,
+            additional_claims={
+                "names": user.names,
+                "last_names": user.last_names,
+                "picture": user_info.get("picture")
+            }
+        )
             
-        # Success query params
+        # Success query params - only access token
         query_params = {
-            "access_token": access_token,
-            "email": email,
-            "names": user.names,
-            "last_names": user.last_names,
-            "picture": user_info.get("picture")
+            "access_token": access_token
         }
         
         current_app.logger.info(f"Auth callback successful for user: {email}")
         return query_params
+
+    def test_auth_callback(self):
+        """
+        Generate a test token with the DEFAULT_ADMIN_EMAIL.
+        Used for testing purposes only.
+        """
+        admin_email = current_app.config.get("DEFAULT_ADMIN_EMAIL")
+        access_token = create_access_token(
+            identity=admin_email,
+            additional_claims={
+                "names": "Admin",
+                "last_names": "User",
+                "picture": ""
+            }
+        )
+        return {
+            "access_token": access_token
+        }

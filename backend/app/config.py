@@ -34,6 +34,7 @@ class Config:
     FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
     FRONTEND_URL = os.getenv("FRONTEND_URL")
     DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL")
+    TEST = os.getenv("TEST", "false").lower() == "true"
 
 
 class TestingConfig(Config):

@@ -6,7 +6,7 @@ from app.services.user_service import UserService
 from app.domain.exceptions import DomainError, UnauthorizedError
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
-
+test_auth_bp = Blueprint("test_auth", __name__, url_prefix="/auth")
 
 @auth_bp.get("/login")
 def login():
@@ -40,15 +40,7 @@ def callback():
         return redirect(redirect_url)
 
 
-@auth_bp.get("/me")
-@jwt_required()
-def me():
-    email = get_jwt_identity()
-    if not email:
-        raise UnauthorizedError("Invalid token: missing email")
-    user = UserService.get_by_id(email)
-    return jsonify({
-        "email": user.email,
-        "names": user.names,
-        "last_names": user.last_names,
-    }), 200
+@test_auth_bp.get("/testLogin")
+def test_mock_callback():
+    token = AuthService(current_app).test_auth_callback()
+    return token , 200
