@@ -6,22 +6,14 @@ export function saveTokensFromUrlParams(params) {
   const token = params.get("access_token");
   if (!token) return false;
 
-  for (const [key, value] of params.entries()) {
-    setCookie(key, value);
-  }
-
+  setCookie(TOKEN_KEY, token);
   return true;
 }
 
 export function saveTokensFromPayload(payload) {
   if (!payload || !payload.access_token) return false;
 
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      setCookie(key, String(value));
-    }
-  });
-
+  setCookie(TOKEN_KEY, payload.access_token);
   return true;
 }
 
@@ -50,19 +42,11 @@ export function isAuthenticated() {
 
 export function expired() {
   deleteCookie(TOKEN_KEY);
-  deleteCookie("email");
-  deleteCookie("names");
-  deleteCookie("last_names");
-  deleteCookie("picture");
   window.location.href = "/login?error=session_expired";
 }
 
 export function logout() {
   deleteCookie(TOKEN_KEY);
-  deleteCookie("email");
-  deleteCookie("names");
-  deleteCookie("last_names");
-  deleteCookie("picture");
   window.location.href = "/login";
 }
 
