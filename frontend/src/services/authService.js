@@ -50,8 +50,25 @@ export function logout() {
   window.location.href = "/login";
 }
 
-export function startLogin() {
-  window.location.href = `${import.meta.env.VITE_API_URL}/auth/login`;
+export async function startLogin() {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
+  try {
+    const response = await fetch(`${apiUrl}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('API is not responding correctly');
+    }
+    window.location.href = `${apiUrl}/auth/login`;
+  } catch (error) {
+    const origin = encodeURIComponent(window.location.pathname);
+    window.location.href = `/connection-error?origin=${origin}`;
+  }
 }
 
 

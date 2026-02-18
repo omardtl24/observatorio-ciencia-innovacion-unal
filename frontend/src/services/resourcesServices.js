@@ -1,14 +1,40 @@
 import { getToken } from "./authService";
 
+function redirectToConnectionError() {
+    if (typeof window === "undefined") return;
+    if (window.location.pathname === "/connection-error") return;
+    const origin = encodeURIComponent(window.location.pathname);
+    window.location.assign(`${window.location.origin}/connection-error?origin=${origin}`);
+}
+
+async function getErrorMessage(response, fallbackMessage) {
+    try {
+        const data = await response.json();
+        if (data && typeof data.message === "string" && data.message.trim() !== "") {
+            return data.message;
+        }
+    } catch (err) {
+        return fallbackMessage;
+    }
+    return fallbackMessage;
+}
+
 export async function fetchFromUrl(url) {
     const token = getToken();
-    const response = await fetch(url, {
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    });
+    let response;
+    try {
+        response = await fetch(url, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        redirectToConnectionError();
+        throw err;
+    }
     if (!response.ok) {
-        throw new Error(`Failed to fetch from ${url}`);
+        const message = await getErrorMessage(response, `Failed to fetch from ${url}`);
+        throw new Error(message);
     }
     return response.json();
 }
@@ -24,13 +50,20 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
         urlObj.searchParams.set(key, value);
     });
     
-    const response = await fetch(urlObj.toString(), {
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    });
+    let response;
+    try {
+        response = await fetch(urlObj.toString(), {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        redirectToConnectionError();
+        throw err;
+    }
     if (!response.ok) {
-        throw new Error(`Failed to fetch file from ${url}`);
+        const message = await getErrorMessage(response, `Failed to fetch file from ${url}`);
+        throw new Error(message);
     }
     const blob = await response.blob();
     return URL.createObjectURL(blob);
@@ -39,13 +72,20 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
 export async function fetchResources(type) {
     const fetch_url = `${import.meta.env.VITE_API_URL}/${type}/all`;
     const token = getToken();
-    const response = await fetch(fetch_url, {
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    });
+    let response;
+    try {
+        response = await fetch(fetch_url, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        redirectToConnectionError();
+        throw err;
+    }
     if (!response.ok) {
-        throw new Error(`Failed to fetch ${type} resources`);
+        const message = await getErrorMessage(response, `Failed to fetch ${type} resources`);
+        throw new Error(message);
     }
     return response.json();
 }
@@ -54,13 +94,23 @@ export async function fetchResources(type) {
 export async function fetchResource(type, id) {
     const fetch_url = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
     const token = getToken();
-    const response = await fetch(fetch_url, {
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    });
+    let response;
+    try {
+        response = await fetch(fetch_url, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        redirectToConnectionError();
+        throw err;
+    }
     if (!response.ok) {
-        throw new Error(`Failed to fetch ${type} resource`);
+        const message = await getErrorMessage(
+            response,
+            `Failed to fetch ${type} resource with ID ${id}`
+        );
+        throw new Error(message);
     }
     return response.json();
 }

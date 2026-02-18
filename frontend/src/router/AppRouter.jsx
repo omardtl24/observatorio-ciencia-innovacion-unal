@@ -5,6 +5,7 @@ import Dashboard from "../pages/Dashboard";
 import Landing from "../pages/Landing";
 import Resources from "../pages/Resources";
 import Resource from "../pages/Resource";
+import ConnectionError from "../pages/ConnectionError";
 
 import Bg1 from "../assets/backgrounds/bg-pattern-1.svg?react";
 import Bg2 from "../assets/backgrounds/bg-pattern-2.svg?react";
@@ -34,6 +35,11 @@ const routeConfig = [
   { path: "/", 
     component: Landing, 
     backgroundSVGImage: Bg2, 
+    svgFillClass: "text-primary-cyan-base",
+    backgroundClass: "bg-gray-100"},
+  { path: "/connection-error",
+    component: ConnectionError,
+    backgroundSVGImage: Bg4,
     svgFillClass: "text-primary-cyan-base",
     backgroundClass: "bg-gray-100"},
 ];

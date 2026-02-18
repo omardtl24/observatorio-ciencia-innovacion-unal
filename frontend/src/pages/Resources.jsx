@@ -1,14 +1,28 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ResourceCard from "../components/ResourceCard";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
 import { datetoString } from "../services/stringServices.jsx";
 
 export default function Resources() {
   const { type } = useParams();
+  const navigate = useNavigate();
   const [data_mapper, setDataMapper] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const typeLabels = {
+    report: "reportes",
+    reports: "reportes",
+    simulator: "simuladores",
+    simulators: "simuladores",
+    visor: "visores",
+    visors: "visores",
+    document: "documentos",
+    documents: "documentos",
+  };
+  const typeSpanish = typeLabels[type] || "recursos";
+  const defaultErrorMessage = `No fue posible consultar los ${typeSpanish}`;
 
   const images = [
     "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
@@ -30,7 +44,9 @@ export default function Resources() {
         const parsedData = parseResourcesForCards(type, jsonData);
         setDataMapper(parsedData);
       } catch (err) {
-        setError(err.message + ' Please try again later.');
+        const message = err?.message ? `${err.message} ${defaultErrorMessage}` : defaultErrorMessage;
+        setError(message);
+        navigate(`/connection-error?origin=${encodeURIComponent(window.location.pathname)}`);
       } finally {
         setLoading(false);
       }
@@ -48,11 +64,7 @@ export default function Resources() {
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-        <p className="text-lg text-red-600">Error: {error}</p>
-      </div>
-    );
+    return null;
   }
 
   return (
