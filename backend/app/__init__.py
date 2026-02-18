@@ -10,6 +10,7 @@ from app.api.report_routes import report_bp
 from app.models.base import db
 from app.config import Config, TestingConfig
 from app.domain.exceptions import DomainError, DatabaseConnectionError
+from werkzeug.exceptions import HTTPException
 from app.services.bootstrap_service import BootstrapService
 import logging
 import traceback
@@ -49,6 +50,7 @@ def create_app(config_name="production"):
 
     @app.errorhandler(DomainError)
     def handle_domain_error(error):
+        app.logger.error(f"Domain error: {error.message}")
         response = jsonify(error.to_dict())
         response.status_code = error.code
         return response
@@ -63,9 +65,73 @@ def create_app(config_name="production"):
         response.status_code = db_error.code
         return response
 
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        description = getattr(error, "description", str(error))
+        app.logger.error(f"HTTP exception: {type(error).__name__} - {description}")
+
+        if isinstance(error, DomainError):
+            response = jsonify(error.to_dict())
+            response.status_code = error.code
+            app.logger.error(f"Domain error: {error.message}")
+            return response
+
+        response = jsonify({
+            "code": "http_exception",
+            "message": error.description,
+            "details": None,
+        })
+        response.status_code = error.code or 500
+        return response
+
     db.init_app(app)
     jwt.init_app(app)
     CORS(app)
+
+    @jwt.unauthorized_loader
+    def handle_jwt_missing_token(reason):
+        app.logger.error(f"JWT unauthorized: {reason}")
+        return jsonify({
+            "code": "unauthorized",
+            "message": reason,
+            "details": None,
+        }), 401
+
+    @jwt.invalid_token_loader
+    def handle_jwt_invalid_token(reason):
+        app.logger.error(f"JWT invalid: {reason}")
+        return jsonify({
+            "code": "invalid_token",
+            "message": reason,
+            "details": None,
+        }), 401
+
+    @jwt.expired_token_loader
+    def handle_jwt_expired_token(jwt_header, jwt_payload):
+        app.logger.error("JWT expired")
+        return jsonify({
+            "code": "token_expired",
+            "message": "Token has expired",
+            "details": None,
+        }), 401
+
+    @jwt.needs_fresh_token_loader
+    def handle_jwt_needs_fresh_token(jwt_header, jwt_payload):
+        app.logger.error("JWT needs fresh token")
+        return jsonify({
+            "code": "fresh_token_required",
+            "message": "Fresh token required",
+            "details": None,
+        }), 401
+
+    @jwt.revoked_token_loader
+    def handle_jwt_revoked_token(jwt_header, jwt_payload):
+        app.logger.error("JWT revoked")
+        return jsonify({
+            "code": "token_revoked",
+            "message": "Token has been revoked",
+            "details": None,
+        }), 401
 
     @app.route("/", methods=["GET"])
     def index():

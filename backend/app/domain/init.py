@@ -1,1 +1,9 @@
-from app.domain.exceptions import DomainError, IllegalOperation, NotFound, Forbidden
+from app.domain.exceptions import (
+    IllegalOperation,
+    NotFound,
+    ForbiddenError,
+    UnauthorizedError,
+    SchemaValidationError,
+    DatabaseConnectionError,
+    DomainError
+)
