@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ResourceDisplay from "../components/ResourceDisplay";
+import ErrorPopup from "../components/ErrorPopup";
 import { fetchResource, parseResourcesText } from "../services/resourcesServices";
 import { parseRichText, parseColor } from "../services/stringServices.jsx";
 export default function Resource() {
@@ -24,7 +25,7 @@ export default function Resource() {
         const parsedData = parseResourcesText(type, data);
         setResource(parsedData);
       } catch (err) {
-        setError(err.message + " Please try again later.");
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -43,9 +44,16 @@ export default function Resource() {
 
   if (error) {
     return (
-      <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-        <p className="text-lg text-red-600">Error: {error}</p>
-      </div>
+      <>
+        <div className="min-h-screen px-6 py-12 flex items-center justify-center">
+          <p className="text-lg text-red-600">Error: {error}</p>
+        </div>
+        <ErrorPopup 
+          error={error} 
+          onClose={() => setError(null)}
+          redirectTo={`/resources/${type}`}
+        />
+      </>
     );
   }
 
