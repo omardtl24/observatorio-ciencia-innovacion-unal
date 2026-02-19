@@ -24,6 +24,7 @@ export async function fetchFromUrl(url) {
     let response;
     try {
         response = await fetch(url, {
+            credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -53,6 +54,7 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
     let response;
     try {
         response = await fetch(urlObj.toString(), {
+            credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -75,6 +77,7 @@ export async function fetchResources(type) {
     let response;
     try {
         response = await fetch(fetch_url, {
+            credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -97,6 +100,7 @@ export async function fetchResource(type, id) {
     let response;
     try {
         response = await fetch(fetch_url, {
+            credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }

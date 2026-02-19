@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app, session
 from authlib.integrations.flask_client import OAuth
 from app.models import db
 from flask_jwt_extended import create_access_token
@@ -6,6 +6,7 @@ from app.services.user_service import UserService
 from app.services.role_service import RoleService
 from app.services.relations.user_role_relation import UserRoleRelation
 from app.domain.exceptions import ForbiddenError, IllegalOperationError, NotFoundError
+from datetime import datetime, timedelta
 
 class AuthService:
     def __init__(self, app):
@@ -20,10 +21,10 @@ class AuthService:
 
     def process_callback_for_redirect(self):
         """
-        Process the Auth0 callback and always redirect to frontend with
-        either user info or error message as query params.
+        Process the Auth0 callback and return user info for session creation.
+        This method validates the Auth0 authorization code and returns user information
+        that will be stored in a secure, HttpOnly session cookie.
         """
-        query_params = {}
         token = self.auth0.authorize_access_token()
         user_info = token.get('userinfo') or self.auth0.parse_id_token(token)
 
@@ -58,23 +59,74 @@ class AuthService:
                                                       role_id=community_rol.id)
             except NotFoundError:
                 pass
+
+        current_app.logger.info(f"Auth callback successful for user: {email}")
+        return {
+            "email": email,
+            "names": user.names,
+            "last_names": user.last_names,
+            "picture": user_info.get("picture", "")
+        }
+
+    def create_session(self, user_info):
+        """
+        Create a secure server-side session for an authenticated user.
         
+        Args:
+            user_info: Dictionary with keys: email, names, last_names, picture
+        
+        Returns:
+            None (session is stored server-side)
+        """
+        session['user_email'] = user_info.get('email')
+        session['user_names'] = user_info.get('names', '')
+        session['user_last_names'] = user_info.get('last_names', '')
+        session['user_picture'] = user_info.get('picture', '')
+        session['authenticated_at'] = datetime.utcnow().isoformat()
+        # Session is automatically marked as modified
+        session.modified = True
+
+    def get_session_user(self):
+        """
+        Get the authenticated user from the session.
+        
+        Returns:
+            Dict with user info if session is valid, None otherwise
+        """
+        if 'user_email' not in session:
+            return None
+        
+        return {
+            'email': session.get('user_email'),
+            'names': session.get('user_names'),
+            'last_names': session.get('user_last_names'),
+            'picture': session.get('user_picture')
+        }
+
+    def issue_access_token(self, user_email):
+        """
+        Issue a short-lived access token for an authenticated session.
+        
+        Args:
+            user_email: Email of the authenticated user
+            
+        Returns:
+            Tuple of (access_token, expires_in_seconds)
+        """
+        user = UserService.get_by_id(user_email)
+        
+        # Create a short-lived token (15 minutes)
         access_token = create_access_token(
-            identity=email,
+            identity=user_email,
+            expires_delta=timedelta(minutes=15),
             additional_claims={
                 "names": user.names,
                 "last_names": user.last_names,
-                "picture": user_info.get("picture")
+                "picture": user.picture if hasattr(user, 'picture') else ""
             }
         )
-            
-        # Success query params - only access token
-        query_params = {
-            "access_token": access_token
-        }
         
-        current_app.logger.info(f"Auth callback successful for user: {email}")
-        return query_params
+        return access_token, 900  # 15 minutes in seconds
 
     def test_auth_callback(self):
         """

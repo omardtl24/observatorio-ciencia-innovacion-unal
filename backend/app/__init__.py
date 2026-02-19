@@ -86,7 +86,18 @@ def create_app(config_name="production"):
 
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app)
+    
+    # Configure CORS to support credentials (session cookies)
+    CORS(app, 
+         supports_credentials=True,
+         origins=["*"])  # In production, specify exact origins
+    
+    # Configure secure session handling
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+    app.config['SESSION_COOKIE_NAME'] = 'observatorio_session'
+    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour for session
 
     @jwt.unauthorized_loader
     def handle_jwt_missing_token(reason):

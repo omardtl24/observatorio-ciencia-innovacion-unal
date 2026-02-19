@@ -30,6 +30,7 @@ export default function Resources() {
   ];
 
   useEffect(() => {
+
     if (!type) {
       setError("Resource type not specified");
       setLoading(false);
@@ -53,7 +54,7 @@ export default function Resources() {
     };
 
     loadResources();
-  }, [type]);
+  }, [type, navigate]);
 
   if (loading) {
     return (

@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import ResourceDisplay from "../components/ResourceDisplay";
 import ErrorPopup from "../components/ErrorPopup";
 import { fetchResource, parseResourcesText } from "../services/resourcesServices";
 import { parseRichText, parseColor } from "../services/stringServices.jsx";
+import { isAuthenticated, redirectToLogin } from "../services/authService";
 export default function Resource() {
   const { type, id } = useParams();
+  const navigate = useNavigate();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Check if user is authenticated, if not redirect to login
+    if (!isAuthenticated()) {
+      redirectToLogin(navigate);
+      return;
+    }
+
     if (!type || !id) {
       setError("Resource type and ID are required");
       setLoading(false);
@@ -25,6 +33,11 @@ export default function Resource() {
         const parsedData = parseResourcesText(type, data);
         setResource(parsedData);
       } catch (err) {
+        // Check if it's an authentication error
+        if (err.message && err.message.includes("401")) {
+          redirectToLogin(navigate);
+          return;
+        }
         setError(err.message);
       } finally {
         setLoading(false);

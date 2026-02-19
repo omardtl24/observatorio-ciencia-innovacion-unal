@@ -55,7 +55,7 @@ export default function AppRouter() {
             key={path}
             path={path}
             element={
-              <Layout {...route}>
+              <Layout {...route} path={path}>
                 <Component />
               </Layout>
             }

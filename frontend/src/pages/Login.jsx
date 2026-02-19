@@ -44,7 +44,12 @@ export default function Login() {
   const handleLogin = () => {
     setLoading(true);
     setErrorMessage(null);
-    startLogin();
+    
+    // Get the origin from query params, default to "/"
+    const params = new URLSearchParams(location.search);
+    const origin = params.get("origin") || "/";
+    
+    startLogin(origin);
   };
 
   if (loading) return <Loading message="Redirigiendo a Google..." />;
