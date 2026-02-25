@@ -152,8 +152,8 @@ def create_app(config_name="production"):
     #Include auth or mock auth
     if app.config.get("TEST"):
         app.register_blueprint(test_auth_bp)
-    else:
-        app.register_blueprint(auth_bp)
+        
+    app.register_blueprint(auth_bp)
     app.logger.info(f'TEST MODE: {app.config.get("TEST")}')
     app.register_blueprint(visor_bp)
     app.register_blueprint(file_bp)

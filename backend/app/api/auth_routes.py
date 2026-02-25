@@ -7,7 +7,7 @@ from app.services.user_service import UserService
 from app.domain.exceptions import DomainError, UnauthorizedError
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
-test_auth_bp = Blueprint("test_auth", __name__, url_prefix="/auth")
+test_auth_bp = Blueprint("test_auth", __name__, url_prefix="/test_auth")
 
 @auth_bp.get("/login")
 def login():
