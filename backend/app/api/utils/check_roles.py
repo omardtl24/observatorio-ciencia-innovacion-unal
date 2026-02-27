@@ -12,10 +12,10 @@ class AccessChecker:
 
     @staticmethod
     def is_admin(user_email):
-        """Check if the user has the 'admin' role."""
+        """Check if the user has the 'Administrador' role."""
         try:
             user_roles = UserRoleRelation.get_all_b_for_a(user_email)
-            return any(role.name == "admin" for role in user_roles)
+            return any(role.name == "Administrador" for role in user_roles)
         except NotFoundError:
             return False
     
@@ -156,7 +156,7 @@ class AccessChecker:
             IllegalOperationError: If the relationship already exists or operation fails.
         """
         resource_type = resource_type.lower()
-        admin_role = RoleService.get_by_name("admin")
+        admin_role = RoleService.get_by_name("Administrador")
         
         if resource_type == "report":
             return AccessChecker._grant_report_admin_access(admin_role.id, resource_id)

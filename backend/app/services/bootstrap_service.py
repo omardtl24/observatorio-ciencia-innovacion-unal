@@ -9,8 +9,8 @@ class BootstrapService:
     def initialize_minimals():
         # Create default roles
         roles = {
-            "admin": "Usuarios con permisos administrativos para gestionar el sistema y sus contenidos",
-            "community": "Cualquier usuario perteneciente a la comunidad académica de la UNAL (Cualquier individuo con correo @unal.edu.co)"
+            "Administrador": "Usuarios con permisos administrativos para gestionar el sistema y sus contenidos",
+            "Comunidad": "Cualquier usuario perteneciente a la comunidad académica de la UNAL (Cualquier individuo con correo @unal.edu.co)"
         }
         for role, description in roles.items():
             try:
@@ -29,5 +29,5 @@ class BootstrapService:
                     names="Admin",
                     last_names="User"
                 )
-                admin_role = RoleService.get_by_name("admin")
+                admin_role = RoleService.get_by_name("Administrador")
                 UserRoleRelation.add_role_to_user(user_email=admin_user.email, role_id=admin_role.id)
