@@ -1,10 +1,60 @@
 import { jwtDecode } from "jwt-decode";
 import { setCookie, getCookie, deleteCookie } from "./cookiesManager";
-import { setItem, getItem, removeItem } from "./localStorageManager";
 
 const TOKEN_KEY = "access_token";
+const IMAGE_ID_KEY = "profile_image_id";
 const POPUP_WIDTH = 500;
 const POPUP_HEIGHT = 600;
+const PROFILE_IMAGE_CACHE_NAME = "profile-image-blobs-v1";
+const profileImageBlobCache = new Map();
+const profileImagePendingRequests = new Map();
+
+function profileImageCacheRequest(imageId) {
+  const cacheUrl = `${window.location.origin}/__profile_image_cache__/${imageId}`;
+  return new Request(cacheUrl, { method: "GET" });
+}
+
+async function readProfileImageFromPersistentCache(imageId) {
+  if (!("caches" in window)) {
+    return null;
+  }
+
+  const cache = await caches.open(PROFILE_IMAGE_CACHE_NAME);
+  const cachedResponse = await cache.match(profileImageCacheRequest(imageId));
+  if (!cachedResponse) {
+    return null;
+  }
+
+  const blob = await cachedResponse.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  profileImageBlobCache.set(imageId, blobUrl);
+  return blobUrl;
+}
+
+async function writeProfileImageToPersistentCache(imageId, response) {
+  if (!("caches" in window)) {
+    return;
+  }
+
+  const cache = await caches.open(PROFILE_IMAGE_CACHE_NAME);
+  await cache.put(profileImageCacheRequest(imageId), response.clone());
+}
+
+async function clearPersistentProfileImageCache() {
+  if (!("caches" in window)) {
+    return;
+  }
+  await caches.delete(PROFILE_IMAGE_CACHE_NAME);
+}
+
+function clearProfileImageBlobCache() {
+  for (const blobUrl of profileImageBlobCache.values()) {
+    URL.revokeObjectURL(blobUrl);
+  }
+  profileImageBlobCache.clear();
+  profileImagePendingRequests.clear();
+  clearPersistentProfileImageCache().catch(() => {});
+}
 
 /**
  * Open an authentication popup to the backend login endpoint.
@@ -48,13 +98,12 @@ export function openAuthPopup() {
         // Authentication successful
         window.removeEventListener("message", messageHandler);
         
-        // Store profile picture in localStorage if provided
-        if (event.data.picture) {
-          console.log("Storing profile picture in localStorage:", event.data.picture);
-          setItem("pp", event.data.picture);
-          console.log("localStorage 'pp' set successfully");
-        } else {
-          console.warn("No picture provided in postMessage");
+        if (event.data.image_id) {
+          const previousImageId = sessionStorage.getItem(IMAGE_ID_KEY);
+          if (previousImageId && previousImageId !== event.data.image_id) {
+            clearProfileImageBlobCache();
+          }
+          sessionStorage.setItem(IMAGE_ID_KEY, event.data.image_id);
         }
         
         resolve();
@@ -180,14 +229,16 @@ export function isAuthenticated() {
 export function expired() {
   localStorage.removeItem(TOKEN_KEY);
   deleteCookie(TOKEN_KEY);
-  removeItem("pp"); // Delete profile picture from localStorage
+  sessionStorage.removeItem(IMAGE_ID_KEY);
+  clearProfileImageBlobCache();
   window.location.href = "/login?error=session_expired";
 }
 
 export function logout(origin = null, navigate = null) {
   localStorage.removeItem(TOKEN_KEY);
   deleteCookie(TOKEN_KEY);
-  removeItem("pp"); // Delete profile picture from localStorage
+  sessionStorage.removeItem(IMAGE_ID_KEY);
+  clearProfileImageBlobCache();
   
   // Calculate the appropriate destination
   const destination = origin || getLogoutDestination();
@@ -214,20 +265,74 @@ export function getUserInfo() {
   try {
     const decoded = jwtDecode(token);
     
-    // Get profile picture from localStorage
-    const picture = getItem("pp") || "";
-    console.log("getUserInfo - Retrieved picture from localStorage:", picture);
+    const imageId = decoded.image_id || sessionStorage.getItem(IMAGE_ID_KEY) || null;
+    if (imageId) {
+      sessionStorage.setItem(IMAGE_ID_KEY, imageId);
+    }
     
     return {
       email: decoded.sub,
       names: decoded.names || "",
       lastNames: decoded.last_names || "",
-      picture: picture,
+      imageId,
       expiresAt: decoded.exp * 1000 // Convert to milliseconds
     };
   } catch (e) {
     console.error("Error decoding token:", e);
     return null;
+  }
+}
+
+export async function fetchProfileImage(imageId) {
+  const token = getToken();
+  if (!token || !imageId) {
+    return null;
+  }
+
+  if (profileImageBlobCache.has(imageId)) {
+    return profileImageBlobCache.get(imageId);
+  }
+
+  const persistentBlobUrl = await readProfileImageFromPersistentCache(imageId);
+  if (persistentBlobUrl) {
+    return persistentBlobUrl;
+  }
+
+  if (profileImagePendingRequests.has(imageId)) {
+    return profileImagePendingRequests.get(imageId);
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const pendingRequest = (async () => {
+    const response = await fetch(`${apiUrl}/auth/images/${imageId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to load profile image: ${response.status}`);
+    }
+
+    await writeProfileImageToPersistentCache(imageId, response);
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    profileImageBlobCache.set(imageId, blobUrl);
+    return blobUrl;
+  })();
+
+  profileImagePendingRequests.set(imageId, pendingRequest);
+
+  try {
+    return await pendingRequest;
+  } finally {
+    profileImagePendingRequests.delete(imageId);
   }
 }
 

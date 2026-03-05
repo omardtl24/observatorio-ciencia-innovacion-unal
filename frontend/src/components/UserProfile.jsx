@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserInfo, getTokenExpiresIn, logout } from "../services/authService";
+import { getUserInfo, getTokenExpiresIn, logout, fetchProfileImage } from "../services/authService";
 
 export default function UserProfile() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [imageSrc, setImageSrc] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const dropdownRef = useRef(null);
 
@@ -26,6 +27,34 @@ export default function UserProfile() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadImage = async () => {
+      if (!userInfo?.imageId) {
+        setImageSrc(null);
+        return;
+      }
+
+      try {
+        const url = await fetchProfileImage(userInfo.imageId);
+        if (active) {
+          setImageSrc(url);
+        }
+      } catch (error) {
+        if (active) {
+          setImageSrc(null);
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      active = false;
+    };
+  }, [userInfo?.imageId]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -96,9 +125,9 @@ export default function UserProfile() {
           {/* User Info Section */}
           <div className="bg-gradient-to-r from-primary-blue-strong to-blue-600 text-white p-4">
             <div className="flex items-center space-x-3">
-              {userInfo.picture ? (
+              {imageSrc ? (
                 <img
-                  src={userInfo.picture}
+                  src={imageSrc}
                   alt={fullName}
                   className="w-12 h-12 rounded-full object-cover border-2 border-white"
                 />

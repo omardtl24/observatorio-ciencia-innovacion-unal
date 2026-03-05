@@ -28,6 +28,9 @@ class Config:
     FILE_STORAGE_ROOT = os.path.join(
         BASE_DIR, os.getenv("FILE_STORAGE_ROOT")
     )
+    PROFILE_IMAGE_CACHE_DIR = os.path.join(FILE_STORAGE_ROOT, "profile_images_cache")
+    PROFILE_IMAGE_CACHE_TTL_SECONDS = int(os.getenv("PROFILE_IMAGE_CACHE_TTL_SECONDS", "86400"))
+    PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = int(os.getenv("PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS", "900"))
 
     # ---- SECURITY ----
     RESTRICTED_EMAIL_DOMAIN = os.getenv("RESTRICTED_EMAIL_DOMAIN")
@@ -42,3 +45,5 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     TESTING = True
     JWT_SECRET_KEY = "test-secret-key"
+    PROFILE_IMAGE_CACHE_TTL_SECONDS = 60
+    PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = 60

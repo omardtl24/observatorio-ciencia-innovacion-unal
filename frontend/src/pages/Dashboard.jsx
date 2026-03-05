@@ -1,16 +1,45 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated, logout } from "../services/authService";
+import { isAuthenticated, logout, getUserInfo, fetchProfileImage } from "../services/authService";
 import { getCookie } from "../services/cookiesManager";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [imageSrc, setImageSrc] = useState("https://via.placeholder.com/150");
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate("/login");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadImage = async () => {
+      const user = getUserInfo();
+      if (!user?.imageId) {
+        return;
+      }
+
+      try {
+        const url = await fetchProfileImage(user.imageId);
+        if (active && url) {
+          setImageSrc(url);
+        }
+      } catch (error) {
+        if (active) {
+          setImageSrc("https://via.placeholder.com/150");
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -21,7 +50,6 @@ export default function Dashboard() {
   const name = getCookie("names") || "Invitado";
   const lastName = getCookie("last_names") || "";
   const email = getCookie("email") || "desconocido";
-  const image = getCookie("picture") || "https://via.placeholder.com/150";
 
   return (
     <div className="p-10 flex flex-col items-center">
@@ -31,7 +59,7 @@ export default function Dashboard() {
         {/* LEFT — IMAGE */}
         <div className="flex flex-col items-center md:items-start">
           <img
-            src={image}
+            src={imageSrc}
             alt="User Avatar"
             className="w-32 h-32 rounded-full mb-4 object-cover"
           />

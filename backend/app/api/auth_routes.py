@@ -1,9 +1,9 @@
 import json
 from urllib.parse import urlencode
-from flask import Blueprint, jsonify, current_app, redirect, session, render_template_string
+from flask import Blueprint, jsonify, current_app, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
-from app.services.user_service import UserService
+from app.services.profile_image_fs_cache_service import ProfileImageFsCacheService
 from app.domain.exceptions import DomainError, UnauthorizedError
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -31,18 +31,31 @@ def callback():
     try:
         # Validate Auth0 callback and get user info
         user_info = auth_service.process_callback_for_redirect()
+
+        image_id = None
+        profile_picture_url = user_info.get("picture")
+        if profile_picture_url:
+            try:
+                image_id = ProfileImageFsCacheService.cache_profile_image_at_login(
+                    user_id=user_info["email"],
+                    image_url=profile_picture_url,
+                )
+            except Exception as exc:
+                current_app.logger.warning(
+                    f"Profile image cache failed for {user_info.get('email')}: {str(exc)}"
+                )
+
+        user_info["image_id"] = image_id
         
         # Create server-side session (stored server-side, cookie reference only)
         auth_service.create_session(user_info)
         
-        # Get profile picture URL to send to frontend
-        profile_picture = user_info.get('picture', '')
-        current_app.logger.info(f"Profile picture URL: {profile_picture}")
+        current_app.logger.info(f"Profile image ID: {image_id}")
         
         # Create message data and JSON encode it for safe JavaScript embedding
         message_data = {
             "status": "ok",
-            "picture": profile_picture
+            "image_id": image_id
         }
         message_json = json.dumps(message_data)
         
@@ -93,7 +106,7 @@ def callback():
         </html>
         """
         response = current_app.make_response(html_response)
-        return response, 400
+        return response, exc.code
     except Exception as exc:
         current_app.logger.error(f"Unexpected error in callback: {str(exc)}")
         html_response = """
@@ -150,7 +163,10 @@ def get_session():
         }), 401
     
     try:
-        access_token, expires_in = auth_service.issue_access_token(user_info['email'])
+        access_token, expires_in = auth_service.issue_access_token(
+            user_info['email'],
+            image_id=user_info.get('image_id')
+        )
         current_app.logger.info(f"Access token issued for user: {user_info['email']}")
         return jsonify({
             "access_token": access_token,
@@ -163,3 +179,32 @@ def get_session():
             "message": "Failed to issue access token",
             "details": None
         }), 401
+
+
+@auth_bp.get("/images/<string:image_id>")
+@jwt_required()
+def get_cached_profile_image(image_id):
+    user_id = get_jwt_identity()
+    expected_image_id = ProfileImageFsCacheService.build_image_id(user_id)
+
+    if image_id != expected_image_id:
+        return jsonify({
+            "code": "forbidden",
+            "message": "Image does not belong to authenticated user",
+            "details": None
+        }), 403
+
+    image_path = ProfileImageFsCacheService.resolve_image_path(image_id)
+    if not image_path:
+        return jsonify({
+            "code": "not_found",
+            "message": "Image not found",
+            "details": None
+        }), 404
+
+    ProfileImageFsCacheService.touch_image(image_path)
+    content_type = ProfileImageFsCacheService.guess_content_type(image_path)
+
+    response = send_file(image_path, mimetype=content_type, conditional=True)
+    response.headers["Cache-Control"] = "private, max-age=86400"
+    return response, 200

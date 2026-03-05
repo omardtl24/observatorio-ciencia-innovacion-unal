@@ -12,6 +12,10 @@ from app.config import Config, TestingConfig
 from app.domain.exceptions import DomainError, DatabaseConnectionError
 from werkzeug.exceptions import HTTPException
 from app.services.bootstrap_service import BootstrapService
+from app.services.profile_image_fs_cache_service import (
+    ProfileImageFsCacheService,
+    start_profile_image_cleanup_daemon,
+)
 import logging
 import traceback
 import os
@@ -164,5 +168,15 @@ def create_app(config_name="production"):
             BootstrapService.initialize_minimals()
 
     os.makedirs(app.config["FILE_STORAGE_ROOT"], exist_ok=True)
+    os.makedirs(app.config["PROFILE_IMAGE_CACHE_DIR"], exist_ok=True)
+
+    @app.cli.command("cleanup-profile-images")
+    def cleanup_profile_images_command():
+        ttl_seconds = int(app.config.get("PROFILE_IMAGE_CACHE_TTL_SECONDS", 86400))
+        removed = ProfileImageFsCacheService.cleanup_expired_images(ttl_seconds=ttl_seconds)
+        app.logger.info(f"Removed {removed} expired profile images")
+
+    if not app.config.get("TESTING", False):
+        start_profile_image_cleanup_daemon(app)
 
     return app

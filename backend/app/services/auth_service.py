@@ -90,6 +90,7 @@ class AuthService:
         session['user_names'] = user_info.get('names', '')
         session['user_last_names'] = user_info.get('last_names', '')
         session['user_picture'] = user_info.get('picture', '')
+        session['user_image_id'] = user_info.get('image_id')
         session['authenticated_at'] = datetime.utcnow().isoformat()
         # Session is automatically marked as modified
         session.modified = True
@@ -108,10 +109,11 @@ class AuthService:
             'email': session.get('user_email'),
             'names': session.get('user_names'),
             'last_names': session.get('user_last_names'),
-            'picture': session.get('user_picture')
+            'picture': session.get('user_picture'),
+            'image_id': session.get('user_image_id')
         }
 
-    def issue_access_token(self, user_email):
+    def issue_access_token(self, user_email, image_id=None):
         """
         Issue a short-lived access token for an authenticated session.
         
@@ -130,7 +132,8 @@ class AuthService:
             additional_claims={
                 "names": user.names,
                 "last_names": user.last_names,
-                "picture": user.picture if hasattr(user, 'picture') else ""
+                "picture": None,
+                "image_id": image_id,
             }
         )
         
