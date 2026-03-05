@@ -35,6 +35,10 @@ class AuthService:
         if not email:
             raise NotFoundError("El proveedor de identidad no proporcionó un correo electrónico")
 
+        restricted_domain = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
+        if restricted_domain and not email.endswith(f"@{restricted_domain}"):
+            raise ForbiddenError(f"Solo se permiten cuentas con dominio @{restricted_domain}")
+
         try:
             user = UserService.create(
                 email=email,
@@ -61,11 +65,15 @@ class AuthService:
                 pass
 
         current_app.logger.info(f"Auth callback successful for user: {email}")
+
+        access_token = create_access_token(identity=email)
+
         return {
+            "access_token": access_token,
             "email": email,
             "names": user.names,
             "last_names": user.last_names,
-            "picture": user_info.get("picture", "")
+            "picture": user_info.get("picture")
         }
 
     def create_session(self, user_info):

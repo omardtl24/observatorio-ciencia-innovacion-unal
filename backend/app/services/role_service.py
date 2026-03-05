@@ -1,5 +1,6 @@
 from app.models.role import Role
 from app.services.base_service import BaseService
+from app.domain.exceptions import NotFoundError
 
 
 class RoleService(BaseService):

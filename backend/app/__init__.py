@@ -159,8 +159,9 @@ def create_app(config_name="production"):
     app.register_blueprint(file_bp)
     app.register_blueprint(report_bp)
 
-    with app.app_context():
-        BootstrapService.initialize_minimals()
+    if not app.config.get("TESTING", False):
+        with app.app_context():
+            BootstrapService.initialize_minimals()
 
     os.makedirs(app.config["FILE_STORAGE_ROOT"], exist_ok=True)
 
