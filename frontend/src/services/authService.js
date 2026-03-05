@@ -3,6 +3,7 @@ import { setCookie, getCookie, deleteCookie } from "./cookiesManager";
 
 const TOKEN_KEY = "access_token";
 const IMAGE_ID_KEY = "profile_image_id";
+const ROLES_KEY = "user_roles";
 const POPUP_WIDTH = 500;
 const POPUP_HEIGHT = 600;
 const PROFILE_IMAGE_CACHE_NAME = "profile-image-blobs-v1";
@@ -56,6 +57,27 @@ function clearProfileImageBlobCache() {
   clearPersistentProfileImageCache().catch(() => {});
 }
 
+function saveRoles(roles) {
+  if (!Array.isArray(roles)) {
+    return;
+  }
+  sessionStorage.setItem(ROLES_KEY, JSON.stringify(roles));
+}
+
+function readRoles() {
+  const raw = sessionStorage.getItem(ROLES_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Open an authentication popup to the backend login endpoint.
  * The popup will handle Auth0 authentication and communicate back via postMessage.
@@ -104,6 +126,10 @@ export function openAuthPopup() {
             clearProfileImageBlobCache();
           }
           sessionStorage.setItem(IMAGE_ID_KEY, event.data.image_id);
+        }
+
+        if (Array.isArray(event.data.roles)) {
+          saveRoles(event.data.roles);
         }
         
         resolve();
@@ -230,6 +256,7 @@ export function expired() {
   localStorage.removeItem(TOKEN_KEY);
   deleteCookie(TOKEN_KEY);
   sessionStorage.removeItem(IMAGE_ID_KEY);
+  sessionStorage.removeItem(ROLES_KEY);
   clearProfileImageBlobCache();
   window.location.href = "/login?error=session_expired";
 }
@@ -238,6 +265,7 @@ export function logout(origin = null, navigate = null) {
   localStorage.removeItem(TOKEN_KEY);
   deleteCookie(TOKEN_KEY);
   sessionStorage.removeItem(IMAGE_ID_KEY);
+  sessionStorage.removeItem(ROLES_KEY);
   clearProfileImageBlobCache();
   
   // Calculate the appropriate destination
@@ -269,12 +297,17 @@ export function getUserInfo() {
     if (imageId) {
       sessionStorage.setItem(IMAGE_ID_KEY, imageId);
     }
+    const roles = Array.isArray(decoded.roles) ? decoded.roles : readRoles();
+    if (Array.isArray(decoded.roles)) {
+      saveRoles(decoded.roles);
+    }
     
     return {
       email: decoded.sub,
       names: decoded.names || "",
       lastNames: decoded.last_names || "",
       imageId,
+      roles,
       expiresAt: decoded.exp * 1000 // Convert to milliseconds
     };
   } catch (e) {

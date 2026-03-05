@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from flask import Blueprint, jsonify, current_app, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
+from app.services.user_service import UserService
 from app.services.profile_image_fs_cache_service import ProfileImageFsCacheService
 from app.domain.exceptions import DomainError, UnauthorizedError
 
@@ -60,6 +61,8 @@ def callback():
                 )
 
         user_info["image_id"] = image_id
+        user = UserService.get_by_id(user_info["email"])
+        user_info["roles"] = [role.name for role in user.roles] if getattr(user, "roles", None) else []
         
         # Create server-side session (stored server-side, cookie reference only)
         auth_service.create_session(user_info)
@@ -69,7 +72,8 @@ def callback():
         # Create message data and JSON encode it for safe JavaScript embedding
         message_data = {
             "status": "ok",
-            "image_id": image_id
+            "image_id": image_id,
+            "roles": user_info.get("roles", []),
         }
         message_json = json.dumps(message_data)
         

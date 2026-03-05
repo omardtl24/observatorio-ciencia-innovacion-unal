@@ -59,6 +59,17 @@ class AuthService:
             redirect_uri=redirect_uri,
         )
 
+    @staticmethod
+    def _extract_role_names(user):
+        user_roles = getattr(user, "roles", None)
+        if not user_roles:
+            return []
+
+        try:
+            return [role.name for role in user_roles if getattr(role, "name", None)]
+        except TypeError:
+            return []
+
     def process_callback_for_redirect(self, authorization_code=None, nonce=None):
         """
         Process the Auth0 callback and return user info for session creation.
@@ -102,7 +113,7 @@ class AuthService:
         email_community = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
         if email_community and email.endswith(f"@{email_community}"):
             try:
-                community_rol = RoleService.get_by_name("community")
+                community_rol = RoleService.get_by_name("Comunidad")
                 if community_rol not in user.roles:
                     UserRoleRelation.add_role_to_user(user_email=email,
                                                       role_id=community_rol.id)
@@ -118,7 +129,7 @@ class AuthService:
             "email": email,
             "names": user.names,
             "last_names": user.last_names,
-            "picture": user_info.get("picture")
+            "picture": user_info.get("picture"),
         }
 
     def create_session(self, user_info):
@@ -136,6 +147,7 @@ class AuthService:
         session['user_last_names'] = user_info.get('last_names', '')
         session['user_picture'] = user_info.get('picture', '')
         session['user_image_id'] = user_info.get('image_id')
+        session['user_roles'] = user_info.get('roles', [])
         session['authenticated_at'] = datetime.utcnow().isoformat()
         # Session is automatically marked as modified
         session.modified = True
@@ -155,7 +167,8 @@ class AuthService:
             'names': session.get('user_names'),
             'last_names': session.get('user_last_names'),
             'picture': session.get('user_picture'),
-            'image_id': session.get('user_image_id')
+            'image_id': session.get('user_image_id'),
+            'roles': session.get('user_roles', [])
         }
 
     def issue_access_token(self, user_email, image_id=None):
@@ -179,6 +192,7 @@ class AuthService:
                 "last_names": user.last_names,
                 "picture": None,
                 "image_id": image_id,
+                "roles": self._extract_role_names(user),
             }
         )
         

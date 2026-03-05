@@ -1,31 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserInfo, getTokenExpiresIn, logout, fetchProfileImage } from "../services/authService";
+import { getUserInfo, logout, fetchProfileImage } from "../services/authService";
 
 export default function UserProfile() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(0);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     const user = getUserInfo();
     setUserInfo(user);
-
-    if (!user) return;
-
-    // Update time remaining immediately and then every second
-    const updateTimer = () => {
-      const expiresIn = getTokenExpiresIn();
-      setTimeRemaining(Math.max(0, expiresIn));
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -74,23 +60,8 @@ export default function UserProfile() {
     return null;
   }
 
-  const formatTimeRemaining = (ms) => {
-    if (ms <= 0) return "Expired";
-
-    const seconds = Math.floor((ms / 1000) % 60);
-    const minutes = Math.floor((ms / 1000 / 60) % 60);
-    const hours = Math.floor(ms / 1000 / 60 / 60);
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
-    }
-  };
-
   const fullName = `${userInfo.names} ${userInfo.lastNames}`.trim();
+  const roleNames = Array.isArray(userInfo.roles) ? userInfo.roles : [];
   const initials = fullName
     .split(" ")
     .map((n) => n[0]?.toUpperCase() || "")
@@ -143,11 +114,11 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Session Info */}
+          {/* Roles */}
           <div className="px-4 py-3 border-b border-gray-200">
-            <p className="text-xs text-gray-600 font-semibold">Session expires in:</p>
-            <p className="text-lg font-bold text-primary-blue mt-1">
-              {formatTimeRemaining(timeRemaining)}
+            <p className="text-xs text-gray-600 font-semibold">Roles:</p>
+            <p className="text-sm font-medium text-primary-blue mt-1">
+              {roleNames.length ? roleNames.join(", ") : "Sin roles asignados"}
             </p>
           </div>
 
