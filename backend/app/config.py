@@ -38,6 +38,7 @@ class Config:
     FRONTEND_URL = os.getenv("FRONTEND_URL")
     DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL")
     TEST = os.getenv("TEST", "false").lower() == "true"
+    OAUTH_STATE_TTL_SECONDS = int(os.getenv("OAUTH_STATE_TTL_SECONDS", "300"))
 
 
 class TestingConfig(Config):
@@ -47,3 +48,4 @@ class TestingConfig(Config):
     JWT_SECRET_KEY = "test-secret-key"
     PROFILE_IMAGE_CACHE_TTL_SECONDS = 60
     PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = 60
+    OAUTH_STATE_TTL_SECONDS = 300

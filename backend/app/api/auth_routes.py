@@ -1,6 +1,6 @@
 import json
 from urllib.parse import urlencode
-from flask import Blueprint, jsonify, current_app, send_file
+from flask import Blueprint, jsonify, current_app, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
 from app.services.profile_image_fs_cache_service import ProfileImageFsCacheService
@@ -14,7 +14,10 @@ def login():
     """Redirect user to Auth0 login."""
     auth_service = AuthService(current_app)
     redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL")
+    oauth_state, oauth_nonce = auth_service.generate_oauth_state()
     return auth_service.auth0.authorize_redirect(redirect_uri=redirect_uri,
+                                                 state=oauth_state,
+                                                 nonce=oauth_nonce,
                                                  prompt='login',
                                                  connection="google-oauth2")
 
@@ -29,8 +32,19 @@ def callback():
     auth_service = AuthService(current_app)
     
     try:
+        state = request.args.get("state")
+        code = request.args.get("code")
+
+        if not state or not code:
+            raise UnauthorizedError("Missing OAuth callback parameters")
+
+        state_payload = auth_service.validate_oauth_state(state)
+
         # Validate Auth0 callback and get user info
-        user_info = auth_service.process_callback_for_redirect()
+        user_info = auth_service.process_callback_for_redirect(
+            authorization_code=code,
+            nonce=state_payload.get("nonce")
+        )
 
         image_id = None
         profile_picture_url = user_info.get("picture")

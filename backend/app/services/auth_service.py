@@ -1,11 +1,14 @@
+import secrets
+
 from flask import current_app, session
 from authlib.integrations.flask_client import OAuth
+from itsdangerous import URLSafeTimedSerializer, BadSignature
 from app.models import db
 from flask_jwt_extended import create_access_token
 from app.services.user_service import UserService
 from app.services.role_service import RoleService
 from app.services.relations.user_role_relation import UserRoleRelation
-from app.domain.exceptions import ForbiddenError, IllegalOperationError, NotFoundError
+from app.domain.exceptions import ForbiddenError, IllegalOperationError, NotFoundError, UnauthorizedError
 from datetime import datetime, timedelta
 
 class AuthService:
@@ -19,14 +22,56 @@ class AuthService:
             server_metadata_url=f'https://{current_app.config.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
         )
 
-    def process_callback_for_redirect(self):
+    def _state_serializer(self):
+        secret = current_app.config.get("FLASK_SECRET_KEY") or current_app.config.get("AUTH0_CLIENT_SECRET")
+        return URLSafeTimedSerializer(secret_key=secret, salt="oauth-state-v1")
+
+    def generate_oauth_state(self):
+        nonce = secrets.token_urlsafe(24)
+        payload = {
+            "nonce": nonce,
+            "purpose": "oauth_state",
+        }
+        serializer = self._state_serializer()
+        return serializer.dumps(payload), nonce
+
+    def validate_oauth_state(self, state_token):
+        serializer = self._state_serializer()
+        max_age = int(current_app.config.get("OAUTH_STATE_TTL_SECONDS", 300))
+
+        try:
+            payload = serializer.loads(state_token, max_age=max_age)
+        except BadSignature as exc:
+            raise UnauthorizedError("Invalid OAuth state") from exc
+        except Exception as exc:
+            raise UnauthorizedError("OAuth state expired or malformed") from exc
+
+        if payload.get("purpose") != "oauth_state" or not payload.get("nonce"):
+            raise UnauthorizedError("Invalid OAuth state payload")
+
+        return payload
+
+    def _exchange_code_for_token(self, authorization_code):
+        redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL")
+        return self.auth0.fetch_access_token(
+            code=authorization_code,
+            grant_type="authorization_code",
+            redirect_uri=redirect_uri,
+        )
+
+    def process_callback_for_redirect(self, authorization_code=None, nonce=None):
         """
         Process the Auth0 callback and return user info for session creation.
         This method validates the Auth0 authorization code and returns user information
         that will be stored in a secure, HttpOnly session cookie.
         """
-        token = self.auth0.authorize_access_token()
-        user_info = token.get('userinfo') or self.auth0.parse_id_token(token)
+        token = self._exchange_code_for_token(authorization_code) if authorization_code else self.auth0.authorize_access_token()
+        user_info = token.get('userinfo')
+        if not user_info:
+            if nonce is not None:
+                user_info = self.auth0.parse_id_token(token, nonce=nonce)
+            else:
+                user_info = self.auth0.parse_id_token(token)
 
         if not user_info:
             raise NotFoundError("No se pudo obtener el perfil del usuario desde Auth0")
