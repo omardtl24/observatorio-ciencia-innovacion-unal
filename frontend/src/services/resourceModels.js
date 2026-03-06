@@ -40,12 +40,12 @@ export function toResourceCardModel(resourceType, item) {
 
   return {
     id: item?.id,
-    main_title: item?.main_title || "",
-    auxiliar_title: item?.auxiliary_title || "",
+    mainTitle: item?.main_title || "",
+    auxiliaryTitle: item?.auxiliary_title || "",
     description: item?.description || "",
-    update_at: normalizeDate(item),
+    updatedAt: normalizeDate(item),
     type: inferMediaType(normalizedType, item).toUpperCase(),
-    resource_type: normalizedType,
+    resourceType: normalizedType,
   };
 }
 
@@ -65,12 +65,12 @@ export function toResourceDisplayModel(resourceType, item) {
 
   return {
     id: item?.id,
-    main_title: item?.main_title || "",
-    auxiliary_title: item?.auxiliary_title || "",
+    mainTitle: item?.main_title || "",
+    auxiliaryTitle: item?.auxiliary_title || "",
     description: item?.description || "",
     type: normalizedType,
-    resource_type: inferMediaType(normalizedType, item),
-    resource_displayable: resourceDisplayable,
+    resourceType: inferMediaType(normalizedType, item),
+    resourceDisplayable,
   };
 }
 

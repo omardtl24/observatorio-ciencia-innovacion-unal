@@ -1,6 +1,53 @@
 import { getToken } from "./authService";
 import { toResourceCardModel, toResourceDisplayModel } from "./resourceModels";
 
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_REQUEST_TIMEOUT_MS || 10000);
+
+function createTimeoutError(timeoutMs) {
+    const error = new Error(`Request timeout after ${timeoutMs}ms`);
+    error.name = "TimeoutError";
+    return error;
+}
+
+function isTimeoutError(err) {
+    return err?.name === "TimeoutError";
+}
+
+function isBackendUnavailableError(err) {
+    if (isTimeoutError(err)) {
+        return true;
+    }
+
+    const message = (err?.message || "").toLowerCase();
+    const name = (err?.name || "").toLowerCase();
+    const isNetworkTypeError = name === "typeerror";
+    const isNetworkMessage =
+        message.includes("failed to fetch") ||
+        message.includes("networkerror") ||
+        message.includes("load failed");
+
+    return isNetworkTypeError || isNetworkMessage;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        return await fetch(url, {
+            ...options,
+            signal: controller.signal,
+        });
+    } catch (err) {
+        if (err?.name === "AbortError") {
+            throw createTimeoutError(timeoutMs);
+        }
+        throw err;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
 function redirectToConnectionError() {
     if (typeof window === "undefined") return;
     if (window.location.pathname === "/connection-error") return;
@@ -24,14 +71,16 @@ export async function fetchFromUrl(url) {
     const token = getToken();
     let response;
     try {
-        response = await fetch(url, {
+        response = await fetchWithTimeout(url, {
             credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
     } catch (err) {
-        redirectToConnectionError();
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
         throw err;
     }
     if (!response.ok) {
@@ -54,14 +103,16 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
     
     let response;
     try {
-        response = await fetch(urlObj.toString(), {
+        response = await fetchWithTimeout(urlObj.toString(), {
             credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
     } catch (err) {
-        redirectToConnectionError();
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
         throw err;
     }
     if (!response.ok) {
@@ -73,18 +124,20 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
 }
 
 export async function fetchResources(type) {
-    const fetch_url = `${import.meta.env.VITE_API_URL}/${type}/all`;
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/${type}/all`;
     const token = getToken();
     let response;
     try {
-        response = await fetch(fetch_url, {
+        response = await fetchWithTimeout(fetchUrl, {
             credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
     } catch (err) {
-        redirectToConnectionError();
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
         throw err;
     }
     if (!response.ok) {
@@ -96,18 +149,20 @@ export async function fetchResources(type) {
 
 
 export async function fetchResource(type, id) {
-    const fetch_url = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
     const token = getToken();
     let response;
     try {
-        response = await fetch(fetch_url, {
+        response = await fetchWithTimeout(fetchUrl, {
             credentials: "include",
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
     } catch (err) {
-        redirectToConnectionError();
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
         throw err;
     }
     if (!response.ok) {
@@ -128,3 +183,5 @@ export function parseResourcesForCards(type, data) {
 export function parseResourcesText(type, data) {
     return toResourceDisplayModel(type, data);
 }
+
+export { isTimeoutError, isBackendUnavailableError };

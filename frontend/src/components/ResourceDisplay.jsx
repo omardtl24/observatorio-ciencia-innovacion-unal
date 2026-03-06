@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { fetchFileWithAuth } from "../services/resourcesServices";
-import { getDisplayableKind, renderDisplayableContent } from "../services/DisplayableService";
+import {
+    getDisplayableKind,
+    loadDisplayableResource,
+    renderDisplayableContent,
+} from "../services/DisplayableService";
 
 export default function ResourceDisplay({
     id,
     type,
-    resource_displayable,
-    resource_type
+    resourceDisplayable
 }){
     const [fileSrc, setFileSrc] = useState(null);
     const displayableKind = getDisplayableKind(type);
@@ -15,30 +17,20 @@ export default function ResourceDisplay({
         let active = true;
         let objectUrl = null;
 
-        const loadDisplayableResource = async () => {
-            if (!resource_displayable) {
-                setFileSrc(null);
-                return;
-            }
-
+        const loadResource = async () => {
             try {
-                if (displayableKind === "pdf") {
-                    const baseUrl = `${import.meta.env.VITE_API_URL}/file/download/${resource_displayable}`;
-                    const params = {
-                        resource: type,
-                        id,
-                        display: "true",
-                    };
-                    const src = await fetchFileWithAuth(baseUrl, params);
-                    if (active) {
-                        objectUrl = src;
-                        setFileSrc(src);
-                    }
-                    return;
-                }
+                const src = await loadDisplayableResource({
+                    displayableKind,
+                    type,
+                    id,
+                    resourceDisplayable,
+                });
 
-                if (displayableKind === "visor") {
-                    setFileSrc(resource_displayable);
+                if (active) {
+                    if (displayableKind === "pdf") {
+                        objectUrl = src;
+                    }
+                    setFileSrc(src);
                 }
             } catch (err) {
                 if (active) {
@@ -47,7 +39,7 @@ export default function ResourceDisplay({
             }
         };
 
-        loadDisplayableResource();
+        loadResource();
 
         return () => {
             active = false;
@@ -55,7 +47,7 @@ export default function ResourceDisplay({
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [resource_displayable, resource_type, id, type, displayableKind]);
+    }, [resourceDisplayable, id, type, displayableKind]);
 
     return renderDisplayableContent(type, fileSrc);
 }

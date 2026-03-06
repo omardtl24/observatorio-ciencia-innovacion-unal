@@ -1,4 +1,5 @@
 import { isPdfResource } from "./resourceModels";
+import { fetchFileWithAuth } from "./resourcesServices";
 
 function renderPdf(fileSrc) {
   return (
@@ -64,4 +65,31 @@ export function renderDisplayableContent(type, fileSrc) {
   }
 
   return renderUnsupported();
+}
+
+export async function loadDisplayableResource({
+  displayableKind,
+  type,
+  id,
+  resourceDisplayable,
+}) {
+  if (!resourceDisplayable) {
+    return null;
+  }
+
+  if (displayableKind === "pdf") {
+    const baseUrl = `${import.meta.env.VITE_API_URL}/file/download/${resourceDisplayable}`;
+    const params = {
+      resource: type,
+      id,
+      display: "true",
+    };
+    return fetchFileWithAuth(baseUrl, params);
+  }
+
+  if (displayableKind === "visor") {
+    return resourceDisplayable;
+  }
+
+  return null;
 }

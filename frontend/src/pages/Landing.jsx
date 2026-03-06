@@ -6,27 +6,26 @@ export default function Landing() {
     "https://images.unsplash.com/photo-1491895200222-0fc4a4c35e18?auto=format&fit=crop&w=800&q=80",
   ];
 
-  const datta_mapper = [
-    { main_title: "Impacto del Curso de Nivelación Matermáticas Básicas",
-      auxiliar_title: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
-      type: "PDF", update_at: "2024-06-01T00:00:00Z", resourceType: "visor" },
-      { main_title: "Impacto del Curso de Nivelación Matermáticas Básicas",
-      auxiliar_title: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
-      type: "PDF", update_at: "2024-10-01T00:00:00Z", resourceType: "simulator" }
+  const dataMapper = [
+    { mainTitle: "Impacto del Curso de Nivelación Matermáticas Básicas",
+      auxiliaryTitle: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
+      type: "PDF", updatedAt: "2024-06-01T00:00:00Z", resourceType: "visor" },
+      { mainTitle: "Impacto del Curso de Nivelación Matermáticas Básicas",
+      auxiliaryTitle: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
+      type: "PDF", updatedAt: "2024-10-01T00:00:00Z", resourceType: "simulator" }
     
   ];
 
   return (
     <div className="min-h-screen px-6 py-12">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        {datta_mapper.map((item, index) => (
+        {dataMapper.map((item, index) => (
           <ResourceCard
             key={index}
-            title={item.name}
-            main_title={item.main_title}
-            auxiliar_title={item.auxiliar_title}
+            mainTitle={item.mainTitle}
+            auxiliaryTitle={item.auxiliaryTitle}
             type={item.type}
-            updatedAt={new Date(item.update_at)
+            updatedAt={new Date(item.updatedAt)
                     .toLocaleDateString("es-ES", {
                         year: "numeric",
                         month: "long",

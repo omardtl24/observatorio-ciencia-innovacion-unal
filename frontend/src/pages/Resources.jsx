@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import ResourceCard from "../components/ResourceCard";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
 import { datetoString } from "../services/stringServices.jsx";
 
 export default function Resources() {
   const { type } = useParams();
-  const navigate = useNavigate();
-  const [data_mapper, setDataMapper] = useState([]);
+  const [dataMapper, setDataMapper] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,14 +46,13 @@ export default function Resources() {
       } catch (err) {
         const message = err?.message ? `${err.message} ${defaultErrorMessage}` : defaultErrorMessage;
         setError(message);
-        navigate(`/connection-error?origin=${encodeURIComponent(window.location.pathname)}`);
       } finally {
         setLoading(false);
       }
     };
 
     loadResources();
-  }, [type, navigate]);
+  }, [type]);
 
   if (loading) {
     return (
@@ -71,15 +69,14 @@ export default function Resources() {
   return (
     <div className="min-h-screen px-6 py-12">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        {data_mapper.map((item, index) => (
+        {dataMapper.map((item, index) => (
           <ResourceCard
             key={item.id}
             id={item.id}
-            title={item.main_title}
-            main_title={item.main_title}
-            auxiliar_title={item.auxiliar_title}
+            mainTitle={item.mainTitle}
+            auxiliaryTitle={item.auxiliaryTitle}
             type={item.type || 'PDF'}
-            updatedAt={datetoString(item.update_at)}
+            updatedAt={datetoString(item.updatedAt)}
             coverImage={images[index % images.length]}
             resourceType={type}
           />

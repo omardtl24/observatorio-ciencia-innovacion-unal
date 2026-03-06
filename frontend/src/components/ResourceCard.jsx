@@ -8,8 +8,8 @@ import { stripColorMarkers } from "../services/stringServices.jsx";
 
 export default function ResourceCard({
   id,
-  main_title,
-  auxiliar_title,
+  mainTitle,
+  auxiliaryTitle,
   type,
   updatedAt,
   coverImage,
@@ -57,14 +57,14 @@ export default function ResourceCard({
               text-primary-cyan-strong
               font-medium
             ">
-              {stripColorMarkers(main_title)}
+              {stripColorMarkers(mainTitle)}
             </span>
             <span className="
               text-sm
               text-primary-blue-strong
               font-semibold
             ">
-              {stripColorMarkers(auxiliar_title)}
+              {stripColorMarkers(auxiliaryTitle)}
             </span>
           </div>
         </div>

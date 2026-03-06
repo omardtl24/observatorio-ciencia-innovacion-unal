@@ -6,9 +6,51 @@ const IMAGE_ID_KEY = "profile_image_id";
 const ROLES_KEY = "user_roles";
 const POPUP_WIDTH = 500;
 const POPUP_HEIGHT = 600;
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_REQUEST_TIMEOUT_MS || 10000);
 const PROFILE_IMAGE_CACHE_NAME = "profile-image-blobs-v1";
 const profileImageBlobCache = new Map();
 const profileImagePendingRequests = new Map();
+
+function createTimeoutError(timeoutMs) {
+  const error = new Error(`Request timeout after ${timeoutMs}ms`);
+  error.name = "TimeoutError";
+  return error;
+}
+
+function isBackendUnavailableError(err) {
+  if (err?.name === "TimeoutError") {
+    return true;
+  }
+
+  const message = (err?.message || "").toLowerCase();
+  const name = (err?.name || "").toLowerCase();
+  const isNetworkTypeError = name === "typeerror";
+  const isNetworkMessage =
+    message.includes("failed to fetch") ||
+    message.includes("networkerror") ||
+    message.includes("load failed");
+
+  return isNetworkTypeError || isNetworkMessage;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      throw createTimeoutError(timeoutMs);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 function profileImageCacheRequest(imageId) {
   const cacheUrl = `${window.location.origin}/__profile_image_cache__/${imageId}`;
@@ -463,7 +505,7 @@ export async function startLogin(origin = "/") {
     
     // Verify backend is available
     const apiUrl = import.meta.env.VITE_API_URL;
-    const response = await fetch(`${apiUrl}/`, {
+    const response = await fetchWithTimeout(`${apiUrl}/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -489,11 +531,13 @@ export async function startLogin(origin = "/") {
     }
     if (error.message.includes("popup")) {
       window.location.href = `/login?error=popup_blocked&message=${encodeURIComponent(error.message)}`;
+    } else if (isBackendUnavailableError(error)) {
+      const encodedOrigin = encodeURIComponent(window.location.pathname);
+      window.location.href = `/connection-error?origin=${encodedOrigin}`;
     } else if (error.message.includes("timeout")) {
       window.location.href = `/login?error=timeout&message=${encodeURIComponent("Authentication took too long")}`;
     } else {
-      const origin = encodeURIComponent(window.location.pathname);
-      window.location.href = `/connection-error?origin=${origin}`;
+      window.location.href = `/login?error=auth_failed&message=${encodeURIComponent(error.message || "Authentication failed")}`;
     }
   }
 }
