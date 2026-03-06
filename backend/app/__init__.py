@@ -19,6 +19,7 @@ from app.services.profile_image_fs_cache_service import (
 import logging
 import traceback
 import os
+from datetime import timedelta
 
 jwt = JWTManager()
 
@@ -101,7 +102,9 @@ def create_app(config_name="production"):
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'None'
     app.config['SESSION_COOKIE_NAME'] = 'observatorio_session'
-    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour for session
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(
+        seconds=int(app.config.get("SESSION_LIFETIME_SECONDS", 7200))
+    )
 
     @jwt.unauthorized_loader
     def handle_jwt_missing_token(reason):

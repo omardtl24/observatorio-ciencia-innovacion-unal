@@ -149,6 +149,7 @@ class AuthService:
         session['user_image_id'] = user_info.get('image_id')
         session['user_roles'] = user_info.get('roles', [])
         session['authenticated_at'] = datetime.utcnow().isoformat()
+        session.permanent = True
         # Session is automatically marked as modified
         session.modified = True
 
@@ -183,10 +184,11 @@ class AuthService:
         """
         user = UserService.get_by_id(user_email)
         
-        # Create a short-lived token (15 minutes)
+        token_lifetime_seconds = int(current_app.config.get("SESSION_LIFETIME_SECONDS", 7200))
+
         access_token = create_access_token(
             identity=user_email,
-            expires_delta=timedelta(minutes=15),
+            expires_delta=timedelta(seconds=token_lifetime_seconds),
             additional_claims={
                 "names": user.names,
                 "last_names": user.last_names,
@@ -196,7 +198,7 @@ class AuthService:
             }
         )
         
-        return access_token, 900  # 15 minutes in seconds
+        return access_token, token_lifetime_seconds
 
     def test_auth_callback(self):
         """

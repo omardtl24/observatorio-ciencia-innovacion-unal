@@ -39,6 +39,7 @@ class Config:
     DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL")
     TEST = os.getenv("TEST", "false").lower() == "true"
     OAUTH_STATE_TTL_SECONDS = int(os.getenv("OAUTH_STATE_TTL_SECONDS", "300"))
+    SESSION_LIFETIME_SECONDS = int(os.getenv("SESSION_LIFETIME_SECONDS", "7200"))
 
 
 class TestingConfig(Config):
@@ -49,3 +50,4 @@ class TestingConfig(Config):
     PROFILE_IMAGE_CACHE_TTL_SECONDS = 60
     PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = 60
     OAUTH_STATE_TTL_SECONDS = 300
+    SESSION_LIFETIME_SECONDS = 7200
