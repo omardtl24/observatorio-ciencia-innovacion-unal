@@ -91,10 +91,6 @@ class AuthService:
         if not email:
             raise NotFoundError("El proveedor de identidad no proporcionó un correo electrónico")
 
-        restricted_domain = current_app.config.get("RESTRICTED_EMAIL_DOMAIN")
-        if restricted_domain and not email.endswith(f"@{restricted_domain}"):
-            raise ForbiddenError(f"Solo se permiten cuentas con dominio @{restricted_domain}")
-
         try:
             user = UserService.create(
                 email=email,

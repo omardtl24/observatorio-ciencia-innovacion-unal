@@ -101,6 +101,29 @@ export function openAuthPopup() {
       reject(new Error("Failed to open authentication popup. Please allow popups in your browser."));
       return;
     }
+
+    let isSettled = false;
+    let timeoutId = null;
+    let closedCheckId = null;
+
+    const cleanup = () => {
+      window.removeEventListener("message", messageHandler);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (closedCheckId) {
+        clearInterval(closedCheckId);
+      }
+    };
+
+    const settle = (fn, value) => {
+      if (isSettled) {
+        return;
+      }
+      isSettled = true;
+      cleanup();
+      fn(value);
+    };
     
     // Handler for messages from the popup
     const messageHandler = (event) => {
@@ -117,9 +140,6 @@ export function openAuthPopup() {
       }
       
       if (event.data.status === "ok") {
-        // Authentication successful
-        window.removeEventListener("message", messageHandler);
-        
         if (event.data.image_id) {
           const previousImageId = sessionStorage.getItem(IMAGE_ID_KEY);
           if (previousImageId && previousImageId !== event.data.image_id) {
@@ -131,12 +151,10 @@ export function openAuthPopup() {
         if (Array.isArray(event.data.roles)) {
           saveRoles(event.data.roles);
         }
-        
-        resolve();
+
+        settle(resolve);
       } else if (event.data.status === "error") {
-        // Authentication failed
-        window.removeEventListener("message", messageHandler);
-        reject(new Error(event.data.message || "Authentication failed"));
+        settle(reject, new Error(event.data.message || "Authentication failed"));
       }
     };
     
@@ -144,18 +162,19 @@ export function openAuthPopup() {
     window.addEventListener("message", messageHandler);
     
     // Timeout after 10 minutes
-    const timeout = setTimeout(() => {
-      window.removeEventListener("message", messageHandler);
-      popup.close();
-      reject(new Error("Authentication timeout"));
+    timeoutId = setTimeout(() => {
+      if (!popup.closed) {
+        popup.close();
+      }
+      settle(reject, new Error("Authentication timeout"));
     }, 600000);
-    
-    // Clean up timeout if authentication completes
-    const originalResolve = resolve;
-    resolve = () => {
-      clearTimeout(timeout);
-      originalResolve();
-    };
+
+    // If user closes popup manually, reject immediately so login can be retried.
+    closedCheckId = setInterval(() => {
+      if (!isSettled && popup.closed) {
+        settle(reject, new Error("Authentication popup was closed by user"));
+      }
+    }, 300);
   });
 }
 
@@ -465,6 +484,9 @@ export async function startLogin(origin = "/") {
     window.location.href = result.redirectTo;
   } catch (error) {
     console.error("Login error:", error);
+    if (error.message.includes("closed by user")) {
+      throw error;
+    }
     if (error.message.includes("popup")) {
       window.location.href = `/login?error=popup_blocked&message=${encodeURIComponent(error.message)}`;
     } else if (error.message.includes("timeout")) {

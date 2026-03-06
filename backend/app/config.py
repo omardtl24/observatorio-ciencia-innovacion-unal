@@ -45,7 +45,7 @@ class Config:
 class TestingConfig(Config):
     """Configuration for testing."""
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
-    TESTING = True
+    TEST = True
     JWT_SECRET_KEY = "test-secret-key"
     PROFILE_IMAGE_CACHE_TTL_SECONDS = 60
     PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = 60

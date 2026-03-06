@@ -1,4 +1,5 @@
 import { getToken } from "./authService";
+import { toResourceCardModel, toResourceDisplayModel } from "./resourceModels";
 
 function redirectToConnectionError() {
     if (typeof window === "undefined") return;
@@ -120,37 +121,10 @@ export async function fetchResource(type, id) {
 }
 
 export function parseResourcesForCards(type, data) {
-    if (data.length === 0) return [];
-    return data.map((item, index) => {
-        return {
-            id: item.id,
-            main_title: item.main_title,
-            auxiliar_title: item.auxiliary_title,
-            description: item.description,
-            update_at: item.updated_at,
-            type: item.type,
-            resource_type: type
-        }
-    })
+    if (!Array.isArray(data) || data.length === 0) return [];
+    return data.map((item) => toResourceCardModel(type, item));
 }
 
 export function parseResourcesText(type, data) {
-    let resource = null;
-    let resource_type = null;
-    
-    if (type==='report'){
-        resource = data.document_file_id;
-        resource_type = "report";
-    }
-    console.log(data)
-    console.log(type, resource)
-    return {
-        id: data.id,
-        main_title: data.main_title,
-        auxiliary_title: data.auxiliary_title,
-        description: data.description,
-        resource_type: resource_type,
-        type: type,
-        resource_displayable: resource
-    }
+    return toResourceDisplayModel(type, data);
 }

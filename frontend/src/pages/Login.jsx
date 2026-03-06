@@ -41,7 +41,7 @@ export default function Login() {
     }
   }, [location, navigate]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setLoading(true);
     setErrorMessage(null);
     
@@ -49,7 +49,17 @@ export default function Login() {
     const params = new URLSearchParams(location.search);
     const origin = params.get("origin") || "/";
     
-    startLogin(origin);
+    try {
+      await startLogin(origin);
+    } catch (error) {
+      if (error.message.includes("closed by user")) {
+        setErrorMessage("La ventana de autenticacion fue cerrada. Intenta nuevamente.");
+      } else {
+        setErrorMessage(error.message || "No fue posible completar el inicio de sesion.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return <Loading message="Redirigiendo a Google..." />;
