@@ -211,3 +211,6 @@ __marimo__/
 #Test_files that are real reports for official demo
 test_files/**.pdf
 backend/app/files/
+
+#Credentials files
+credentials/**

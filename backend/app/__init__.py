@@ -5,6 +5,7 @@ from app.api.auth_routes import auth_bp, test_auth_bp
 from app.api.visor_routes import visor_bp
 from app.api.file_routes import file_bp
 from app.api.report_routes import report_bp
+from app.api.permission_routes import permission_bp
 from app.models.base import db
 from app.config import Config, TestingConfig
 from app.error_handlers import (
@@ -81,6 +82,7 @@ def create_app(config_name="production"):
     app.register_blueprint(visor_bp)
     app.register_blueprint(file_bp)
     app.register_blueprint(report_bp)
+    app.register_blueprint(permission_bp)
 
     if not is_test_mode:
         with app.app_context():

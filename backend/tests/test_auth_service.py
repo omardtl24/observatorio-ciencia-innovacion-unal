@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from app.services.auth_service import AuthService
-from app.domain.exceptions import NotFoundError, ForbiddenError, IllegalOperationError
+from app.domain.exceptions import NotFoundError, IllegalOperationError
 
 @pytest.fixture
 def mock_app(app):
@@ -225,8 +225,12 @@ class TestAuthServiceProcessCallbackErrors:
             
             assert "no proporcionó un correo electrónico" in str(exc_info.value)
     
-    def test_callback_raises_error_for_invalid_email_domain(self, auth_service, mock_app):
-        """Test that ForbiddenError is raised for invalid email domain."""
+    @patch('app.services.auth_service.create_access_token')
+    @patch('app.services.auth_service.UserService')
+    def test_callback_allows_invalid_email_domain(
+        self, mock_user_service, mock_create_token, auth_service, mock_app
+    ):
+        """Test that non-community domains are allowed and authenticated."""
         with mock_app.app_context():
             # Setup token with wrong email domain
             token = {
@@ -237,15 +241,27 @@ class TestAuthServiceProcessCallbackErrors:
                 }
             }
             auth_service.auth0.authorize_access_token.return_value = token
+
+            mock_user = Mock()
+            mock_user.email = 'test@invalid-domain.com'
+            mock_user.names = 'Test'
+            mock_user.last_names = 'User'
+            mock_user.roles = []
+
+            mock_user_service.create.return_value = mock_user
+            mock_user_service.update.return_value = mock_user
+            mock_create_token.return_value = 'jwt_token'
             
             # Execute and verify
-            with pytest.raises(ForbiddenError) as exc_info:
-                auth_service.process_callback_for_redirect()
-            
-            assert "Solo se permiten cuentas con dominio @unal.edu.co" in str(exc_info.value)
+            result = auth_service.process_callback_for_redirect()
+            assert result['email'] == 'test@invalid-domain.com'
     
-    def test_callback_rejects_email_with_partial_domain_match(self, auth_service, mock_app):
-        """Test that emails with partial domain match are rejected."""
+    @patch('app.services.auth_service.create_access_token')
+    @patch('app.services.auth_service.UserService')
+    def test_callback_allows_email_with_partial_domain_match(
+        self, mock_user_service, mock_create_token, auth_service, mock_app
+    ):
+        """Test that partial domain matches are also allowed by current auth logic."""
         with mock_app.app_context():
             # Setup token with email that contains but doesn't end with domain
             token = {
@@ -256,10 +272,20 @@ class TestAuthServiceProcessCallbackErrors:
                 }
             }
             auth_service.auth0.authorize_access_token.return_value = token
+
+            mock_user = Mock()
+            mock_user.email = 'test@notunal.edu.co.fake.com'
+            mock_user.names = 'Test'
+            mock_user.last_names = 'User'
+            mock_user.roles = []
+
+            mock_user_service.create.return_value = mock_user
+            mock_user_service.update.return_value = mock_user
+            mock_create_token.return_value = 'jwt_token'
             
             # Execute and verify
-            with pytest.raises(ForbiddenError):
-                auth_service.process_callback_for_redirect()
+            result = auth_service.process_callback_for_redirect()
+            assert result['email'] == 'test@notunal.edu.co.fake.com'
 
 
 class TestAuthServiceProcessCallbackEdgeCases:

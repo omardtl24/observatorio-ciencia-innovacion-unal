@@ -24,6 +24,12 @@ class Config:
     AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
     AUTH0_CALLBACK_URL = os.getenv("AUTH0_CALLBACK_URL")
 
+    # ---- LOOKER STUDIO / OAUTH ----
+    CLIENT_ID = os.getenv("CLIENT_ID")
+    CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+    REDIRECT_URI = os.getenv("REDIRECT_URI")
+    REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
+
     # ---- FILE STORAGE ----
     FILE_STORAGE_ROOT = os.path.join(
         BASE_DIR, os.getenv("FILE_STORAGE_ROOT")
