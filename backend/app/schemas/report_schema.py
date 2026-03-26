@@ -31,6 +31,7 @@ class ReportCreateRequest(BaseModel):
     auxiliary_title: Optional[str] = Field(None, description="The auxiliary title of the report")
     description: Optional[str] = Field(None, description="The description of the report")
     document_file_id: Optional[int] = Field(None, description="The ID of the associated document file")
+    role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the report")
     updated_at: datetime = Field(..., description="The last update timestamp of the report")
 
 

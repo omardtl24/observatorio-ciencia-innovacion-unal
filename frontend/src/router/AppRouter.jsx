@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "../layout/Layout";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
+import CreateResource from "../pages/CreateResource";
 import Landing from "../pages/Landing";
 import Resources from "../pages/Resources";
 import Resource from "../pages/Resource";
@@ -21,7 +22,10 @@ const routeConfig = [
     backgroundClass: "bg-gray-100" },
   { path: "/dashboard", 
     component: Dashboard, 
-    backgroundSVGImage: Bg3, 
+    backgroundClass: "bg-primary-cyan-soft" },
+  { path: "/resources/create",
+    component: CreateResource,
+    backgroundSVGImage: Bg3,
     svgFillClass: "text-primary-cyan-strong",
     backgroundClass: "bg-gray-100" },
   { path: "/resources/:type", 

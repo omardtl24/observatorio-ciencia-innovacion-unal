@@ -61,7 +61,7 @@ async function getErrorMessage(response, fallbackMessage) {
         if (data && typeof data.message === "string" && data.message.trim() !== "") {
             return data.message;
         }
-    } catch (err) {
+    } catch {
         return fallbackMessage;
     }
     return fallbackMessage;
@@ -147,6 +147,121 @@ export async function fetchResources(type) {
     return response.json();
 }
 
+export async function fetchAssignableRoles() {
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/role/all?exclude_admin=true`;
+    const token = getToken();
+    let response;
+    try {
+        response = await fetchWithTimeout(fetchUrl, {
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "Failed to fetch roles");
+        throw new Error(message);
+    }
+    return response.json();
+}
+
+export async function fetchRoleManagementData(options = {}) {
+    const excludeAdmin = options.excludeAdmin ?? true;
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/role/management-data?exclude_admin=${excludeAdmin}`;
+    const token = getToken();
+    let response;
+    try {
+        response = await fetchWithTimeout(fetchUrl, {
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "Failed to fetch role management data");
+        throw new Error(message);
+    }
+    return response.json();
+}
+
+export async function assignRoleToUser(userEmail, roleId) {
+    const url = `${import.meta.env.VITE_API_URL}/role/assign`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                user_email: userEmail,
+                role_id: roleId,
+            }),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "Failed to assign role to user");
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function removeRoleFromUser(userEmail, roleId) {
+    const url = `${import.meta.env.VITE_API_URL}/role/remove`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                user_email: userEmail,
+                role_id: roleId,
+            }),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "Failed to remove role from user");
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
 
 export async function fetchResource(type, id) {
     const fetchUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
@@ -173,6 +288,124 @@ export async function fetchResource(type, id) {
         throw new Error(message);
     }
     return response.json();
+}
+
+export async function uploadResourceFile(file) {
+    if (!(file instanceof File)) {
+        throw new Error("A valid file is required");
+    }
+
+    const uploadUrl = `${import.meta.env.VITE_API_URL}/file/upload`;
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("file", file);
+
+    let response;
+    try {
+        response = await fetchWithTimeout(uploadUrl, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+            body: formData,
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "Failed to upload file");
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function createResource(type, payload) {
+    const createUrl = `${import.meta.env.VITE_API_URL}/${type}`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(createUrl, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, `Failed to create ${type}`);
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function deleteResource(type, id, cascade = true) {
+    const query = cascade ? "?cascade=true" : "";
+    const deleteUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}${query}`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(deleteUrl, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, `Failed to delete ${type} with ID ${id}`);
+        throw new Error(message);
+    }
+}
+
+export async function deleteFileById(fileId) {
+    const deleteUrl = `${import.meta.env.VITE_API_URL}/file/${fileId}`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(deleteUrl, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, `Failed to delete file ${fileId}`);
+        throw new Error(message);
+    }
 }
 
 export function parseResourcesForCards(type, data) {

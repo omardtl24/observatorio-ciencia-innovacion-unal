@@ -34,4 +34,5 @@ class VisorCreateRequest(BaseModel):
     type: str = Field(..., min_length=1, description="The type of the visor")
     description: str = Field(..., min_length=1, description="The description of the visor")
     visor_url: str = Field(..., min_length=1, description="The URL of the visor")
+    role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the visor")
     updated_at: datetime = Field(..., description="The last update timestamp of the visor")

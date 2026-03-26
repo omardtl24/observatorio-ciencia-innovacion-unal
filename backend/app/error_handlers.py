@@ -1,4 +1,7 @@
 from flask import jsonify, request
+from werkzeug.exceptions import HTTPException
+
+from app.domain.exceptions import DomainError
 
 
 def register_app_logger(app):
@@ -65,3 +68,26 @@ def register_jwt_error_handlers(jwt, app):
             "message": "Token has been revoked",
             "details": None,
         }), 401
+
+
+def register_api_error_handlers(app):
+    @app.errorhandler(DomainError)
+    def handle_domain_error(error):
+        return jsonify(error.to_dict()), error.code or 400
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        return jsonify({
+            "code": "http_error",
+            "message": error.description or "HTTP error",
+            "details": None,
+        }), error.code or 500
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_exception(error):
+        app.logger.exception("Unhandled exception", exc_info=error)
+        return jsonify({
+            "code": "internal_server_error",
+            "message": "Internal server error",
+            "details": None,
+        }), 500

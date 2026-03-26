@@ -8,8 +8,15 @@ from app.domain.exceptions import DomainError, UnauthorizedError
 from app.schemas.visor_schema import VisorCreateRequest
 from app.middleware import schema_validator
 from app.api.utils.check_roles import AccessChecker
+from app.services.role_service import RoleService
 
 visor_bp = Blueprint("visor", __name__, url_prefix="/visor")
+
+
+def _visor_to_dict_with_roles(visor):
+    payload = visor.to_dict()
+    payload["roles"] = [role.name for role in getattr(visor, "roles", [])]
+    return payload
 
 @visor_bp.post("")
 @jwt_required()
@@ -37,14 +44,28 @@ def create_visor():
 
     visor_service = VisorService()
     visor_data = request.validated_data.dict()
+    role_ids = visor_data.pop("role_ids", [])
+    selected_role_ids = list({int(role_id) for role_id in role_ids})
+    admin_role = RoleService.get_by_name("Administrador")
+
+    for role_id in selected_role_ids:
+        RoleService.get_by_id(role_id)
+
     visor = visor_service.create(**visor_data)
     visor = visor_service.get_by_id(visor.id)
     
     # Grant admin role access to the newly created visor
     AccessChecker.grant_admin_access(visor.id, "visor")
+    for role_id in selected_role_ids:
+        if role_id != admin_role.id:
+            RoleVisorRelation.add(role_id, visor.id)
+
+    visor = visor_service.get_by_id(visor.id)
     
-    include = ["id", "name", "description", "type", "visor_url", "updated_at"]
-    return jsonify(visor.to_dict(include=include)), 201
+    include = ["id", "main_title", "auxiliary_title", "description", "type", "visor_url", "updated_at"]
+    response = visor.to_dict(include=include)
+    response["roles"] = [role.name for role in getattr(visor, "roles", [])]
+    return jsonify(response), 201
 
 @visor_bp.get("/all")
 def get_visor():
@@ -53,12 +74,17 @@ def get_visor():
         list: A list of visors with their basic information (id, main_title, auxiliary_title, type, updated_at).
     """
     full = request.args.get("full") == "true"
-    visors = VisorService.get_all_dict(include=["id",
-                                                "main_title",
-                                                "auxiliary_title",
-                                                "type", 
-                                                "updated_at"]) if not full else VisorService.get_all_dict()
-    return jsonify(visors), 200
+    visors = VisorService.get_all()
+    if not full:
+        payload = []
+        for visor in visors:
+            item = visor.to_dict(include=["id", "main_title", "auxiliary_title", "type", "updated_at"])
+            item["roles"] = [role.name for role in getattr(visor, "roles", [])]
+            payload.append(item)
+        return jsonify(payload), 200
+
+    payload = [_visor_to_dict_with_roles(visor) for visor in visors]
+    return jsonify(payload), 200
 
 @visor_bp.get("/<int:visor_id>")
 #@jwt_required()

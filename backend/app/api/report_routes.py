@@ -8,8 +8,15 @@ from app.domain.exceptions import DomainError, SchemaValidationError, Unauthoriz
 from app.schemas.report_schema import ReportCreateRequest, ReportUpdateRequest
 from app.middleware import schema_validator
 from app.api.utils.check_roles import AccessChecker
+from app.services.role_service import RoleService
 
 report_bp = Blueprint("report", __name__, url_prefix="/report")
+
+
+def _report_to_dict_with_roles(report):
+    payload = report.to_dict()
+    payload["roles"] = [role.name for role in getattr(report, "roles", [])]
+    return payload
 
 @report_bp.post("")
 @jwt_required()
@@ -37,13 +44,27 @@ def create_report():
 
     report_service = ReportService()
     report_data = request.validated_data.dict()
+    role_ids = report_data.pop("role_ids", [])
+    selected_role_ids = list({int(role_id) for role_id in role_ids})
+    admin_role = RoleService.get_by_name("Administrador")
+
+    for role_id in selected_role_ids:
+        RoleService.get_by_id(role_id)
+
     report = report_service.create(**report_data)
     report = report_service.get_by_id(report.id)
-    
+
     AccessChecker.grant_admin_access(report.id, "report")
+    for role_id in selected_role_ids:
+        if role_id != admin_role.id:
+            RoleReportRelation.add(role_id, report.id)
+
+    report = report_service.get_by_id(report.id)
     
     include = ["id", "main_title", "auxiliary_title", "description", "document_file_id", "updated_at"]
-    return jsonify(report.to_dict(include=include)), 201
+    response = report.to_dict(include=include)
+    response["roles"] = [role.name for role in getattr(report, "roles", [])]
+    return jsonify(response), 201
 
 @report_bp.get("/all")
 def get_reports():
@@ -57,11 +78,17 @@ def get_reports():
               If full=true, returns all fields.
     """
     full = request.args.get("full") == "true"
-    reports = ReportService.get_all_dict(include=["id",
-                                                   "main_title",
-                                                   "auxiliary_title",
-                                                   "updated_at"]) if not full else ReportService.get_all_dict()
-    return jsonify(reports), 200
+    reports = ReportService.get_all()
+    if not full:
+        payload = []
+        for report in reports:
+            item = report.to_dict(include=["id", "main_title", "auxiliary_title", "updated_at"])
+            item["roles"] = [role.name for role in getattr(report, "roles", [])]
+            payload.append(item)
+        return jsonify(payload), 200
+
+    payload = [_report_to_dict_with_roles(report) for report in reports]
+    return jsonify(payload), 200
 
 @report_bp.get("/<int:report_id>")
 @jwt_required()
