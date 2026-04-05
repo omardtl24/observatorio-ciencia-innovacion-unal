@@ -38,7 +38,8 @@ export function parseRichText(text, colorClass) {
 
   const applyColor = (line) => parseColor(line, colorClass);
 
-  const lines = text.split("\n");
+  const normalizedText = text.replace(/\\n/g, "\n");
+  const lines = normalizedText.split("\n");
 
   const blocks = [];
   let listBuffer = [];

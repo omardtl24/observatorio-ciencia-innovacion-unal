@@ -73,7 +73,7 @@ function encodeMarkedFromHtml(html) {
     }
 
     if (node.nodeName === "BR") {
-      return "\n";
+      return "\\n";
     }
 
     if (node.nodeType !== Node.ELEMENT_NODE) {
@@ -88,7 +88,7 @@ function encodeMarkedFromHtml(html) {
     }
 
     if (tagName === "div" || tagName === "p") {
-      return `${childrenContent}\n`;
+      return `${childrenContent}\\n`;
     }
 
     return childrenContent;
@@ -97,8 +97,8 @@ function encodeMarkedFromHtml(html) {
   return Array.from(container.childNodes)
     .map(processNode)
     .join("")
-    .replace(/\n{3,}/g, "\n\n")
-    .trimEnd();
+    .replace(/(?:\\n){3,}/g, "\\n\\n")
+    .replace(/(?:\\n)+$/g, "");
 }
 
 function isSelectionInsideElement(selection, element) {
@@ -567,7 +567,7 @@ export default function CreateResource() {
             <div>
               <p className="text-sm text-gray-600 mb-3">Vista del titulo en detalle:</p>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
-                <h2 className="text-3xl font-ancizarItalic font-bold italic text-primary-blue-strong mb-1">
+                <h2 className="text-3xl font-serif italic font-bold text-primary-blue-strong mb-1">
                   {parseColor(previewMainTitleEncoded, "text-primary-cyan-base")}
                 </h2>
               </div>
