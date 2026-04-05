@@ -4,8 +4,7 @@ class Visor(db.Model, TimestampMixin, BaseModel):
     __tablename__ = 'visors'
 
     id = db.Column(db.Integer, primary_key=True)
-    main_title = db.Column(db.Text, nullable=False)
-    auxiliary_title = db.Column(db.Text)
+    title = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
     type = db.Column(db.Text)
     visor_url = db.Column(db.Text)
@@ -23,4 +22,4 @@ class Visor(db.Model, TimestampMixin, BaseModel):
     )
 
     def __repr__(self):
-        return f"<Visor {self.main_title}>"
+        return f"<Visor {self.title}>"

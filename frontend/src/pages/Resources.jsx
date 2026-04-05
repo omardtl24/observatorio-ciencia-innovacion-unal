@@ -74,7 +74,6 @@ export default function Resources() {
             key={item.id}
             id={item.id}
             mainTitle={item.mainTitle}
-            auxiliaryTitle={item.auxiliaryTitle}
             type={item.type || 'PDF'}
             updatedAt={datetoString(item.updatedAt)}
             coverImage={images[index % images.length]}

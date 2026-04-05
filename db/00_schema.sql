@@ -40,8 +40,7 @@ CREATE TABLE files (
 
 CREATE TABLE simulators (
     id SERIAL PRIMARY KEY,
-    main_title TEXT NOT NULL,
-    auxiliary_title TEXT,
+    title TEXT NOT NULL,
     description TEXT,
     specs_file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
@@ -50,8 +49,7 @@ CREATE TABLE simulators (
 
 CREATE TABLE visors (
     id SERIAL PRIMARY KEY,
-    main_title TEXT NOT NULL,
-    auxiliary_title TEXT,
+    title TEXT NOT NULL,
     description TEXT,
     type TEXT,
     visor_url TEXT,
@@ -61,8 +59,7 @@ CREATE TABLE visors (
 
 CREATE TABLE reports (
     id SERIAL PRIMARY KEY,
-    main_title TEXT NOT NULL,
-    auxiliary_title TEXT,
+    title TEXT NOT NULL,
     description TEXT,
     document_file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
@@ -71,8 +68,7 @@ CREATE TABLE reports (
 
 CREATE TABLE documents_presentations (
     id SERIAL PRIMARY KEY,
-    main_title TEXT NOT NULL,
-    auxiliary_title TEXT,
+    title TEXT NOT NULL,
     description TEXT,
     file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),

@@ -31,8 +31,11 @@ class Config:
     REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
 
     # ---- FILE STORAGE ----
-    FILE_STORAGE_ROOT = os.path.join(
-        BASE_DIR, os.getenv("FILE_STORAGE_ROOT")
+    _FILE_STORAGE_ROOT_ENV = os.getenv("FILE_STORAGE_ROOT", "files")
+    FILE_STORAGE_ROOT = (
+        _FILE_STORAGE_ROOT_ENV
+        if os.path.isabs(_FILE_STORAGE_ROOT_ENV)
+        else os.path.join(BASE_DIR, _FILE_STORAGE_ROOT_ENV)
     )
     PROFILE_IMAGE_CACHE_DIR = os.path.join(FILE_STORAGE_ROOT, "profile_images_cache")
     PROFILE_IMAGE_CACHE_TTL_SECONDS = int(os.getenv("PROFILE_IMAGE_CACHE_TTL_SECONDS", "86400"))

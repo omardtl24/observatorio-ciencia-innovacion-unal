@@ -40,8 +40,7 @@ export function toResourceCardModel(resourceType, item) {
 
   return {
     id: item?.id,
-    mainTitle: item?.main_title || "",
-    auxiliaryTitle: item?.auxiliary_title || "",
+    mainTitle: item?.title || "",
     description: item?.description || "",
     updatedAt: normalizeDate(item),
     type: inferMediaType(normalizedType, item).toUpperCase(),
@@ -65,8 +64,7 @@ export function toResourceDisplayModel(resourceType, item) {
 
   return {
     id: item?.id,
-    mainTitle: item?.main_title || "",
-    auxiliaryTitle: item?.auxiliary_title || "",
+    mainTitle: item?.title || "",
     description: item?.description || "",
     type: normalizedType,
     resourceType: inferMediaType(normalizedType, item),

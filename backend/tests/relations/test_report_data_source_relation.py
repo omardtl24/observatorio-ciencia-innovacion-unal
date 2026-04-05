@@ -13,7 +13,7 @@ class TestReportDataSourceRelationAdd:
     def test_add_data_source_to_report(self, app, test_file):
         """Test adding a data source to a report."""
         with app.app_context():
-            report = ReportService.create(main_title="Analytics Report")
+            report = ReportService.create(title="Analytics Report")
             data_source = DataSourceService.create(name="API Source", file_id=test_file.id)
             
             report_result, ds_result = ReportDataSourceRelation.add_data_source_to_report(report.id, data_source.id)
@@ -25,7 +25,7 @@ class TestReportDataSourceRelationAdd:
     def test_add_duplicate_data_source_raises_error(self, app, test_file):
         """Test that adding duplicate data source raises error."""
         with app.app_context():
-            report = ReportService.create(main_title="Test Report")
+            report = ReportService.create(title="Test Report")
             data_source = DataSourceService.create(name="DB Source", file_id=test_file.id)
             
             ReportDataSourceRelation.add_data_source_to_report(report.id, data_source.id)
@@ -44,7 +44,7 @@ class TestReportDataSourceRelationAdd:
     def test_add_nonexistent_data_source_to_report_raises_error(self, app):
         """Test that adding nonexistent data source raises error."""
         with app.app_context():
-            report = ReportService.create(main_title="Report")
+            report = ReportService.create(title="Report")
             
             with pytest.raises(NotFoundError):
                 ReportDataSourceRelation.add_data_source_to_report(report.id, 9999)
@@ -56,7 +56,7 @@ class TestReportDataSourceRelationRemove:
     def test_remove_data_source_from_report(self, app, test_file):
         """Test removing a data source from a report."""
         with app.app_context():
-            report = ReportService.create(main_title="Report")
+            report = ReportService.create(title="Report")
             data_source = DataSourceService.create(name="Source", file_id=test_file.id)
             ReportDataSourceRelation.add_data_source_to_report(report.id, data_source.id)
             
@@ -67,7 +67,7 @@ class TestReportDataSourceRelationRemove:
     def test_remove_nonexistent_data_source_from_report_raises_error(self, app, test_file):
         """Test that removing unassigned data source raises error."""
         with app.app_context():
-            report = ReportService.create(main_title="Report")
+            report = ReportService.create(title="Report")
             data_source = DataSourceService.create(name="Source", file_id=test_file.id)
             
             with pytest.raises(IllegalOperationError):
@@ -80,7 +80,7 @@ class TestReportDataSourceRelationGet:
     def test_get_all_data_sources_for_report(self, app, test_file):
         """Test getting all data sources for a report."""
         with app.app_context():
-            report = ReportService.create(main_title="Multi-source Report")
+            report = ReportService.create(title="Multi-source Report")
             ds1 = DataSourceService.create(name="Source 1", file_id=test_file.id)
             ds2 = DataSourceService.create(name="Source 2", file_id=test_file.id)
             
@@ -96,8 +96,8 @@ class TestReportDataSourceRelationGet:
     def test_get_all_reports_for_data_source(self, app, test_file):
         """Test getting all reports for a data source."""
         with app.app_context():
-            report1 = ReportService.create(main_title="Report 1")
-            report2 = ReportService.create(main_title="Report 2")
+            report1 = ReportService.create(title="Report 1")
+            report2 = ReportService.create(title="Report 2")
             data_source = DataSourceService.create(name="Shared Source", file_id=test_file.id)
             
             ReportDataSourceRelation.add_data_source_to_report(report1.id, data_source.id)
@@ -116,7 +116,7 @@ class TestReportDataSourceRelationRemoveAll:
     def test_remove_all_data_sources_for_report(self, app, test_file):
         """Test removing all data sources from a report."""
         with app.app_context():
-            report = ReportService.create(main_title="Report")
+            report = ReportService.create(title="Report")
             ds1 = DataSourceService.create(name="DS1", file_id=test_file.id)
             ds2 = DataSourceService.create(name="DS2", file_id=test_file.id)
             
@@ -131,8 +131,8 @@ class TestReportDataSourceRelationRemoveAll:
     def test_remove_all_reports_for_data_source(self, app, test_file):
         """Test removing all reports from a data source."""
         with app.app_context():
-            report1 = ReportService.create(main_title="R1")
-            report2 = ReportService.create(main_title="R2")
+            report1 = ReportService.create(title="R1")
+            report2 = ReportService.create(title="R2")
             data_source = DataSourceService.create(name="DS", file_id=test_file.id)
             
             ReportDataSourceRelation.add_data_source_to_report(report1.id, data_source.id)
@@ -150,7 +150,7 @@ class TestReportDataSourceRelationIntegration:
     def test_complete_relationship_lifecycle(self, app, test_file):
         """Test complete lifecycle of report-datasource relationship."""
         with app.app_context():
-            report = ReportService.create(main_title="Dashboard")
+            report = ReportService.create(title="Dashboard")
             ds1 = DataSourceService.create(name="API", file_id=test_file.id)
             ds2 = DataSourceService.create(name="DB", file_id=test_file.id)
             

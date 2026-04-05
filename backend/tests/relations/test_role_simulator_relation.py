@@ -14,7 +14,7 @@ class TestRoleSimulatorRelationAdd:
         """Test adding a simulator to a role."""
         with app.app_context():
             role = RoleService.create(name="Analyst")
-            simulator = SimulatorService.create(main_title="Budget Simulator")
+            simulator = SimulatorService.create(title="Budget Simulator")
             
             role_result, sim_result = RoleSimulatorRelation.add_simulator_to_role(role.id, simulator.id)
             
@@ -26,7 +26,7 @@ class TestRoleSimulatorRelationAdd:
         """Test that adding duplicate simulator raises error."""
         with app.app_context():
             role = RoleService.create(name="Manager")
-            simulator = SimulatorService.create(main_title="Cost Simulator")
+            simulator = SimulatorService.create(title="Cost Simulator")
             
             RoleSimulatorRelation.add_simulator_to_role(role.id, simulator.id)
             
@@ -36,7 +36,7 @@ class TestRoleSimulatorRelationAdd:
     def test_add_simulator_to_nonexistent_role_raises_error(self, app):
         """Test that adding simulator to nonexistent role raises error."""
         with app.app_context():
-            simulator = SimulatorService.create(main_title="Risk Simulator")
+            simulator = SimulatorService.create(title="Risk Simulator")
             
             with pytest.raises(NotFoundError):
                 RoleSimulatorRelation.add_simulator_to_role(9999, simulator.id)
@@ -57,7 +57,7 @@ class TestRoleSimulatorRelationRemove:
         """Test removing a simulator from a role."""
         with app.app_context():
             role = RoleService.create(name="Viewer")
-            simulator = SimulatorService.create(main_title="Forecast Simulator")
+            simulator = SimulatorService.create(title="Forecast Simulator")
             RoleSimulatorRelation.add_simulator_to_role(role.id, simulator.id)
             
             role_result, sim_result = RoleSimulatorRelation.remove_simulator_from_role(role.id, simulator.id)
@@ -68,7 +68,7 @@ class TestRoleSimulatorRelationRemove:
         """Test that removing unassigned simulator raises error."""
         with app.app_context():
             role = RoleService.create(name="Guest")
-            simulator = SimulatorService.create(main_title="Test Simulator")
+            simulator = SimulatorService.create(title="Test Simulator")
             
             with pytest.raises(IllegalOperationError):
                 RoleSimulatorRelation.remove_simulator_from_role(role.id, simulator.id)
@@ -81,8 +81,8 @@ class TestRoleSimulatorRelationGet:
         """Test getting all simulators for a role."""
         with app.app_context():
             role = RoleService.create(name="Power User")
-            sim1 = SimulatorService.create(main_title="Simulator 1")
-            sim2 = SimulatorService.create(main_title="Simulator 2")
+            sim1 = SimulatorService.create(title="Simulator 1")
+            sim2 = SimulatorService.create(title="Simulator 2")
             
             RoleSimulatorRelation.add_simulator_to_role(role.id, sim1.id)
             RoleSimulatorRelation.add_simulator_to_role(role.id, sim2.id)
@@ -98,7 +98,7 @@ class TestRoleSimulatorRelationGet:
         with app.app_context():
             role1 = RoleService.create(name="Role 1")
             role2 = RoleService.create(name="Role 2")
-            simulator = SimulatorService.create(main_title="Shared Simulator")
+            simulator = SimulatorService.create(title="Shared Simulator")
             
             RoleSimulatorRelation.add_simulator_to_role(role1.id, simulator.id)
             RoleSimulatorRelation.add_simulator_to_role(role2.id, simulator.id)
@@ -117,8 +117,8 @@ class TestRoleSimulatorRelationRemoveAll:
         """Test removing all simulators from a role."""
         with app.app_context():
             role = RoleService.create(name="Test Role")
-            sim1 = SimulatorService.create(main_title="S1")
-            sim2 = SimulatorService.create(main_title="S2")
+            sim1 = SimulatorService.create(title="S1")
+            sim2 = SimulatorService.create(title="S2")
             
             RoleSimulatorRelation.add_simulator_to_role(role.id, sim1.id)
             RoleSimulatorRelation.add_simulator_to_role(role.id, sim2.id)
@@ -133,7 +133,7 @@ class TestRoleSimulatorRelationRemoveAll:
         with app.app_context():
             role1 = RoleService.create(name="R1")
             role2 = RoleService.create(name="R2")
-            simulator = SimulatorService.create(main_title="S")
+            simulator = SimulatorService.create(title="S")
             
             RoleSimulatorRelation.add_simulator_to_role(role1.id, simulator.id)
             RoleSimulatorRelation.add_simulator_to_role(role2.id, simulator.id)
@@ -151,8 +151,8 @@ class TestRoleSimulatorRelationIntegration:
         """Test complete lifecycle of role-simulator relationship."""
         with app.app_context():
             role = RoleService.create(name="SuperUser")
-            sim1 = SimulatorService.create(main_title="Scenario 1")
-            sim2 = SimulatorService.create(main_title="Scenario 2")
+            sim1 = SimulatorService.create(title="Scenario 1")
+            sim2 = SimulatorService.create(title="Scenario 2")
             
             # Add simulators
             RoleSimulatorRelation.add_simulator_to_role(role.id, sim1.id)

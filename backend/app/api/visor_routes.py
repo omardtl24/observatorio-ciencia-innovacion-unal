@@ -61,8 +61,8 @@ def create_visor():
             RoleVisorRelation.add(role_id, visor.id)
 
     visor = visor_service.get_by_id(visor.id)
-    
-    include = ["id", "main_title", "auxiliary_title", "description", "type", "visor_url", "updated_at"]
+
+    include = ["id", "title", "description", "type", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     return jsonify(response), 201
@@ -71,14 +71,13 @@ def create_visor():
 def get_visor():
     """Retreive all visors available for preview
     Returns:
-        list: A list of visors with their basic information (id, main_title, auxiliary_title, type, updated_at).
     """
     full = request.args.get("full") == "true"
     visors = VisorService.get_all()
     if not full:
         payload = []
         for visor in visors:
-            item = visor.to_dict(include=["id", "main_title", "auxiliary_title", "type", "updated_at"])
+            item = visor.to_dict(include=["id", "title", "type", "updated_at"])
             item["roles"] = [role.name for role in getattr(visor, "roles", [])]
             payload.append(item)
         return jsonify(payload), 200
@@ -91,15 +90,13 @@ def get_visor():
 def get_visor_by_id(visor_id):
     """Retreive specific information of visor by id
     Returns:
-        list: A list of visors with their basic information (id, main_title, auxiliary_title, description, visor_url).
     """
 
     #TODO: validate user permissions to delete files
 
     visor = VisorService.get_by_id(visor_id)
     response = visor.to_dict(include=["id",
-                                      "main_title",
-                                      "auxiliary_title",
+                                      "title",
                                       "description",
                                       "type",
                                       "visor_url",
@@ -138,7 +135,7 @@ def update_visor(visor_id):
                 RoleVisorRelation.add(role_id, visor_id)
 
     visor = VisorService.get_by_id(visor_id)
-    include = ["id", "main_title", "auxiliary_title", "description", "type", "visor_url", "updated_at"]
+    include = ["id", "title", "description", "type", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
@@ -173,7 +170,7 @@ def update_visor_roles(visor_id):
             RoleVisorRelation.add(role_id, visor_id)
 
     visor = VisorService.get_by_id(visor_id)
-    include = ["id", "main_title", "auxiliary_title", "description", "type", "visor_url", "updated_at"]
+    include = ["id", "title", "description", "type", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]

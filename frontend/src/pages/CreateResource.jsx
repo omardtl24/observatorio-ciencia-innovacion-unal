@@ -41,8 +41,7 @@ const RESOURCE_DEFINITIONS = {
 
 const INITIAL_FORM = {
   resourceType: "report",
-  main_title: "",
-  auxiliary_title: "",
+  title: "",
   description: "",
   visor_type: "",
   visor_url: "",
@@ -116,8 +115,7 @@ export default function CreateResource() {
   const location = useLocation();
   const [form, setForm] = useState(INITIAL_FORM);
   const [richFields, setRichFields] = useState({
-    main_title: "",
-    auxiliary_title: "",
+    title: "",
     description: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -126,7 +124,6 @@ export default function CreateResource() {
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [formatMessage, setFormatMessage] = useState("");
   const mainTitleRef = useRef(null);
-  const auxiliaryTitleRef = useRef(null);
   const descriptionRef = useRef(null);
 
   const currentDefinition = useMemo(
@@ -241,8 +238,7 @@ export default function CreateResource() {
   };
 
   const validate = () => {
-    const mainTitle = getPlainFromHtml(richFields.main_title).trim();
-    const auxiliaryTitle = getPlainFromHtml(richFields.auxiliary_title).trim();
+    const mainTitle = getPlainFromHtml(richFields.title).trim();
     const description = getPlainFromHtml(richFields.description).trim();
 
     if (!mainTitle) {
@@ -250,9 +246,6 @@ export default function CreateResource() {
     }
 
     if (form.resourceType === "visor") {
-      if (!auxiliaryTitle) {
-        return "El campo Titulo auxiliar es obligatorio para visores";
-      }
       if (!description) {
         return "La descripcion es obligatoria para visores";
       }
@@ -272,18 +265,13 @@ export default function CreateResource() {
   };
 
   const buildPayload = (fileId) => {
-    const encodedMainTitle = encodeMarkedFromHtml(richFields.main_title);
-    const encodedAuxTitle = encodeMarkedFromHtml(richFields.auxiliary_title);
+    const encodedMainTitle = encodeMarkedFromHtml(richFields.title);
     const encodedDescription = encodeMarkedFromHtml(richFields.description);
 
     const basePayload = {
-      main_title: encodedMainTitle.trim(),
+      title: encodedMainTitle.trim(),
       updated_at: form.updated_date ? new Date(form.updated_date).toISOString() : new Date().toISOString(),
     };
-
-    if (encodedAuxTitle.trim()) {
-      basePayload.auxiliary_title = encodedAuxTitle.trim();
-    }
 
     if (encodedDescription.trim()) {
       basePayload.description = encodedDescription;
@@ -310,13 +298,11 @@ export default function CreateResource() {
     month: "long",
   });
 
-  const previewMainTitle = getPlainFromHtml(richFields.main_title).trim() || "Titulo principal";
-  const previewAuxTitle = getPlainFromHtml(richFields.auxiliary_title).trim() || "Titulo auxiliar";
+  const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
   const previewType = form.resourceType === "visor"
     ? (form.visor_type.trim() || "VISOR")
     : "PDF";
-  const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.main_title).trim() || "Titulo principal";
-  const previewAuxTitleEncoded = encodeMarkedFromHtml(richFields.auxiliary_title).trim() || "Titulo auxiliar";
+  const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.title).trim() || "Titulo principal";
   const previewDescriptionEncoded = encodeMarkedFromHtml(richFields.description).trim() ||
     "Aqui veras una vista previa de la descripcion del recurso.";
   const previewCardType = form.resourceType === "documents_presentations"
@@ -393,7 +379,7 @@ export default function CreateResource() {
               <label className="block text-sm font-medium text-gray-700">Titulo principal *</label>
               <button
                 type="button"
-                onClick={() => applyHighlightFormat("main_title", mainTitleRef)}
+                onClick={() => applyHighlightFormat("title", mainTitleRef)}
                 className="border border-primary-blue text-primary-blue px-2.5 py-1 rounded text-xs font-semibold hover:bg-blue-50 transition"
               >
                 Resaltar texto
@@ -403,27 +389,7 @@ export default function CreateResource() {
               ref={mainTitleRef}
               contentEditable={!submitting}
               suppressContentEditableWarning
-              onInput={(e) => updateRichField("main_title", e.currentTarget.innerHTML)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 min-h-10 whitespace-pre-wrap"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <label className="block text-sm font-medium text-gray-700">Titulo auxiliar</label>
-              <button
-                type="button"
-                onClick={() => applyHighlightFormat("auxiliary_title", auxiliaryTitleRef)}
-                className="border border-primary-blue text-primary-blue px-2.5 py-1 rounded text-xs font-semibold hover:bg-blue-50 transition"
-              >
-                Resaltar texto
-              </button>
-            </div>
-            <div
-              ref={auxiliaryTitleRef}
-              contentEditable={!submitting}
-              suppressContentEditableWarning
-              onInput={(e) => updateRichField("auxiliary_title", e.currentTarget.innerHTML)}
+              onInput={(e) => updateRichField("title", e.currentTarget.innerHTML)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 min-h-10 whitespace-pre-wrap"
             />
           </div>
@@ -590,7 +556,6 @@ export default function CreateResource() {
                 <ResourceCard
                   id={0}
                   mainTitle={previewMainTitle}
-                  auxiliaryTitle={previewAuxTitle}
                   type={previewType}
                   updatedAt={previewUpdatedAt}
                   coverImage={previewCoverImage}
@@ -603,7 +568,7 @@ export default function CreateResource() {
               <p className="text-sm text-gray-600 mb-3">Vista del titulo en detalle:</p>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <h2 className="text-3xl font-ancizarItalic font-bold italic text-primary-blue-strong mb-1">
-                  {parseColor(`${previewMainTitleEncoded} ${previewAuxTitleEncoded}`, "text-primary-cyan-base")}
+                  {parseColor(previewMainTitleEncoded, "text-primary-cyan-base")}
                 </h2>
               </div>
             </div>

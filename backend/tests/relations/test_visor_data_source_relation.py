@@ -13,7 +13,7 @@ class TestVisorDataSourceRelationAdd:
     def test_add_data_source_to_visor(self, app, test_file):
         """Test adding a data source to a visor."""
         with app.app_context():
-            visor = VisorService.create(main_title="Dashboard")
+            visor = VisorService.create(title="Dashboard")
             data_source = DataSourceService.create(name="API Source", file_id=test_file.id)
             
             visor_result, ds_result = VisorDataSourceRelation.add_data_source_to_visor(visor.id, data_source.id)
@@ -25,7 +25,7 @@ class TestVisorDataSourceRelationAdd:
     def test_add_duplicate_data_source_raises_error(self, app, test_file):
         """Test that adding duplicate data source raises error."""
         with app.app_context():
-            visor = VisorService.create(main_title="Test Visor")
+            visor = VisorService.create(title="Test Visor")
             data_source = DataSourceService.create(name="DB Source", file_id=test_file.id)
             
             VisorDataSourceRelation.add_data_source_to_visor(visor.id, data_source.id)
@@ -44,7 +44,7 @@ class TestVisorDataSourceRelationAdd:
     def test_add_nonexistent_data_source_to_visor_raises_error(self, app):
         """Test that adding nonexistent data source raises error."""
         with app.app_context():
-            visor = VisorService.create(main_title="Visor")
+            visor = VisorService.create(title="Visor")
             
             with pytest.raises(NotFoundError):
                 VisorDataSourceRelation.add_data_source_to_visor(visor.id, 9999)
@@ -56,7 +56,7 @@ class TestVisorDataSourceRelationRemove:
     def test_remove_data_source_from_visor(self, app, test_file):
         """Test removing a data source from a visor."""
         with app.app_context():
-            visor = VisorService.create(main_title="Visor")
+            visor = VisorService.create(title="Visor")
             data_source = DataSourceService.create(name="Source", file_id=test_file.id)
             VisorDataSourceRelation.add_data_source_to_visor(visor.id, data_source.id)
             
@@ -67,7 +67,7 @@ class TestVisorDataSourceRelationRemove:
     def test_remove_nonexistent_data_source_from_visor_raises_error(self, app, test_file):
         """Test that removing unassigned data source raises error."""
         with app.app_context():
-            visor = VisorService.create(main_title="Visor")
+            visor = VisorService.create(title="Visor")
             data_source = DataSourceService.create(name="Source", file_id=test_file.id)
             
             with pytest.raises(IllegalOperationError):
@@ -80,7 +80,7 @@ class TestVisorDataSourceRelationGet:
     def test_get_all_data_sources_for_visor(self, app, test_file):
         """Test getting all data sources for a visor."""
         with app.app_context():
-            visor = VisorService.create(main_title="Multi-source Visor")
+            visor = VisorService.create(title="Multi-source Visor")
             ds1 = DataSourceService.create(name="Source 1", file_id=test_file.id)
             ds2 = DataSourceService.create(name="Source 2", file_id=test_file.id)
             
@@ -96,8 +96,8 @@ class TestVisorDataSourceRelationGet:
     def test_get_all_visors_for_data_source(self, app, test_file):
         """Test getting all visors for a data source."""
         with app.app_context():
-            visor1 = VisorService.create(main_title="Visor 1")
-            visor2 = VisorService.create(main_title="Visor 2")
+            visor1 = VisorService.create(title="Visor 1")
+            visor2 = VisorService.create(title="Visor 2")
             data_source = DataSourceService.create(name="Shared Source", file_id=test_file.id)
             
             VisorDataSourceRelation.add_data_source_to_visor(visor1.id, data_source.id)
@@ -116,7 +116,7 @@ class TestVisorDataSourceRelationRemoveAll:
     def test_remove_all_data_sources_for_visor(self, app, test_file):
         """Test removing all data sources from a visor."""
         with app.app_context():
-            visor = VisorService.create(main_title="Visor")
+            visor = VisorService.create(title="Visor")
             ds1 = DataSourceService.create(name="DS1", file_id=test_file.id)
             ds2 = DataSourceService.create(name="DS2", file_id=test_file.id)
             
@@ -131,8 +131,8 @@ class TestVisorDataSourceRelationRemoveAll:
     def test_remove_all_visors_for_data_source(self, app, test_file):
         """Test removing all visors from a data source."""
         with app.app_context():
-            visor1 = VisorService.create(main_title="V1")
-            visor2 = VisorService.create(main_title="V2")
+            visor1 = VisorService.create(title="V1")
+            visor2 = VisorService.create(title="V2")
             data_source = DataSourceService.create(name="DS", file_id=test_file.id)
             
             VisorDataSourceRelation.add_data_source_to_visor(visor1.id, data_source.id)
@@ -150,7 +150,7 @@ class TestVisorDataSourceRelationIntegration:
     def test_complete_relationship_lifecycle(self, app, test_file):
         """Test complete lifecycle of visor-datasource relationship."""
         with app.app_context():
-            visor = VisorService.create(main_title="Analytics Dashboard")
+            visor = VisorService.create(title="Analytics Dashboard")
             ds1 = DataSourceService.create(name="API", file_id=test_file.id)
             ds2 = DataSourceService.create(name="DB", file_id=test_file.id)
             

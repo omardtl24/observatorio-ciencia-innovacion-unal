@@ -25,8 +25,7 @@ def create_report():
     """Create a new report.
     
     Payload:
-        main_title (str, required): The main title of the report.
-        auxiliary_title (str, optional): The auxiliary title of the report.
+        title (str, required): The main title of the report.
         description (str, optional): The description of the report.
         document_file_id (int, optional): The ID of the associated document file.
         updated_at (datetime, required): The last update timestamp.
@@ -60,8 +59,8 @@ def create_report():
             RoleReportRelation.add(role_id, report.id)
 
     report = report_service.get_by_id(report.id)
-    
-    include = ["id", "main_title", "auxiliary_title", "description", "document_file_id", "updated_at"]
+
+    include = ["id", "title", "description", "document_file_id", "updated_at"]
     response = report.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(report, "roles", [])]
     return jsonify(response), 201
@@ -74,7 +73,6 @@ def get_reports():
         full (str, optional): Set to 'true' to get full report information.
     
     Returns:
-        list: A list of reports with their basic information (id, main_title, auxiliary_title, updated_at).
               If full=true, returns all fields.
     """
     full = request.args.get("full") == "true"
@@ -82,7 +80,7 @@ def get_reports():
     if not full:
         payload = []
         for report in reports:
-            item = report.to_dict(include=["id", "main_title", "auxiliary_title", "updated_at"])
+            item = report.to_dict(include=["id", "title", "updated_at"])
             item["roles"] = [role.name for role in getattr(report, "roles", [])]
             payload.append(item)
         return jsonify(payload), 200
@@ -99,7 +97,6 @@ def get_report_by_id(report_id):
         report_id (int): The ID of the report.
     
     Returns:
-        dict: The report with basic information (id, main_title, auxiliary_title, description, document_file_id).
     
     Raises:
         401: If not authenticated (when JWT is enabled).
@@ -112,8 +109,7 @@ def get_report_by_id(report_id):
 
     report = ReportService.get_by_id(report_id)
     response = report.to_dict(include=["id",
-                                       "main_title",
-                                       "auxiliary_title",
+                                       "title",
                                        "description",
                                        "document_file_id",
                                        "updated_at"])
@@ -133,8 +129,7 @@ def update_report(report_id):
         report_id (int): The ID of the report to update.
     
     Payload:
-        main_title (str, optional): The main title of the report.
-        auxiliary_title (str, optional): The auxiliary title of the report.
+        title (str, optional): The main title of the report.
         description (str, optional): The description of the report.
         document_file_id (int, optional): The ID of the associated document file.
         updated_at (datetime, optional): The last update timestamp.
@@ -159,8 +154,7 @@ def update_report(report_id):
     report = ReportService.update(report_id, **update_data)
 
     return jsonify(report.to_dict(include=["id",
-                                           "main_title",
-                                           "auxiliary_title",
+                                           "title",
                                            "description",
                                            "document_file_id",
                                            "updated_at"])), 200
@@ -194,7 +188,7 @@ def update_report_roles(report_id):
             RoleReportRelation.add(role_id, report_id)
 
     report = ReportService.get_by_id(report_id)
-    response = report.to_dict(include=["id", "main_title", "auxiliary_title", "description", "document_file_id", "updated_at"])
+    response = report.to_dict(include=["id", "title", "description", "document_file_id", "updated_at"])
     response["roles"] = [role.name for role in getattr(report, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(report, "roles", [])]
     return jsonify(response), 200

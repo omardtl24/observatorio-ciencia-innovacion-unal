@@ -514,8 +514,7 @@ export default function Dashboard() {
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-gray-50 text-gray-700 uppercase tracking-wide text-xs">
                   <tr>
-                    <th className="px-6 py-3">Titulo principal</th>
-                    <th className="px-6 py-3">Titulo auxiliar</th>
+                    <th className="px-6 py-3">Titulo</th>
                     <th className="px-6 py-3">Roles asociados</th>
                     <th className="px-6 py-3">Actualizado en</th>
                     <th className="px-6 py-3">Acciones</th>
@@ -524,7 +523,7 @@ export default function Dashboard() {
                 <tbody>
                   {!tablesLoading && rows.length === 0 && (
                     <tr className="border-t border-gray-100">
-                      <td className="px-6 py-4 text-gray-500" colSpan={5}>
+                      <td className="px-6 py-4 text-gray-500" colSpan={4}>
                         No hay registros disponibles.
                       </td>
                     </tr>
@@ -533,13 +532,8 @@ export default function Dashboard() {
                   {(tablesLoading ? [] : rows.slice(0, 5)).map((row) => (
                     <tr key={row.id} className="border-t border-gray-100">
                       <td className="px-6 py-3 text-gray-900 font-medium">
-                        {row.main_title
-                          ? parseColor(row.main_title, "font-bold")
-                          : "No disponible"}
-                      </td>
-                      <td className="px-6 py-3 text-gray-700">
-                        {row.auxiliary_title
-                          ? parseColor(row.auxiliary_title, "font-bold")
+                        {row.title
+                          ? parseColor(row.title, "font-bold")
                           : "No disponible"}
                       </td>
                       <td className="px-6 py-3 text-gray-700">
@@ -551,6 +545,24 @@ export default function Dashboard() {
                       <td className="px-6 py-3 text-gray-700">{formatDate(getItemLastUpdate(row))}</td>
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/resource/${resourceType}/${row.id}`)}
+                            className="inline-flex items-center justify-center rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 px-2 py-1 transition"
+                            title="Ver recurso"
+                            aria-label="Ver recurso"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-4 h-4"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          </button>
                           <button
                             onClick={() => navigate(`/resource/edit/${resourceType}/${row.id}`)}
                             className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition"
@@ -598,7 +610,7 @@ export default function Dashboard() {
 
                   {tablesLoading && (
                     <tr className="border-t border-gray-100">
-                      <td className="px-6 py-4 text-gray-500" colSpan={5}>
+                      <td className="px-6 py-4 text-gray-500" colSpan={4}>
                         Cargando registros...
                       </td>
                     </tr>

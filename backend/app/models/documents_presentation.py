@@ -4,8 +4,7 @@ class DocumentPresentation(db.Model, TimestampMixin, BaseModel):
     __tablename__ = 'documents_presentations'
 
     id = db.Column(db.Integer, primary_key=True)
-    main_title = db.Column(db.Text, nullable=False)
-    auxiliary_title = db.Column(db.Text)
+    title = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
 
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
@@ -18,4 +17,4 @@ class DocumentPresentation(db.Model, TimestampMixin, BaseModel):
     )
 
     def __repr__(self):
-        return f"<DocumentPresentation {self.main_title}>"
+        return f"<DocumentPresentation {self.title}>"

@@ -14,8 +14,7 @@ class TestVisorServiceCreate:
         """Test creating a visor with all fields provided."""
         with app.app_context():
             visor_data = {
-                "main_title": "Test Visor",
-                "auxiliary_title": "Test Aux Title",
+                "title": "Test Visor",
                 "description": "A test visor",
                 "type": "analytics",
                 "visor_url": "http://example.com/visor",
@@ -25,8 +24,7 @@ class TestVisorServiceCreate:
             visor = VisorService.create(**visor_data)
             
             assert visor.id is not None
-            assert visor.main_title == "Test Visor"
-            assert visor.auxiliary_title == "Test Aux Title"
+            assert visor.title == "Test Visor"
             assert visor.description == "A test visor"
             assert visor.type == "analytics"
             assert visor.visor_url == "http://example.com/visor"
@@ -34,25 +32,24 @@ class TestVisorServiceCreate:
             assert isinstance(visor.created_at, datetime)
     
     def test_create_visor_with_minimal_fields(self, app):
-        """Test creating a visor with only required field (main_title)."""
+        """Test creating a visor with only required field (title)."""
         with app.app_context():
             visor_data = {
-                "main_title": "Minimal Visor",
+                "title": "Minimal Visor",
                 "updated_at": datetime.utcnow()
             }
             
             visor = VisorService.create(**visor_data)
             
             assert visor.id is not None
-            assert visor.main_title == "Minimal Visor"
-            assert visor.auxiliary_title is None
+            assert visor.title == "Minimal Visor"
             assert visor.description is None
             assert visor.type is None
             assert visor.visor_url is None
             assert visor.created_at is not None
     
     def test_create_visor_without_name_fails(self, app):
-        """Test that creating a visor without a main_title raises an error."""
+        """Test that creating a visor without a title raises an error."""
         with app.app_context():
             visor_data = {
                 "description": "A visor without name",
@@ -68,7 +65,7 @@ class TestVisorServiceCreate:
             before_creation = datetime.utcnow()
             
             visor_data = {
-                "main_title": "Timestamp Test Visor",
+                "title": "Timestamp Test Visor",
                 "updated_at": datetime.utcnow()
             }
             visor = VisorService.create(**visor_data)
@@ -99,11 +96,11 @@ class TestVisorServiceRead:
         with app.app_context():
             # Create multiple visors
             visor1 = VisorService.create(
-                main_title="Visor 1",
+                title="Visor 1",
                 updated_at=datetime.utcnow()
             )
             visor2 = VisorService.create(
-                main_title="Visor 2",
+                title="Visor 2",
                 description="Second visor",
                 updated_at=datetime.utcnow()
             )
@@ -118,7 +115,7 @@ class TestVisorServiceRead:
         """Test getting all visors as dictionaries."""
         with app.app_context():
             visor = VisorService.create(
-                main_title="Dict Visor",
+                title="Dict Visor",
                 type="analytics",
                 updated_at=datetime.utcnow()
             )
@@ -126,7 +123,7 @@ class TestVisorServiceRead:
             visors_dict = VisorService.get_all_dict()
             
             assert len(visors_dict) == 1
-            assert visors_dict[0]["main_title"] == "Dict Visor"
+            assert visors_dict[0]["title"] == "Dict Visor"
             assert visors_dict[0]["type"] == "analytics"
             assert "id" in visors_dict[0]
             assert "created_at" in visors_dict[0]
@@ -135,17 +132,17 @@ class TestVisorServiceRead:
         """Test getting all visors as dictionaries with field filtering."""
         with app.app_context():
             VisorService.create(
-                main_title="Include Test Visor",
+                title="Include Test Visor",
                 description="Test description",
                 type="report",
                 updated_at=datetime.utcnow()
             )
             
-            visors_dict = VisorService.get_all_dict(include=["id", "main_title", "type"])
+            visors_dict = VisorService.get_all_dict(include=["id", "title", "type"])
             
             assert len(visors_dict) == 1
             assert "id" in visors_dict[0]
-            assert "main_title" in visors_dict[0]
+            assert "title" in visors_dict[0]
             assert "type" in visors_dict[0]
             assert "description" not in visors_dict[0]
     
@@ -153,7 +150,7 @@ class TestVisorServiceRead:
         """Test getting all visors as dictionaries with field exclusion."""
         with app.app_context():
             VisorService.create(
-                main_title="Exclude Test Visor",
+                title="Exclude Test Visor",
                 description="Test description",
                 updated_at=datetime.utcnow()
             )
@@ -161,7 +158,7 @@ class TestVisorServiceRead:
             visors_dict = VisorService.get_all_dict(exclude=["created_at", "updated_at"])
             
             assert len(visors_dict) == 1
-            assert "main_title" in visors_dict[0]
+            assert "title" in visors_dict[0]
             assert "description" in visors_dict[0]
             assert "created_at" not in visors_dict[0]
             assert "updated_at" not in visors_dict[0]
@@ -170,14 +167,14 @@ class TestVisorServiceRead:
         """Test getting a visor by its ID."""
         with app.app_context():
             visor = VisorService.create(
-                main_title="Get By ID Visor",
+                title="Get By ID Visor",
                 updated_at=datetime.utcnow()
             )
             
             retrieved_visor = VisorService.get_by_id(visor.id)
             
             assert retrieved_visor.id == visor.id
-            assert retrieved_visor.main_title == "Get By ID Visor"
+            assert retrieved_visor.title == "Get By ID Visor"
     
     def test_get_visor_by_nonexistent_id_raises_error(self, app):
         """Test that getting a visor with a nonexistent ID raises NotFoundError."""
@@ -193,25 +190,25 @@ class TestVisorServiceUpdate:
         """Test updating a single field of a visor."""
         with app.app_context():
             visor = VisorService.create(
-                main_title="Original Name",
+                title="Original Name",
                 updated_at=datetime.utcnow()
             )
             original_id = visor.id
             
             updated_visor = VisorService.update(
                 visor.id,
-                main_title="Updated Name",
+                title="Updated Name",
                 updated_at=datetime.utcnow()
             )
             
             assert updated_visor.id == original_id
-            assert updated_visor.main_title == "Updated Name"
+            assert updated_visor.title == "Updated Name"
     
     def test_update_visor_multiple_fields(self, app):
         """Test updating multiple fields of a visor."""
         with app.app_context():
             visor = VisorService.create(
-                main_title="Original Visor",
+                title="Original Visor",
                 description="Original description",
                 type="old_type",
                 updated_at=datetime.utcnow()
@@ -219,14 +216,14 @@ class TestVisorServiceUpdate:
             
             updated_visor = VisorService.update(
                 visor.id,
-                main_title="New Visor Name",
+                title="New Visor Name",
                 description="New description",
                 type="new_type",
                 visor_url="http://new-url.com",
                 updated_at=datetime.utcnow()
             )
             
-            assert updated_visor.main_title == "New Visor Name"
+            assert updated_visor.title == "New Visor Name"
             assert updated_visor.description == "New description"
             assert updated_visor.type == "new_type"
             assert updated_visor.visor_url == "http://new-url.com"
@@ -235,18 +232,18 @@ class TestVisorServiceUpdate:
         """Test that updating a nonexistent visor raises NotFoundError."""
         with app.app_context():
             with pytest.raises(NotFoundError):
-                VisorService.update(9999, main_title="New Name")
+                VisorService.update(9999, title="New Name")
     
     def test_update_preserves_created_at(self, app):
         """Test that updating a visor preserves its created_at timestamp."""
         with app.app_context():
             visor = VisorService.create(
-                main_title="Test Visor",
+                title="Test Visor",
                 updated_at=datetime.utcnow()
             )
             original_created_at = visor.created_at
             
-            VisorService.update(visor.id, main_title="Updated Name")
+            VisorService.update(visor.id, title="Updated Name")
             updated_visor = VisorService.get_by_id(visor.id)
             
             assert updated_visor.created_at == original_created_at
@@ -259,7 +256,7 @@ class TestVisorServiceDelete:
         """Test deleting a visor."""
         with app.app_context():
             visor = VisorService.create(
-                main_title="Delete Test Visor",
+                title="Delete Test Visor",
                 updated_at=datetime.utcnow()
             )
             visor_id = visor.id
@@ -280,11 +277,11 @@ class TestVisorServiceDelete:
         """Test that deleting a visor removes it from the database."""
         with app.app_context():
             visor1 = VisorService.create(
-                main_title="Visor 1",
+                title="Visor 1",
                 updated_at=datetime.utcnow()
             )
             visor2 = VisorService.create(
-                main_title="Visor 2",
+                title="Visor 2",
                 updated_at=datetime.utcnow()
             )
             
@@ -303,7 +300,7 @@ class TestVisorServiceIntegration:
         with app.app_context():
             # Create
             visor = VisorService.create(
-                main_title="CRUD Test Visor",
+                title="CRUD Test Visor",
                 description="Test description",
                 type="analytics",
                 visor_url="http://test.com",
@@ -313,19 +310,19 @@ class TestVisorServiceIntegration:
             
             # Read
             retrieved = VisorService.get_by_id(visor_id)
-            assert retrieved.main_title == "CRUD Test Visor"
+            assert retrieved.title == "CRUD Test Visor"
             
             # Update
             updated = VisorService.update(
                 visor_id,
-                main_title="Updated CRUD Visor",
+                title="Updated CRUD Visor",
                 updated_at=datetime.utcnow()
             )
-            assert updated.main_title == "Updated CRUD Visor"
+            assert updated.title == "Updated CRUD Visor"
             
             # Verify update
             verified = VisorService.get_by_id(visor_id)
-            assert verified.main_title == "Updated CRUD Visor"
+            assert verified.title == "Updated CRUD Visor"
             
             # Delete
             VisorService.delete(visor_id)
@@ -337,7 +334,7 @@ class TestVisorServiceIntegration:
         with app.app_context():
             # Create 3 visors
             visors = [
-                VisorService.create(main_title=f"Visor {i}", updated_at=datetime.utcnow())
+                VisorService.create(title=f"Visor {i}", updated_at=datetime.utcnow())
                 for i in range(1, 4)
             ]
             
@@ -348,16 +345,16 @@ class TestVisorServiceIntegration:
             assert len(VisorService.get_all()) == 2
             
             # Create another
-            VisorService.create(main_title="Visor 4", updated_at=datetime.utcnow())
+            VisorService.create(title="Visor 4", updated_at=datetime.utcnow())
             assert len(VisorService.get_all()) == 3
     
     def test_multiple_visors_with_different_data(self, app):
         """Test creating and retrieving multiple visors with different data."""
         with app.app_context():
             visor_data_list = [
-                {"main_title": "Analytics Visor", "type": "analytics", "description": "For analytics"},
-                {"main_title": "Report Visor", "type": "report", "description": "For reports"},
-                {"main_title": "Dashboard Visor", "type": "dashboard", "description": "For dashboards"},
+                {"title": "Analytics Visor", "type": "analytics", "description": "For analytics"},
+                {"title": "Report Visor", "type": "report", "description": "For reports"},
+                {"title": "Dashboard Visor", "type": "dashboard", "description": "For dashboards"},
             ]
             
             created_visors = []
@@ -368,7 +365,7 @@ class TestVisorServiceIntegration:
             all_visors = VisorService.get_all()
             
             assert len(all_visors) == 3
-            titles = [v.main_title for v in all_visors]
+            titles = [v.title for v in all_visors]
             assert "Analytics Visor" in titles
             assert "Report Visor" in titles
             assert "Dashboard Visor" in titles

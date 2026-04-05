@@ -7,8 +7,7 @@ class VisorCreateRequest(BaseModel):
     """Schema for creating a new visor.
     
     Attributes:
-        main_title: The main title of the visor (required).
-        auxiliary_title: The auxiliary title of the visor (required).
+        title: The main title of the visor (required).
         type: The type of the visor (required).
         description: The description of the visor (required).
         visor_url: The URL of the visor (required).
@@ -19,8 +18,7 @@ class VisorCreateRequest(BaseModel):
         validate_default=True,
         json_schema_extra={
             "example": {
-                "main_title": "Main Visor title",
-                "auxiliary_title": "Auxiliary Visor title",
+                "title": "Main Visor title",
                 "description": "Primary data visualization visor",
                 "type": "dashboard",
                 "visor_url": "https://example.com/visor",
@@ -29,8 +27,7 @@ class VisorCreateRequest(BaseModel):
         }
     )
     
-    main_title: str = Field(..., min_length=1, description="The main title of the visor")
-    auxiliary_title: str = Field(..., min_length=1, description="The auxiliary title of the visor")
+    title: str = Field(..., min_length=1, description="The main title of the visor")
     type: str = Field(..., min_length=1, description="The type of the visor")
     description: str = Field(..., min_length=1, description="The description of the visor")
     visor_url: str = Field(..., min_length=1, description="The URL of the visor")
@@ -46,8 +43,7 @@ class VisorUpdateRequest(BaseModel):
         validate_default=True,
         json_schema_extra={
             "example": {
-                "main_title": "Main Visor title updated",
-                "auxiliary_title": "Auxiliary title updated",
+                "title": "Main Visor title updated",
                 "description": "Updated visor description",
                 "type": "dashboard",
                 "visor_url": "https://example.com/visor-updated",
@@ -56,8 +52,7 @@ class VisorUpdateRequest(BaseModel):
         }
     )
 
-    main_title: Optional[str] = Field(None, min_length=1, description="The main title of the visor")
-    auxiliary_title: Optional[str] = Field(None, min_length=1, description="The auxiliary title of the visor")
+    title: Optional[str] = Field(None, min_length=1, description="The main title of the visor")
     type: Optional[str] = Field(None, min_length=1, description="The type of the visor")
     description: Optional[str] = Field(None, min_length=1, description="The description of the visor")
     visor_url: Optional[str] = Field(None, min_length=1, description="The URL of the visor")

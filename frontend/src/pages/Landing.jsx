@@ -7,12 +7,18 @@ export default function Landing() {
   ];
 
   const dataMapper = [
-    { mainTitle: "Impacto del Curso de Nivelación Matermáticas Básicas",
-      auxiliaryTitle: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
-      type: "PDF", updatedAt: "2024-06-01T00:00:00Z", resourceType: "visor" },
-      { mainTitle: "Impacto del Curso de Nivelación Matermáticas Básicas",
-      auxiliaryTitle: "en el desempeño de los estudiantes en la asignatura Cálculo Diferencial",
-      type: "PDF", updatedAt: "2024-10-01T00:00:00Z", resourceType: "simulator" }
+    {
+      mainTitle: "Impacto del Curso de Nivelacion Matematicas Basicas en el desempeno de los estudiantes en la asignatura Calculo Diferencial",
+      type: "PDF",
+      updatedAt: "2024-06-01T00:00:00Z",
+      resourceType: "visor",
+    },
+    {
+      mainTitle: "Impacto del Curso de Nivelacion Matematicas Basicas en el desempeno de los estudiantes en la asignatura Calculo Diferencial",
+      type: "PDF",
+      updatedAt: "2024-10-01T00:00:00Z",
+      resourceType: "simulator",
+    }
     
   ];
 
@@ -23,7 +29,6 @@ export default function Landing() {
           <ResourceCard
             key={index}
             mainTitle={item.mainTitle}
-            auxiliaryTitle={item.auxiliaryTitle}
             type={item.type}
             updatedAt={new Date(item.updatedAt)
                     .toLocaleDateString("es-ES", {

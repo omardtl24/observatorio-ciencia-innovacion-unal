@@ -46,7 +46,7 @@ def create_simulator():
 
     simulator = SimulatorService.get_by_id(simulator.id)
 
-    include = ["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"]
+    include = ["id", "title", "description", "specs_file_id", "updated_at"]
     response = simulator.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     return jsonify(response), 201
@@ -59,7 +59,7 @@ def get_simulators():
     if not full:
         payload = []
         for simulator in simulators:
-            item = simulator.to_dict(include=["id", "main_title", "auxiliary_title", "updated_at"])
+            item = simulator.to_dict(include=["id", "title", "updated_at"])
             item["roles"] = [role.name for role in getattr(simulator, "roles", [])]
             payload.append(item)
         return jsonify(payload), 200
@@ -77,7 +77,7 @@ def get_simulator_by_id(simulator_id):
 
     simulator = SimulatorService.get_by_id(simulator_id)
     response = simulator.to_dict(
-        include=["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"]
+        include=["id", "title", "description", "specs_file_id", "updated_at"]
     )
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
@@ -100,7 +100,7 @@ def update_simulator(simulator_id):
 
     return jsonify(
         simulator.to_dict(
-            include=["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"]
+            include=["id", "title", "description", "specs_file_id", "updated_at"]
         )
     ), 200
 
@@ -133,7 +133,7 @@ def update_simulator_roles(simulator_id):
             RoleSimulatorRelation.add(role_id, simulator_id)
 
     simulator = SimulatorService.get_by_id(simulator_id)
-    response = simulator.to_dict(include=["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"])
+    response = simulator.to_dict(include=["id", "title", "description", "specs_file_id", "updated_at"])
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
     return jsonify(response), 200

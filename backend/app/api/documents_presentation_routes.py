@@ -50,7 +50,7 @@ def create_document_presentation():
 
     document_presentation = DocumentPresentationService.get_by_id(document_presentation.id)
 
-    include = ["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"]
+    include = ["id", "title", "description", "file_id", "updated_at"]
     response = document_presentation.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
     return jsonify(response), 201
@@ -63,7 +63,7 @@ def get_documents_presentations():
     if not full:
         payload = []
         for document_presentation in documents_presentations:
-            item = document_presentation.to_dict(include=["id", "main_title", "auxiliary_title", "updated_at"])
+            item = document_presentation.to_dict(include=["id", "title", "updated_at"])
             item["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
             payload.append(item)
         return jsonify(payload), 200
@@ -81,7 +81,7 @@ def get_document_presentation_by_id(document_id):
 
     document_presentation = DocumentPresentationService.get_by_id(document_id)
     response = document_presentation.to_dict(
-        include=["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"]
+        include=["id", "title", "description", "file_id", "updated_at"]
     )
     response["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(document_presentation, "roles", [])]
@@ -104,7 +104,7 @@ def update_document_presentation(document_id):
 
     return jsonify(
         document_presentation.to_dict(
-            include=["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"]
+            include=["id", "title", "description", "file_id", "updated_at"]
         )
     ), 200
 
@@ -137,7 +137,7 @@ def update_document_presentation_roles(document_id):
             DocumentPresentationRoleRelation.add(document_id, role_id)
 
     document_presentation = DocumentPresentationService.get_by_id(document_id)
-    response = document_presentation.to_dict(include=["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"])
+    response = document_presentation.to_dict(include=["id", "title", "description", "file_id", "updated_at"])
     response["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(document_presentation, "roles", [])]
     return jsonify(response), 200

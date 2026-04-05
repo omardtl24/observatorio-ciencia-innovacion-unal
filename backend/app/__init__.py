@@ -92,9 +92,9 @@ def create_app(config_name="production"):
     app.register_blueprint(permission_bp)
     app.register_blueprint(role_bp)
 
-    if not is_test_mode:
-        with app.app_context():
-            BootstrapService.initialize_minimals()
+    
+    with app.app_context():
+        BootstrapService.initialize_minimals()
 
     os.makedirs(app.config["FILE_STORAGE_ROOT"], exist_ok=True)
     os.makedirs(app.config["PROFILE_IMAGE_CACHE_DIR"], exist_ok=True)

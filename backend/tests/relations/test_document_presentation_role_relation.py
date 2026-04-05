@@ -13,7 +13,7 @@ class TestDocumentPresentationRoleRelationAdd:
     def test_add_role_to_document_presentation(self, app):
         """Test adding a role to a document presentation."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Q3 Presentation")
+            doc = DocumentPresentationService.create(title="Q3 Presentation")
             role = RoleService.create(name="Viewer")
             
             doc_result, role_result = DocumentPresentationRoleRelation.add_role_to_document_presentation(doc.id, role.id)
@@ -25,7 +25,7 @@ class TestDocumentPresentationRoleRelationAdd:
     def test_add_duplicate_role_raises_error(self, app):
         """Test that adding duplicate role raises error."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Annual Report")
+            doc = DocumentPresentationService.create(title="Annual Report")
             role = RoleService.create(name="Admin")
             
             DocumentPresentationRoleRelation.add_role_to_document_presentation(doc.id, role.id)
@@ -44,7 +44,7 @@ class TestDocumentPresentationRoleRelationAdd:
     def test_add_nonexistent_role_to_document_raises_error(self, app):
         """Test that adding nonexistent role raises error."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Document")
+            doc = DocumentPresentationService.create(title="Document")
             
             with pytest.raises(NotFoundError):
                 DocumentPresentationRoleRelation.add_role_to_document_presentation(doc.id, 9999)
@@ -56,7 +56,7 @@ class TestDocumentPresentationRoleRelationRemove:
     def test_remove_role_from_document_presentation(self, app):
         """Test removing a role from a document presentation."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Quarterly Review")
+            doc = DocumentPresentationService.create(title="Quarterly Review")
             role = RoleService.create(name="Analyst")
             DocumentPresentationRoleRelation.add_role_to_document_presentation(doc.id, role.id)
             
@@ -67,7 +67,7 @@ class TestDocumentPresentationRoleRelationRemove:
     def test_remove_nonexistent_role_from_document_raises_error(self, app):
         """Test that removing unassigned role raises error."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Report")
+            doc = DocumentPresentationService.create(title="Report")
             role = RoleService.create(name="Guest")
             
             with pytest.raises(IllegalOperationError):
@@ -80,7 +80,7 @@ class TestDocumentPresentationRoleRelationGet:
     def test_get_all_roles_for_document_presentation(self, app):
         """Test getting all roles for a document presentation."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Shared Document")
+            doc = DocumentPresentationService.create(title="Shared Document")
             role1 = RoleService.create(name="Role 1")
             role2 = RoleService.create(name="Role 2")
             
@@ -96,8 +96,8 @@ class TestDocumentPresentationRoleRelationGet:
     def test_get_all_document_presentations_for_role(self, app):
         """Test getting all document presentations for a role."""
         with app.app_context():
-            doc1 = DocumentPresentationService.create(main_title="Doc 1")
-            doc2 = DocumentPresentationService.create(main_title="Doc 2")
+            doc1 = DocumentPresentationService.create(title="Doc 1")
+            doc2 = DocumentPresentationService.create(title="Doc 2")
             role = RoleService.create(name="PowerUser")
             
             DocumentPresentationRoleRelation.add_role_to_document_presentation(doc1.id, role.id)
@@ -116,7 +116,7 @@ class TestDocumentPresentationRoleRelationRemoveAll:
     def test_remove_all_roles_for_document_presentation(self, app):
         """Test removing all roles from a document presentation."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Document")
+            doc = DocumentPresentationService.create(title="Document")
             role1 = RoleService.create(name="R1")
             role2 = RoleService.create(name="R2")
             
@@ -131,8 +131,8 @@ class TestDocumentPresentationRoleRelationRemoveAll:
     def test_remove_all_document_presentations_for_role(self, app):
         """Test removing all document presentations from a role."""
         with app.app_context():
-            doc1 = DocumentPresentationService.create(main_title="D1")
-            doc2 = DocumentPresentationService.create(main_title="D2")
+            doc1 = DocumentPresentationService.create(title="D1")
+            doc2 = DocumentPresentationService.create(title="D2")
             role = RoleService.create(name="R")
             
             DocumentPresentationRoleRelation.add_role_to_document_presentation(doc1.id, role.id)
@@ -150,7 +150,7 @@ class TestDocumentPresentationRoleRelationIntegration:
     def test_complete_relationship_lifecycle(self, app):
         """Test complete lifecycle of document-role relationship."""
         with app.app_context():
-            doc = DocumentPresentationService.create(main_title="Company Presentation")
+            doc = DocumentPresentationService.create(title="Company Presentation")
             role1 = RoleService.create(name="Executive")
             role2 = RoleService.create(name="Manager")
             
