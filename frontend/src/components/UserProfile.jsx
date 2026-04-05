@@ -62,6 +62,14 @@ export default function UserProfile() {
 
   const fullName = `${userInfo.names} ${userInfo.lastNames}`.trim();
   const roleNames = Array.isArray(userInfo.roles) ? userInfo.roles : [];
+  const hasAdminRole = roleNames.some((role) => {
+    if (typeof role !== "string") {
+      return false;
+    }
+
+    const normalizedRole = role.trim().toLowerCase();
+    return normalizedRole === "administrador" || normalizedRole === "admin" || normalizedRole === "administrator";
+  });
   const initials = fullName
     .split(" ")
     .map((n) => n[0]?.toUpperCase() || "")
@@ -124,6 +132,17 @@ export default function UserProfile() {
 
           {/* Logout Button */}
           <div className="p-3">
+            {hasAdminRole && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate("/dashboard");
+                }}
+                className="w-full mb-2 bg-white border border-primary-blue text-black hover:bg-primary-blue hover:text-white font-semibold py-2 px-3 rounded transition"
+              >
+                Ir al Dashboard
+              </button>
+            )}
             <button
               onClick={() => logout(null, navigate)}
               className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded transition flex items-center justify-center space-x-2"

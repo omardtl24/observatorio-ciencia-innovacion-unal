@@ -80,12 +80,12 @@ def get_document_presentation_by_id(document_id):
         raise UnauthorizedError("El usuario no tiene permiso para acceder a este documento de presentacion")
 
     document_presentation = DocumentPresentationService.get_by_id(document_id)
-
-    return jsonify(
-        document_presentation.to_dict(
-            include=["id", "main_title", "auxiliary_title", "description", "file_id"]
-        )
-    ), 200
+    response = document_presentation.to_dict(
+        include=["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"]
+    )
+    response["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(document_presentation, "roles", [])]
+    return jsonify(response), 200
 
 
 @documents_presentation_bp.patch("/<int:document_id>")
@@ -107,6 +107,40 @@ def update_document_presentation(document_id):
             include=["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"]
         )
     ), 200
+
+
+@documents_presentation_bp.patch("/<int:document_id>/roles")
+@jwt_required()
+def update_document_presentation_roles(document_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este documento de presentacion")
+
+    payload = request.get_json(silent=True) or {}
+    role_ids = payload.get("role_ids")
+    if not isinstance(role_ids, list):
+        raise SchemaValidationError("role_ids must be a list")
+
+    try:
+        selected_role_ids = list({int(role_id) for role_id in role_ids})
+    except (TypeError, ValueError):
+        raise SchemaValidationError("role_ids must contain valid integers")
+
+    admin_role = RoleService.get_by_name("Administrador")
+    for role_id in selected_role_ids:
+        RoleService.get_by_id(role_id)
+
+    DocumentPresentationRoleRelation.remove_all_b_for_a(document_id)
+    AccessChecker.grant_admin_access(document_id, "document")
+    for role_id in selected_role_ids:
+        if role_id != admin_role.id:
+            DocumentPresentationRoleRelation.add(document_id, role_id)
+
+    document_presentation = DocumentPresentationService.get_by_id(document_id)
+    response = document_presentation.to_dict(include=["id", "main_title", "auxiliary_title", "description", "file_id", "updated_at"])
+    response["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(document_presentation, "roles", [])]
+    return jsonify(response), 200
 
 
 @documents_presentation_bp.delete("/<int:document_id>")

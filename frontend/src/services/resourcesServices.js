@@ -325,9 +325,14 @@ export async function uploadResourceFile(file) {
     return response.json();
 }
 
-export async function createResource(type, payload) {
+export async function createResource(type, payload, updatedDate = null) {
     const createUrl = `${import.meta.env.VITE_API_URL}/${type}`;
     const token = getToken();
+
+    const payloadToSend = { ...payload };
+    if (updatedDate) {
+        payloadToSend.updated_at = updatedDate;
+    }
 
     let response;
     try {
@@ -338,7 +343,7 @@ export async function createResource(type, payload) {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(payloadToSend),
         });
     } catch (err) {
         if (isBackendUnavailableError(err)) {
@@ -349,6 +354,71 @@ export async function createResource(type, payload) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, `Failed to create ${type}`);
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function updateResource(type, id, payload, updatedDate = null) {
+    const updateUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
+    const token = getToken();
+
+    const payloadToSend = { ...payload };
+    if (updatedDate) {
+        payloadToSend.updated_at = updatedDate;
+    }
+
+    let response;
+    try {
+        response = await fetchWithTimeout(updateUrl, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(payloadToSend),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, `Failed to update ${type}`);
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function updateResourceRoles(type, id, roleIds = []) {
+    const updateRolesUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}/roles`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(updateRolesUrl, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ role_ids: Array.isArray(roleIds) ? roleIds : [] }),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, `Failed to update roles for ${type}`);
         throw new Error(message);
     }
 

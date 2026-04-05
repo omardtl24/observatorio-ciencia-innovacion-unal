@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { getUserInfo, isAuthenticated, redirectToLogin } from "../services/authService";
 import ResourceCard from "../components/ResourceCard";
 import {
-  createResource,
+  fetchResource,
+  updateResource,
+  updateResourceRoles,
   deleteFileById,
   fetchAssignableRoles,
   uploadResourceFile,
@@ -102,6 +104,48 @@ function encodeMarkedFromHtml(html) {
     .trimEnd();
 }
 
+function markedTextToEditableHtml(value) {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+
+  const escaped = value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  return escaped
+    .replace(/\\\((.*?)\\\)/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>");
+}
+
+function formatDateOnly(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
+function toMidnightISOString(dateOnlyValue) {
+  if (!dateOnlyValue) {
+    return null;
+  }
+  return `${dateOnlyValue}T00:00:00`;
+}
+
+function getTodayDateOnly() {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
 function isSelectionInsideElement(selection, element) {
   if (!selection || !element || !selection.rangeCount) {
     return false;
@@ -111,9 +155,9 @@ function isSelectionInsideElement(selection, element) {
   return element.contains(range.commonAncestorContainer);
 }
 
-export default function CreateResource() {
+export default function EditResource() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { type, id } = useParams();
   const [form, setForm] = useState(INITIAL_FORM);
   const [richFields, setRichFields] = useState({
     main_title: "",
@@ -121,10 +165,13 @@ export default function CreateResource() {
     description: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [rolesLoading, setRolesLoading] = useState(false);
   const [availableRoles, setAvailableRoles] = useState([]);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [formatMessage, setFormatMessage] = useState("");
+  const [existingFileId, setExistingFileId] = useState(null);
+  const [existingFileName, setExistingFileName] = useState(null);
   const mainTitleRef = useRef(null);
   const auxiliaryTitleRef = useRef(null);
   const descriptionRef = useRef(null);
@@ -135,18 +182,101 @@ export default function CreateResource() {
   );
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const requestedType = params.get("type");
-    if (!requestedType || !RESOURCE_DEFINITIONS[requestedType]) {
-      return;
+    if (mainTitleRef.current && mainTitleRef.current.innerHTML !== richFields.main_title) {
+      mainTitleRef.current.innerHTML = richFields.main_title;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      resourceType: requestedType,
-    }));
-  }, [location.search]);
+    if (auxiliaryTitleRef.current && auxiliaryTitleRef.current.innerHTML !== richFields.auxiliary_title) {
+      auxiliaryTitleRef.current.innerHTML = richFields.auxiliary_title;
+    }
 
+    if (descriptionRef.current && descriptionRef.current.innerHTML !== richFields.description) {
+      descriptionRef.current.innerHTML = richFields.description;
+    }
+  }, [richFields]);
+
+  // Load resource data
+  useEffect(() => {
+    let active = true;
+
+    const loadResource = async () => {
+      if (!type || !id || !RESOURCE_DEFINITIONS[type]) {
+        if (active) {
+          setFeedback({ type: "error", message: "Tipo de recurso o ID inválido" });
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const data = await fetchResource(type, id);
+        if (!active) return;
+
+        const parsedRoleIds = Array.isArray(data.role_ids)
+          ? data.role_ids
+          : Array.isArray(data.roles)
+            ? data.roles
+              .map((role) => {
+                if (typeof role === "number") {
+                  return role;
+                }
+                if (role && typeof role === "object") {
+                  return role.id;
+                }
+                return null;
+              })
+              .filter((roleId) => typeof roleId === "number")
+            : [];
+
+        setForm((prev) => ({
+          ...prev,
+          resourceType: type,
+          main_title: data.main_title || "",
+          auxiliary_title: data.auxiliary_title || "",
+          description: data.description || "",
+          visor_type: data.type || "",
+          visor_url: data.visor_url || "",
+          role_ids: parsedRoleIds,
+          updated_date: formatDateOnly(data.updated_at || data.updatedAt || data.last_update),
+        }));
+
+        setRichFields({
+          main_title: markedTextToEditableHtml(data.main_title || ""),
+          auxiliary_title: markedTextToEditableHtml(data.auxiliary_title || ""),
+          description: markedTextToEditableHtml(data.description || ""),
+        });
+
+        // Store existing file ID
+        if (RESOURCE_DEFINITIONS[type].fileField) {
+          const fileId = data[RESOURCE_DEFINITIONS[type].fileField];
+          if (fileId) {
+            setExistingFileId(fileId);
+            // Extract filename from the data if available
+            setExistingFileName(`Archivo actual: ${type}`);
+          }
+        }
+      } catch (error) {
+        if (active) {
+          setFeedback({
+            type: "error",
+            message: error?.message || "No fue posible cargar el recurso",
+          });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadResource();
+
+    return () => {
+      active = false;
+    };
+  }, [type, id]);
+
+  // Load roles
   useEffect(() => {
     let active = true;
 
@@ -177,7 +307,7 @@ export default function CreateResource() {
   }, []);
 
   if (!isAuthenticated()) {
-    redirectToLogin(navigate, "/resources/create");
+    redirectToLogin(navigate, `/resource/${type}/${id}`);
     return null;
   }
 
@@ -188,9 +318,17 @@ export default function CreateResource() {
         <div className="w-full max-w-xl bg-white border border-gray-200 rounded-xl shadow-md p-8 text-center">
           <h1 className="text-2xl font-semibold text-primary-cyan-strong mb-2">Permisos insuficientes</h1>
           <p className="text-gray-700">
-            Solo usuarios con rol Administrador pueden crear recursos.
+            Solo usuarios con rol Administrador pueden editar recursos.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen px-6 py-12 flex items-center justify-center">
+        <p className="text-lg text-gray-600">Cargando recurso...</p>
       </div>
     );
   }
@@ -264,8 +402,8 @@ export default function CreateResource() {
       }
     }
 
-    if (currentDefinition.fileField && !form.file) {
-      return "Debes cargar un archivo antes de crear este recurso";
+    if (currentDefinition.fileField && !form.file && !existingFileId) {
+      return "Debes cargar un archivo para este recurso";
     }
 
     return null;
@@ -278,8 +416,12 @@ export default function CreateResource() {
 
     const basePayload = {
       main_title: encodedMainTitle.trim(),
-      updated_at: form.updated_date ? new Date(form.updated_date).toISOString() : new Date().toISOString(),
     };
+
+    const normalizedUpdatedAt = toMidnightISOString(form.updated_date);
+    if (normalizedUpdatedAt) {
+      basePayload.updated_at = normalizedUpdatedAt;
+    }
 
     if (encodedAuxTitle.trim()) {
       basePayload.auxiliary_title = encodedAuxTitle.trim();
@@ -298,17 +440,16 @@ export default function CreateResource() {
       basePayload[currentDefinition.fileField] = fileId;
     }
 
-    if (Array.isArray(form.role_ids) && form.role_ids.length > 0) {
-      basePayload.role_ids = form.role_ids;
-    }
-
     return basePayload;
   };
 
-  const previewUpdatedAt = new Date().toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "long",
-  });
+  const previewUpdatedAt = form.updated_date
+    ? new Date(`${form.updated_date}T00:00:00`).toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+    : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.main_title).trim() || "Titulo principal";
   const previewAuxTitle = getPlainFromHtml(richFields.auxiliary_title).trim() || "Titulo auxiliar";
@@ -338,7 +479,8 @@ export default function CreateResource() {
     let uploadedFileId = null;
 
     try {
-      if (currentDefinition.fileField) {
+      // Upload new file if provided
+      if (currentDefinition.fileField && form.file) {
         const uploadedFile = await uploadResourceFile(form.file);
         uploadedFileId = uploadedFile?.id;
         if (!uploadedFileId) {
@@ -346,11 +488,28 @@ export default function CreateResource() {
         }
       }
 
-      const payload = buildPayload(uploadedFileId);
-      await createResource(currentDefinition.endpoint, payload, form.updated_date ? new Date(form.updated_date).toISOString() : null);
-      navigate("/dashboard");
+      // Build payload with new file ID or existing one
+      const fileIdToUse = uploadedFileId || existingFileId;
+      const payload = buildPayload(fileIdToUse);
+
+      // 1) Update base resource fields.
+      await updateResource(currentDefinition.endpoint, id, payload, toMidnightISOString(form.updated_date));
+
+      // 2) Update resource roles in a dedicated request.
+      await updateResourceRoles(currentDefinition.endpoint, id, form.role_ids);
+
+      // If new file was uploaded, delete the old one (optional - depends on backend behavior)
+      if (uploadedFileId && existingFileId && existingFileId !== uploadedFileId) {
+        try {
+          await deleteFileById(existingFileId);
+        } catch {
+          // Ignore errors when deleting old file
+        }
+      }
+
+      navigate(`/resource/${type}/${id}`);
     } catch (error) {
-      // If resource creation fails after file upload, rollback orphan file.
+      // If resource update fails after file upload, rollback orphan file.
       if (uploadedFileId) {
         try {
           await deleteFileById(uploadedFileId);
@@ -361,7 +520,7 @@ export default function CreateResource() {
 
       setFeedback({
         type: "error",
-        message: error?.message || "No fue posible crear el recurso",
+        message: error?.message || "No fue posible actualizar el recurso",
       });
     } finally {
       setSubmitting(false);
@@ -372,9 +531,9 @@ export default function CreateResource() {
     <div className="min-h-screen px-6 py-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-          <h1 className="text-3xl font-semibold text-primary-cyan-strong mb-2">Crear recurso</h1>
+          <h1 className="text-3xl font-semibold text-primary-cyan-strong mb-2">Editar recurso</h1>
           <p className="text-gray-600 mb-8">
-            Completa los campos obligatorios para el tipo de recurso seleccionado.
+            Actualiza los campos necesarios para modificar este recurso.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -483,8 +642,11 @@ export default function CreateResource() {
           {currentDefinition.fileField && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {currentDefinition.fileLabel} *
+                {currentDefinition.fileLabel} (Opcional)
               </label>
+              {existingFileName && (
+                <p className="text-xs text-gray-600 mb-2">{existingFileName}</p>
+              )}
               <input
                 type="file"
                 onChange={(e) => updateField("file", e.target.files?.[0] || null)}
@@ -492,7 +654,7 @@ export default function CreateResource() {
                 disabled={submitting}
               />
               <p className="text-xs text-gray-500 mt-1">
-                El archivo se carga primero y luego se enlaza al recurso durante la creacion.
+                Carga un nuevo archivo si deseas reemplazar el actual.
               </p>
             </div>
           )}
@@ -536,14 +698,24 @@ export default function CreateResource() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de actualización personalizada (opcional)</label>
-            <input
-              type="datetime-local"
-              value={form.updated_date}
-              onChange={(e) => updateField("updated_date", e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              disabled={submitting}
-            />
-            <p className="text-xs text-gray-500 mt-1">Si no especificas una fecha, se usará la fecha y hora actual.</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={form.updated_date}
+                onChange={(e) => updateField("updated_date", e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                disabled={submitting}
+              />
+              <button
+                type="button"
+                onClick={() => updateField("updated_date", getTodayDateOnly())}
+                className="border border-primary-blue text-primary-blue px-3 py-2 rounded-lg text-xs font-semibold hover:bg-blue-50 transition"
+                disabled={submitting}
+              >
+                Usar hoy
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Al guardar, esta fecha se enviara con hora 00:00.</p>
           </div>
 
           {feedback.message && (
@@ -564,14 +736,14 @@ export default function CreateResource() {
               disabled={submitting}
               className="bg-primary-cyan-strong text-white px-5 py-2.5 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Creando..." : "Crear recurso"}
+              {submitting ? "Actualizando..." : "Actualizar recurso"}
             </button>
             <button
               type="button"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(`/resource/${type}/${id}`)}
               className="border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Volver al dashboard
+              Cancelar
             </button>
           </div>
           </form>

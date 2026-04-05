@@ -4,8 +4,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.visor_service import VisorService
 from app.services.relations.visor_data_source_relation import VisorDataSourceRelation
 from app.services.relations.role_visor_relation import RoleVisorRelation
-from app.domain.exceptions import DomainError, UnauthorizedError
-from app.schemas.visor_schema import VisorCreateRequest
+from app.domain.exceptions import DomainError, UnauthorizedError, SchemaValidationError
+from app.schemas.visor_schema import VisorCreateRequest, VisorUpdateRequest
 from app.middleware import schema_validator
 from app.api.utils.check_roles import AccessChecker
 from app.services.role_service import RoleService
@@ -97,12 +97,87 @@ def get_visor_by_id(visor_id):
     #TODO: validate user permissions to delete files
 
     visor = VisorService.get_by_id(visor_id)
+    response = visor.to_dict(include=["id",
+                                      "main_title",
+                                      "auxiliary_title",
+                                      "description",
+                                      "type",
+                                      "visor_url",
+                                      "updated_at"])
+    response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
+    return jsonify(response), 200
 
-    return jsonify(visor.to_dict(include=["id",
-                                          "main_title",
-                                          "auxiliary_title",
-                                          "description",
-                                          "visor_url"])), 200
+
+@visor_bp.patch("/<int:visor_id>")
+@jwt_required()
+@schema_validator(VisorUpdateRequest)
+def update_visor(visor_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este visor")
+
+    update_data = request.validated_data.dict(exclude_unset=True)
+    role_ids = update_data.pop("role_ids", None)
+
+    if not update_data and role_ids is None:
+        raise SchemaValidationError("At least one field must be provided")
+
+    if update_data:
+        VisorService.update(visor_id, **update_data)
+
+    if role_ids is not None:
+        selected_role_ids = list({int(role_id) for role_id in role_ids})
+        admin_role = RoleService.get_by_name("Administrador")
+
+        for role_id in selected_role_ids:
+            RoleService.get_by_id(role_id)
+
+        RoleVisorRelation.remove_all_a_for_b(visor_id)
+        for role_id in selected_role_ids:
+            if role_id != admin_role.id:
+                RoleVisorRelation.add(role_id, visor_id)
+
+    visor = VisorService.get_by_id(visor_id)
+    include = ["id", "main_title", "auxiliary_title", "description", "type", "visor_url", "updated_at"]
+    response = visor.to_dict(include=include)
+    response["roles"] = [role.name for role in getattr(visor, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
+    return jsonify(response), 200
+
+
+@visor_bp.patch("/<int:visor_id>/roles")
+@jwt_required()
+def update_visor_roles(visor_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este visor")
+
+    payload = request.get_json(silent=True) or {}
+    role_ids = payload.get("role_ids")
+    if not isinstance(role_ids, list):
+        raise SchemaValidationError("role_ids must be a list")
+
+    try:
+        selected_role_ids = list({int(role_id) for role_id in role_ids})
+    except (TypeError, ValueError):
+        raise SchemaValidationError("role_ids must contain valid integers")
+
+    admin_role = RoleService.get_by_name("Administrador")
+    for role_id in selected_role_ids:
+        RoleService.get_by_id(role_id)
+
+    RoleVisorRelation.remove_all_a_for_b(visor_id)
+    AccessChecker.grant_admin_access(visor_id, "visor")
+    for role_id in selected_role_ids:
+        if role_id != admin_role.id:
+            RoleVisorRelation.add(role_id, visor_id)
+
+    visor = VisorService.get_by_id(visor_id)
+    include = ["id", "main_title", "auxiliary_title", "description", "type", "visor_url", "updated_at"]
+    response = visor.to_dict(include=include)
+    response["roles"] = [role.name for role in getattr(visor, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
+    return jsonify(response), 200
 
 @visor_bp.delete("/<int:visor_id>")
 @jwt_required()

@@ -111,12 +111,15 @@ def get_report_by_id(report_id):
         raise UnauthorizedError("El usuario no tiene permiso para acceder a este reporte")
 
     report = ReportService.get_by_id(report_id)
-
-    return jsonify(report.to_dict(include=["id",
-                                           "main_title",
-                                           "auxiliary_title",
-                                           "description",
-                                           "document_file_id"])), 200
+    response = report.to_dict(include=["id",
+                                       "main_title",
+                                       "auxiliary_title",
+                                       "description",
+                                       "document_file_id",
+                                       "updated_at"])
+    response["roles"] = [role.name for role in getattr(report, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(report, "roles", [])]
+    return jsonify(response), 200
 
 @report_bp.patch("/<int:report_id>")
 @jwt_required()
@@ -161,6 +164,40 @@ def update_report(report_id):
                                            "description",
                                            "document_file_id",
                                            "updated_at"])), 200
+
+
+@report_bp.patch("/<int:report_id>/roles")
+@jwt_required()
+def update_report_roles(report_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este reporte")
+
+    payload = request.get_json(silent=True) or {}
+    role_ids = payload.get("role_ids")
+    if not isinstance(role_ids, list):
+        raise SchemaValidationError("role_ids must be a list")
+
+    try:
+        selected_role_ids = list({int(role_id) for role_id in role_ids})
+    except (TypeError, ValueError):
+        raise SchemaValidationError("role_ids must contain valid integers")
+
+    admin_role = RoleService.get_by_name("Administrador")
+    for role_id in selected_role_ids:
+        RoleService.get_by_id(role_id)
+
+    RoleReportRelation.remove_all_a_for_b(report_id)
+    AccessChecker.grant_admin_access(report_id, "report")
+    for role_id in selected_role_ids:
+        if role_id != admin_role.id:
+            RoleReportRelation.add(role_id, report_id)
+
+    report = ReportService.get_by_id(report_id)
+    response = report.to_dict(include=["id", "main_title", "auxiliary_title", "description", "document_file_id", "updated_at"])
+    response["roles"] = [role.name for role in getattr(report, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(report, "roles", [])]
+    return jsonify(response), 200
 
 @report_bp.delete("/<int:report_id>")
 @jwt_required()

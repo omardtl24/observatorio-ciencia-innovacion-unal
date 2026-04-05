@@ -76,12 +76,12 @@ def get_simulator_by_id(simulator_id):
         raise UnauthorizedError("El usuario no tiene permiso para acceder a este simulador")
 
     simulator = SimulatorService.get_by_id(simulator_id)
-
-    return jsonify(
-        simulator.to_dict(
-            include=["id", "main_title", "auxiliary_title", "description", "specs_file_id"]
-        )
-    ), 200
+    response = simulator.to_dict(
+        include=["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"]
+    )
+    response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
+    return jsonify(response), 200
 
 
 @simulator_bp.patch("/<int:simulator_id>")
@@ -103,6 +103,40 @@ def update_simulator(simulator_id):
             include=["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"]
         )
     ), 200
+
+
+@simulator_bp.patch("/<int:simulator_id>/roles")
+@jwt_required()
+def update_simulator_roles(simulator_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este simulador")
+
+    payload = request.get_json(silent=True) or {}
+    role_ids = payload.get("role_ids")
+    if not isinstance(role_ids, list):
+        raise SchemaValidationError("role_ids must be a list")
+
+    try:
+        selected_role_ids = list({int(role_id) for role_id in role_ids})
+    except (TypeError, ValueError):
+        raise SchemaValidationError("role_ids must contain valid integers")
+
+    admin_role = RoleService.get_by_name("Administrador")
+    for role_id in selected_role_ids:
+        RoleService.get_by_id(role_id)
+
+    RoleSimulatorRelation.remove_all_a_for_b(simulator_id)
+    AccessChecker.grant_admin_access(simulator_id, "simulator")
+    for role_id in selected_role_ids:
+        if role_id != admin_role.id:
+            RoleSimulatorRelation.add(role_id, simulator_id)
+
+    simulator = SimulatorService.get_by_id(simulator_id)
+    response = simulator.to_dict(include=["id", "main_title", "auxiliary_title", "description", "specs_file_id", "updated_at"])
+    response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
+    response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
+    return jsonify(response), 200
 
 
 @simulator_bp.delete("/<int:simulator_id>")

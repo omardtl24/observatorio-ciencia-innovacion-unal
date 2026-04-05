@@ -3,6 +3,7 @@ import Layout from "../layout/Layout";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import CreateResource from "../pages/CreateResource";
+import EditResource from "../pages/EditResource";
 import Landing from "../pages/Landing";
 import Resources from "../pages/Resources";
 import Resource from "../pages/Resource";
@@ -32,6 +33,11 @@ const routeConfig = [
     component: Resources, 
     backgroundSVGImage: Bg1, 
     svgFillClass: "text-primary-cyan-base",
+    backgroundClass: "bg-gray-100" },
+  { path: "/resource/edit/:type/:id",
+    component: EditResource,
+    backgroundSVGImage: Bg3,
+    svgFillClass: "text-primary-cyan-strong",
     backgroundClass: "bg-gray-100" },
   { path: "/resource/:type/:id", 
     component: Resource, 
