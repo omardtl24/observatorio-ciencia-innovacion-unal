@@ -87,7 +87,7 @@ export default function Login() {
 
         {/* Error */}
         {errorMessage && (
-          <div className="text-sm text-red-700 bg-red-100 border border-red-200 px-4 py-2 font-ancizar rounded">
+          <div className="text-sm text-red-700 bg-red-100 border border-red-200 px-4 py-2 font-sans rounded">
             {errorMessage}
           </div>
         )}

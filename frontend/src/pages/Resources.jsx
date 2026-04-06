@@ -11,14 +11,14 @@ export default function Resources() {
   const [error, setError] = useState(null);
 
   const typeLabels = {
-    report: "reportes",
-    reports: "reportes",
-    simulator: "simuladores",
-    simulators: "simuladores",
-    visor: "visores",
-    visors: "visores",
-    document: "documentos",
-    documents: "documentos",
+    report: "reporte",
+    reports: "reporte",
+    simulator: "simulador",
+    simulators: "simulador",
+    visor: "visor",
+    visors: "visor",
+    document: "documento",
+    documents: "documento",
   };
   const typeSpanish = typeLabels[type] || "recursos";
   const defaultErrorMessage = `No fue posible consultar los ${typeSpanish}`;
@@ -68,12 +68,14 @@ export default function Resources() {
 
   return (
     <div className="min-h-screen px-6 py-12">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         {dataMapper.map((item, index) => (
           <ResourceCard
             key={item.id}
             id={item.id}
+            number={index + 1}
             mainTitle={item.mainTitle}
+            spanishResourceType={typeSpanish}
             type={item.type || 'PDF'}
             updatedAt={datetoString(item.updatedAt)}
             coverImage={images[index % images.length]}

@@ -20,14 +20,14 @@ export default function Footer() {
 
         {/* === UP LEFT === */}
         <div className="flex flex-col items-center justify-center">
-          <h1 className="font-ancizarItalic font-bold text-primary-blue bg-white text-6xl">
+          <h1 className="font-serif italic font-bold text-primary-blue bg-white text-6xl">
             ¡Contáctanos!
           </h1>
         </div>
 
         {/* === UP RIGHT === */}
         <div className="flex flex-col items-center justify-center md:items-start px-6 md:px-12 lg:px-20 mb-3 mx-16">
-          <h2 className="font-ancizar text-primary-blue bg-white text-2xl">
+          <h2 className="font-sans text-primary-blue bg-white text-2xl">
             Para más información sobre Divulgación y Medios, no dudes en ponerte en contacto con nosotros.
           </h2>
         </div>
@@ -38,7 +38,7 @@ export default function Footer() {
           <div className="bg-primary-cyan p-12 w-full text-white flex flex-col space-y-4">
             {contact_items.map((item, index) => (
               <div key={index} className="mx-12">
-                <p className="text-m font-ancizar mx-14">{item.label}</p>
+                <p className="text-m font-sans mx-14">{item.label}</p>
 
                 <div className="flex items-center space-x-1 relative">
                   {/* Element icon */}
@@ -46,7 +46,7 @@ export default function Footer() {
 
                   {/* Element content */}
                   <div className="flex-1 group flex items-center bg-primary-cyan p-2 rounded-md border border-white transition-all duration-200 hover:bg-secondary-cyan-accent hover:text-primary-cyan hover:border-secondary-cyan-accent">
-                    <span className="text-xl font-ancizar flex-1 px-2">{item.content}</span>
+                    <span className="text-xl font-sans flex-1 px-2">{item.content}</span>
 
                     {/* Copy button */}
                     {item.copyable && (

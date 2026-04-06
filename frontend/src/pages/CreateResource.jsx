@@ -110,6 +110,19 @@ function isSelectionInsideElement(selection, element) {
   return element.contains(range.commonAncestorContainer);
 }
 
+function toMidnightISOString(dateOnlyValue) {
+  if (!dateOnlyValue) {
+    return null;
+  }
+  return `${dateOnlyValue}T00:00:00`;
+}
+
+function getTodayDateOnly() {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
 export default function CreateResource() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -270,8 +283,12 @@ export default function CreateResource() {
 
     const basePayload = {
       title: encodedMainTitle.trim(),
-      updated_at: form.updated_date ? new Date(form.updated_date).toISOString() : new Date().toISOString(),
     };
+
+    const normalizedUpdatedAt = toMidnightISOString(form.updated_date);
+    if (normalizedUpdatedAt) {
+      basePayload.updated_at = normalizedUpdatedAt;
+    }
 
     if (encodedDescription.trim()) {
       basePayload.description = encodedDescription;
@@ -293,10 +310,13 @@ export default function CreateResource() {
     return basePayload;
   };
 
-  const previewUpdatedAt = new Date().toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "long",
-  });
+  const previewUpdatedAt = form.updated_date
+    ? new Date(`${form.updated_date}T00:00:00`).toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+    : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
   const previewType = form.resourceType === "visor"
@@ -333,7 +353,7 @@ export default function CreateResource() {
       }
 
       const payload = buildPayload(uploadedFileId);
-      await createResource(currentDefinition.endpoint, payload, form.updated_date ? new Date(form.updated_date).toISOString() : null);
+      await createResource(currentDefinition.endpoint, payload, toMidnightISOString(form.updated_date));
       navigate("/dashboard");
     } catch (error) {
       // If resource creation fails after file upload, rollback orphan file.
@@ -502,14 +522,24 @@ export default function CreateResource() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de actualización personalizada (opcional)</label>
-            <input
-              type="datetime-local"
-              value={form.updated_date}
-              onChange={(e) => updateField("updated_date", e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              disabled={submitting}
-            />
-            <p className="text-xs text-gray-500 mt-1">Si no especificas una fecha, se usará la fecha y hora actual.</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={form.updated_date}
+                onChange={(e) => updateField("updated_date", e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                disabled={submitting}
+              />
+              <button
+                type="button"
+                onClick={() => updateField("updated_date", getTodayDateOnly())}
+                className="border border-primary-blue text-primary-blue px-3 py-2 rounded-lg text-xs font-semibold hover:bg-blue-50 transition"
+                disabled={submitting}
+              >
+                Usar hoy
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Al guardar, esta fecha se enviara con hora 00:00.</p>
           </div>
 
           {feedback.message && (

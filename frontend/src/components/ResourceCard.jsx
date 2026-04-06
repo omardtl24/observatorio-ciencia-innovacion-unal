@@ -1,108 +1,87 @@
 import { useNavigate } from "react-router-dom";
-import reportIcon from "../assets/icons/resources/report-blue.svg";
-import simulatorIcon from "../assets/icons/resources/simulator-blue.svg";
-import visorIcon from "../assets/icons/resources/visor-blue.svg";
 import calendarIcon from "../assets/icons/resources/calendar-blue.svg";
-import imageIcon from "../assets/icons/resources/image-blue.svg";
 import { stripColorMarkers } from "../services/stringServices.jsx";
 
 export default function ResourceCard({
   id,
   mainTitle,
-  type,
   updatedAt,
   coverImage,
+  number,
+  spanishResourceType,
   resourceType = "report",
 }) {
   const navigate = useNavigate();
-  const symbol =
-    {
-      report: reportIcon,
-      visor: visorIcon,
-      simulator: simulatorIcon,
-      doc_presentation: reportIcon,
-      image: imageIcon,
-    }[resourceType] || reportIcon;
 
   const handleClick = () => {
     navigate(`/resource/${resourceType}/${id}`);
   };
 
   return (
-    <div 
+    <div
       onClick={handleClick}
-      className="flex flex-col md:flex-row w-full max-w-5xl mx-auto rounded-2xl border border-blue-300 bg-primary-cyan-soft overflow-hidden cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-200"
+      className="
+        w-full max-w-3xl mx-auto
+        border-2 border-primary-blue-strong
+        rounded-t-3xl rounded-b-none
+        bg-white
+        overflow-hidden
+        cursor-pointer
+        hover:shadow-xl
+        transition-all
+      "
     >
-
-      {/* LEFT IMAGE */}
-      <div className="md:w-[500px] w-full h-full py-1 px-1 pr-2 pl-3 flex items-center justify-center">
-        <div className="w-full aspect-[16/10] rounded-xl border-2 border-blue-400 bg-white flex items-center justify-center">
-          <img
-            src={coverImage}
-            className=" w-full h-full object-cover rounded-xl"
-          />
-        </div>
+      {/* TOP COVER (GRAPH STYLE IMAGE) */}
+      <div className="w-full aspect-[16/10] overflow-hidden rounded-t-3xl">
+        <img
+          src={coverImage}
+          className="w-full h-full object-cover"
+        />
       </div>
 
-      {/* RIGHT CONTENT */}
-      <div className="flex flex-col justify-center gap-2.5 py-6 pr-5 pl-0 md:ml-0">
+      {/* DIVIDER */}
+      <div className="border-t border-primary-blue-strong"></div>
 
-        {/* TITLE */}
-        <div className="flex items-start gap-1">
-          <img src={symbol} alt="" className="w-10 h-10" />
-          <div className="flex flex-col">
-            <span className="
-              text-slg
-              text-primary-cyan-strong
-              font-medium
-            ">
-              {stripColorMarkers(mainTitle)}
-            </span>
-          </div>
-        </div>
+      {/* HEADER */}
+      
+      <div className="text-center py-2">
+        <span className="
+          text-xl
+          font-serif italic
+          font-bold
+          text-primary-blue-strong
+        ">
+          {(spanishResourceType || "recurso").toUpperCase()} {number}
+        </span>
+      </div>
 
-        {/* TYPE */}
-        <div className="flex items-start gap-1">
-          <img src={imageIcon} alt="" className="w-10 h-10" />
-          <div className="flex flex-col">
-            <span className="
-              text-sm
-              text-primary-cyan-strong
-              font-medium
-            ">
-              Multimedia
-            </span>
-            <span className="
-              text-sm
-              text-primary-blue-strong
-              font-semibold
-            ">
-              {type}
-            </span>
-          </div>
-        </div>
+      {/* DIVIDER */}
+      <div className="border-t border-primary-blue-strong"></div>
 
-        {/* DATE */}
-        <div className="flex items-start gap-1">
-          <img src={calendarIcon} alt="" className="w-10 h-10" />
-          <div className="flex flex-col">
-            <span className="
-              text-sm
-              text-primary-cyan-strong
-              font-medium
-            ">
-              Fecha de actualización
-            </span>
-            <span className="
-              text-sm
-              text-primary-blue-strong
-              font-semibold
-            ">
-              {updatedAt}
-            </span>
-          </div>
-        </div>
+      {/* DESCRIPTION */}
+      <div className="px-2 pb-1 pt-2 flex items-center gap-3">
+        <img src={calendarIcon} alt="" className="w-6 h-6" />
+        <span className="
+          text-primary-blue-strong
+          text-sm
+          font-serif italic
+          font-bold
+        ">
+          {stripColorMarkers(mainTitle)}
+        </span>
+      </div>
 
+      {/* DATE */}
+      <div className="px-2 pb-2 pt-1 flex items-center gap-3">
+        <img src={calendarIcon} alt="" className="w-6 h-6" />
+        <span className="
+          text-primary-blue-strong
+          text-sm
+          font-serif italic
+          font-bold
+        ">
+          Fecha de actualización: {updatedAt}
+        </span>
       </div>
     </div>
   );

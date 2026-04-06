@@ -478,15 +478,6 @@ export default function EditResource() {
       // 2) Update resource roles in a dedicated request.
       await updateResourceRoles(currentDefinition.endpoint, id, form.role_ids);
 
-      // If new file was uploaded, delete the old one (optional - depends on backend behavior)
-      if (uploadedFileId && existingFileId && existingFileId !== uploadedFileId) {
-        try {
-          await deleteFileById(existingFileId);
-        } catch {
-          // Ignore errors when deleting old file
-        }
-      }
-
       navigate("/dashboard");
     } catch (error) {
       // If resource update fails after file upload, rollback orphan file.

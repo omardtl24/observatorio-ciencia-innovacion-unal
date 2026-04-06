@@ -82,7 +82,7 @@ export default function Resource() {
     <div className="min-h-screen px-6 py-12">
       <div className="max-w-4xl mx-auto">
         {/* Main Title */}
-        <h2 className="text-3xl font-ancizarItalic font-bold italic text-primary-blue-strong mb-4">
+        <h2 className="text-3xl font-serif italic font-bold text-primary-blue-strong mb-4">
           {parseColor(resource.mainTitle, "text-primary-cyan-base")}
         </h2>
 

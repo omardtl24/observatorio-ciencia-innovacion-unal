@@ -3,15 +3,39 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: "AncizarSans";
+  font-family: "Ancizar Sans";
   src: url("/fonts/AncizarSans-VariableFont_wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
 }
 
 @font-face {
-  font-family: "AncizarSansItalic";
+  font-family: "Ancizar Sans";
   src: url("/fonts/AncizarSans-Italic-VariableFont_wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: italic;
+}
+
+@font-face {
+  font-family: "Ancizar Serif";
+  src: url("/fonts/AncizarSerif-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Ancizar Serif";
+  src: url("/fonts/AncizarSerif-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+@layer utilities {
+  .font-sans {
+    font-family: "Ancizar Sans";
+  }
+
+  .font-serif {
+    font-family: "Ancizar Serif";
+  }
 }

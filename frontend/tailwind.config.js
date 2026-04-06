@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        ancizar: ["AncizarSans"],
-        ancizarItalic: ["AncizarSansItalic"],
+        sans: ["Ancizar Sans"],
+        serif: ["Ancizar Serif"],
       },
       colors: colors
     },

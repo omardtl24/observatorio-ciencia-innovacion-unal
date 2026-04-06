@@ -36,7 +36,7 @@ export default function ConnectionError() {
               <p className="text-sm uppercase tracking-widest text-primary-cyan-strong font-semibold">
                 Estado del servicio
               </p>
-              <h1 className="mt-2 text-3xl md:text-4xl font-ancizarItalic font-bold italic text-primary-blue-strong">
+              <h1 className="mt-2 text-3xl md:text-4xl font-serif italic font-bold text-primary-blue-strong">
                 Estamos teniendo problemas de conexión
               </h1>
               <p className="mt-4 text-gray-700 leading-relaxed">

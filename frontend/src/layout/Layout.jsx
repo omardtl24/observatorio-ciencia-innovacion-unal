@@ -22,7 +22,7 @@ export default function Layout({
 
   return (
     <div
-      className={`relative min-h-screen flex flex-col font-ancizar ${backgroundClass || ""}`}
+      className={`relative min-h-screen flex flex-col font-sans ${backgroundClass || ""}`}
       style={backgroundStyle}
     >
       {/* SVG BACKGROUND */}
