@@ -9,7 +9,7 @@ import {
   fetchAssignableRoles,
   uploadResourceFile,
 } from "../services/resourcesServices";
-import { hasAdministratorRole } from "../utils/dashboardUtils";
+import { hasAdministratorRole } from "../services/dashboardUtils";
 import { parseColor, parseRichText } from "../services/stringServices.jsx";
 
 const RESOURCE_DEFINITIONS = {

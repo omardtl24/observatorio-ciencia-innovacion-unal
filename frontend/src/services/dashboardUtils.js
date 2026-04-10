@@ -1,4 +1,4 @@
-import { fetchFromUrl, fetchResources } from "../services/resourcesServices";
+import { fetchFromUrl, fetchResources } from "./resourcesServices";
 
 export const RESOURCE_TABLES = [
   {

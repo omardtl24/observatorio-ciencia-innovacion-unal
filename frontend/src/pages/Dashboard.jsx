@@ -14,7 +14,7 @@ import {
   getItemLastUpdate,
   getMostRecentDate,
   hasAdministratorRole,
-} from "../utils/dashboardUtils";
+} from "../services/dashboardUtils";
 import {
   assignRoleToUser,
   deleteFileById,
