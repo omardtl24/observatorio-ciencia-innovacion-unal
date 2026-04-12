@@ -5,6 +5,7 @@ import ErrorPopup from "../components/ErrorPopup";
 import { fetchResource, parseResourcesText } from "../services/resourcesServices";
 import { parseRichText, parseColor } from "../services/stringServices.jsx";
 import { isAuthenticated, redirectToLogin } from "../services/authService";
+
 export default function Resource() {
   const { type, id } = useParams();
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function Resource() {
   useEffect(() => {
     // Check if user is authenticated, if not redirect to login
     if (!isAuthenticated()) {
-      redirectToLogin(navigate);
+      redirectToLogin(navigate, `/resource/${type || ""}/${id || ""}`, type || null);
       return;
     }
 
@@ -35,7 +36,7 @@ export default function Resource() {
       } catch (err) {
         // Check if it's an authentication error
         if (err.message && err.message.includes("401")) {
-          redirectToLogin(navigate);
+          redirectToLogin(navigate, `/resource/${type || ""}/${id || ""}`, type || null);
           return;
         }
         setError(err.message);

@@ -3,6 +3,30 @@ import { toResourceCardModel, toResourceDisplayModel } from "./resourceModels";
 
 const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_REQUEST_TIMEOUT_MS || 10000);
 
+const API_ENDPOINT_ALIASES = {
+    report: "report",
+    visor: "visor",
+    simulator: "simulator",
+    document: "document",
+    reports: "report",
+    visors: "visor",
+    simulators: "simulator",
+    documents_presentations: "document",
+    documents_presentation: "document",
+    document_presentation: "document",
+    documents: "document",
+    document: "document",
+};
+
+function normalizeApiEndpoint(type) {
+    if (!type) {
+        return type;
+    }
+
+    const normalized = String(type).toLowerCase();
+    return API_ENDPOINT_ALIASES[normalized] || normalized;
+}
+
 function createTimeoutError(timeoutMs) {
     const error = new Error(`Request timeout after ${timeoutMs}ms`);
     error.name = "TimeoutError";
@@ -124,7 +148,8 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
 }
 
 export async function fetchResources(type) {
-    const fetchUrl = `${import.meta.env.VITE_API_URL}/${type}/all`;
+    const endpoint = normalizeApiEndpoint(type);
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/all`;
     const token = getToken();
     let response;
     try {
@@ -264,7 +289,8 @@ export async function removeRoleFromUser(userEmail, roleId) {
 
 
 export async function fetchResource(type, id) {
-    const fetchUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
+    const endpoint = normalizeApiEndpoint(type);
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}`;
     const token = getToken();
     let response;
     try {
@@ -326,7 +352,8 @@ export async function uploadResourceFile(file) {
 }
 
 export async function createResource(type, payload, updatedDate = null) {
-    const createUrl = `${import.meta.env.VITE_API_URL}/${type}`;
+    const endpoint = normalizeApiEndpoint(type);
+    const createUrl = `${import.meta.env.VITE_API_URL}/${endpoint}`;
     const token = getToken();
 
     const payloadToSend = { ...payload };
@@ -361,7 +388,8 @@ export async function createResource(type, payload, updatedDate = null) {
 }
 
 export async function updateResource(type, id, payload, updatedDate = null) {
-    const updateUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}`;
+    const endpoint = normalizeApiEndpoint(type);
+    const updateUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}`;
     const token = getToken();
 
     const payloadToSend = { ...payload };
@@ -396,7 +424,8 @@ export async function updateResource(type, id, payload, updatedDate = null) {
 }
 
 export async function updateResourceRoles(type, id, roleIds = []) {
-    const updateRolesUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}/roles`;
+    const endpoint = normalizeApiEndpoint(type);
+    const updateRolesUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}/roles`;
     const token = getToken();
 
     let response;
@@ -427,7 +456,8 @@ export async function updateResourceRoles(type, id, roleIds = []) {
 
 export async function deleteResource(type, id, cascade = true) {
     const query = cascade ? "?cascade=true" : "";
-    const deleteUrl = `${import.meta.env.VITE_API_URL}/${type}/${id}${query}`;
+    const endpoint = normalizeApiEndpoint(type);
+    const deleteUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}${query}`;
     const token = getToken();
 
     let response;

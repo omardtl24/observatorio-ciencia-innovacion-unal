@@ -14,7 +14,7 @@ from app.services.role_service import RoleService
 
 
 documents_presentation_bp = Blueprint(
-    "documents_presentation", __name__, url_prefix="/documents_presentations"
+    "documents_presentation", __name__, url_prefix="/document"
 )
 
 

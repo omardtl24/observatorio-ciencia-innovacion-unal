@@ -2,24 +2,24 @@ import { fetchFromUrl, fetchResources } from "./resourcesServices";
 
 export const RESOURCE_TABLES = [
   {
-    key: "reports",
+    key: "report",
     title: "Reportes",
     endpointCandidates: ["report"],
   },
   {
-    key: "visors",
+    key: "visor",
     title: "Visores",
     endpointCandidates: ["visor"],
   },
   {
-    key: "simulators",
+    key: "simulator",
     title: "Simuladores",
     endpointCandidates: ["simulator"],
   },
   {
-    key: "documents_presentations",
+    key: "document",
     title: "Documentos y Presentaciones",
-    endpointCandidates: ["documents_presentations"],
+    endpointCandidates: ["document"],
   },
 ];
 

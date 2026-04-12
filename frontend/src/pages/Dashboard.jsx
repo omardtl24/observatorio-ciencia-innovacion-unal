@@ -27,7 +27,7 @@ import { parseColor } from "../services/stringServices.jsx";
 
 const RESOURCE_FILE_ID_KEYS = {
   report: ["document_file_id", "documentFileId"],
-  documents_presentations: ["file_id", "fileId"],
+  document: ["file_id", "fileId"],
   simulator: ["specs_file_id", "specsFileId"],
 };
 

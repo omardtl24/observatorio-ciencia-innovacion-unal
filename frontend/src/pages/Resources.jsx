@@ -3,30 +3,88 @@ import { useParams } from "react-router-dom";
 import ResourceCard from "../components/ResourceCard";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
 import { datetoString } from "../services/stringServices.jsx";
+import { getPresentationInfo } from "../services/resourceModels";
+import { parseRichText, parseColor } from "../services/stringServices.jsx";
+import  reportCoverImg  from "../assets/cardImages/reports.png";
+import  reportHoveredCoverImg  from "../assets/cardImages/reportsHover.png";
+import  visorCoverImg  from "../assets/cardImages/visors.png";
+import  visorHoveredCoverImg  from "../assets/cardImages/visorsHover.png";
+import  simulatorCoverImg  from "../assets/cardImages/simulators.png";
+import  simulatorHoveredCoverImg  from "../assets/cardImages/simulatorsHover.png";
+import  documentCoverImg  from "../assets/cardImages/documents.png";
+import  documentHoveredCoverImg  from "../assets/cardImages/documentsHover.png";
+import reportIcon from "../assets/icons/resources/report-blue.svg";
+import visorIcon from "../assets/icons/resources/visor-blue.svg";
+import simulatorIcon from "../assets/icons/resources/simulator-blue.svg";
+import documentIcon from "../assets/icons/resources/document-blue.svg";
+
+const TYPE_ALIASES = {
+  report: "report",
+  reports: "report",
+  simulator: "simulator",
+  simulators: "simulator",
+  visor: "visor",
+  visors: "visor",
+  document: "document",
+  documents: "document",
+  document_presentation: "document",
+  documents_presentation: "document",
+  documents_presentations: "document",
+};
+
+function normalizeResourceType(resourceType) {
+  if (!resourceType) {
+    return "report";
+  }
+
+  const key = String(resourceType).toLowerCase();
+  return TYPE_ALIASES[key] || key;
+}
 
 export default function Resources() {
   const { type } = useParams();
+  const normalizedType = normalizeResourceType(type);
   const [dataMapper, setDataMapper] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const typeLabels = {
     report: "reporte",
-    reports: "reporte",
     simulator: "simulador",
-    simulators: "simulador",
     visor: "visor",
-    visors: "visor",
     document: "documento",
-    documents: "documento",
   };
-  const typeSpanish = typeLabels[type] || "recursos";
+  const typeSpanish = typeLabels[normalizedType] || "recursos";
   const defaultErrorMessage = `No fue posible consultar los ${typeSpanish}`;
+  const presentationInfo = getPresentationInfo(normalizedType);
 
-  const images = [
-    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1491895200222-0fc4a4c35e18?auto=format&fit=crop&w=800&q=80",
-  ];
+  const images_icons = {
+    report: {
+      coverImage: reportCoverImg,
+      hoverCoverImage: reportHoveredCoverImg,
+      icon: reportIcon
+    },
+    simulator: {
+      coverImage: simulatorCoverImg,
+      hoverCoverImage: simulatorHoveredCoverImg,
+      icon: simulatorIcon
+    },
+    visor: {
+      coverImage: visorCoverImg,
+      hoverCoverImage: visorHoveredCoverImg,
+      icon: visorIcon
+    },
+    document: {
+      coverImage: documentCoverImg,
+      hoverCoverImage: documentHoveredCoverImg,
+      icon: documentIcon
+    },
+    document: {
+      coverImage: documentCoverImg,
+      hoverCoverImage: documentHoveredCoverImg,
+      icon: documentIcon,
+    },
+  };
 
   useEffect(() => {
 
@@ -40,8 +98,8 @@ export default function Resources() {
       try {
         setLoading(true);
         setError(null);
-        const jsonData = await fetchResources(type);
-        const parsedData = parseResourcesForCards(type, jsonData);
+        const jsonData = await fetchResources(normalizedType);
+        const parsedData = parseResourcesForCards(normalizedType, jsonData);
         setDataMapper(parsedData);
       } catch (err) {
         const message = err?.message ? `${err.message} ${defaultErrorMessage}` : defaultErrorMessage;
@@ -52,7 +110,7 @@ export default function Resources() {
     };
 
     loadResources();
-  }, [type]);
+  }, [normalizedType]);
 
   if (loading) {
     return (
@@ -65,23 +123,39 @@ export default function Resources() {
   if (error) {
     return null;
   }
-
+  
   return (
     <div className="min-h-screen px-6 py-12">
+      <div className="max-w-6xl mx-auto mb-10 rounded-3xl border-2 border-primary-blue-strong bg-white/90 px-6 py-8 shadow-lg">
+        <h1 className="text-4xl md:text-5xl font-serif italic font-bold text-primary-blue-strong">
+          {parseColor(presentationInfo?.title || `Recursos ${typeSpanish}`, "text-secondary-cyan-strong")}
+        </h1>
+        {presentationInfo?.text ? (
+          <div className="mt-4 space-y-4 text-base leading-7 text-gray-700 whitespace-pre-line">
+            {parseRichText(presentationInfo.text, "text-gray-700")}
+          </div>
+        ) : null}
+      </div>
+
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        {dataMapper.map((item, index) => (
-          <ResourceCard
-            key={item.id}
-            id={item.id}
-            number={index + 1}
-            mainTitle={item.mainTitle}
-            spanishResourceType={typeSpanish}
-            type={item.type || 'PDF'}
-            updatedAt={datetoString(item.updatedAt)}
-            coverImage={images[index % images.length]}
-            resourceType={type}
-          />
-        ))}
+        {dataMapper.map((item, index) => {
+          const typeImages = images_icons[normalizedType] || images_icons.report;
+          return (
+            <ResourceCard
+              key={item.id}
+              id={item.id}
+              number={index + 1}
+              mainTitle={item.mainTitle}
+              spanishResourceType={typeSpanish}
+              type={item.type || 'PDF'}
+              updatedAt={datetoString(item.updatedAt)}
+              resourceIcon={typeImages.icon}
+              coverImage={typeImages.coverImage}
+              hoverCoverImage={typeImages.hoverCoverImage}
+              resourceType={normalizedType}
+            />
+          );
+        })}
       </div>
     </div>
   );

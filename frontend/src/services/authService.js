@@ -451,11 +451,15 @@ export function getTokenExpiresIn() {
  * 
  * @param {Function} navigate - React Router navigate function
  * @param {string} customOrigin - Optional custom origin to redirect to after login
+ * @param {string|null} resourceType - Optional resource type context
  */
-export function redirectToLogin(navigate, customOrigin = null) {
+export function redirectToLogin(navigate, customOrigin = null, resourceType = null) {
   const origin = customOrigin || window.location.pathname;
-  const encodedOrigin = encodeURIComponent(origin);
-  navigate(`/login?origin=${encodedOrigin}`);
+  const params = new URLSearchParams({ origin });
+  if (resourceType) {
+    params.set("resourceType", resourceType);
+  }
+  navigate(`/login?${params.toString()}`);
 }
 
 /**
@@ -463,11 +467,15 @@ export function redirectToLogin(navigate, customOrigin = null) {
  * Prefer redirectToLogin(navigate) when in a React component.
  * 
  * @param {string} customOrigin - Optional custom origin to redirect to after login
+ * @param {string|null} resourceType - Optional resource type context
  */
-export function redirectToLoginFallback(customOrigin = null) {
+export function redirectToLoginFallback(customOrigin = null, resourceType = null) {
   const origin = customOrigin || window.location.pathname;
-  const encodedOrigin = encodeURIComponent(origin);
-  window.location.href = `/login?origin=${encodedOrigin}`;
+  const params = new URLSearchParams({ origin });
+  if (resourceType) {
+    params.set("resourceType", resourceType);
+  }
+  window.location.href = `/login?${params.toString()}`;
 }
 
 /**

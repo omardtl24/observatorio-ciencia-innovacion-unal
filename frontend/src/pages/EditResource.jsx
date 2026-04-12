@@ -14,6 +14,29 @@ import {
 import { hasAdministratorRole } from "../services/dashboardUtils";
 import { parseColor, parseRichText } from "../services/stringServices.jsx";
 
+const TYPE_ALIASES = {
+  report: "report",
+  reports: "report",
+  document: "document",
+  documents: "document",
+  document_presentation: "document",
+  documents_presentation: "document",
+  documents_presentations: "document",
+  simulator: "simulator",
+  simulators: "simulator",
+  visor: "visor",
+  visors: "visor",
+};
+
+function normalizeResourceType(resourceType) {
+  if (!resourceType) {
+    return "report";
+  }
+
+  const key = String(resourceType).toLowerCase();
+  return TYPE_ALIASES[key] || key;
+}
+
 const RESOURCE_DEFINITIONS = {
   report: {
     label: "Reporte",
@@ -21,9 +44,9 @@ const RESOURCE_DEFINITIONS = {
     fileField: "document_file_id",
     fileLabel: "Archivo del reporte (PDF u otro)",
   },
-  documents_presentations: {
+  document: {
     label: "Documento o presentacion",
-    endpoint: "documents_presentations",
+    endpoint: "document",
     fileField: "file_id",
     fileLabel: "Archivo del documento/presentacion",
   },
@@ -56,7 +79,7 @@ const PREVIEW_IMAGES = {
   report: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
   simulator: "https://images.unsplash.com/photo-1491895200222-0fc4a4c35e18?auto=format&fit=crop&w=800&q=80",
   visor: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80",
-  documents_presentations: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
+  document: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
 };
 
 function getPlainFromHtml(html) {
@@ -157,6 +180,7 @@ function isSelectionInsideElement(selection, element) {
 export default function EditResource() {
   const navigate = useNavigate();
   const { type, id } = useParams();
+  const normalizedType = normalizeResourceType(type);
   const [form, setForm] = useState(INITIAL_FORM);
   const [richFields, setRichFields] = useState({
     title: "",
@@ -193,7 +217,7 @@ export default function EditResource() {
     let active = true;
 
     const loadResource = async () => {
-      if (!type || !id || !RESOURCE_DEFINITIONS[type]) {
+      if (!normalizedType || !id || !RESOURCE_DEFINITIONS[normalizedType]) {
         if (active) {
           setFeedback({ type: "error", message: "Tipo de recurso o ID inválido" });
           setLoading(false);
@@ -202,7 +226,7 @@ export default function EditResource() {
       }
 
       try {
-        const data = await fetchResource(type, id);
+        const data = await fetchResource(normalizedType, id);
         if (!active) return;
 
         const parsedRoleIds = Array.isArray(data.role_ids)
@@ -223,7 +247,7 @@ export default function EditResource() {
 
         setForm((prev) => ({
           ...prev,
-          resourceType: type,
+          resourceType: normalizedType,
           title: data.title || "",
           description: data.description || "",
           visor_type: data.type || "",
@@ -238,12 +262,12 @@ export default function EditResource() {
         });
 
         // Store existing file ID
-        if (RESOURCE_DEFINITIONS[type].fileField) {
-          const fileId = data[RESOURCE_DEFINITIONS[type].fileField];
+        if (RESOURCE_DEFINITIONS[normalizedType].fileField) {
+          const fileId = data[RESOURCE_DEFINITIONS[normalizedType].fileField];
           if (fileId) {
             setExistingFileId(fileId);
             // Extract filename from the data if available
-            setExistingFileName(`Archivo actual: ${type}`);
+            setExistingFileName(`Archivo actual: ${normalizedType}`);
           }
         }
       } catch (error) {
@@ -265,7 +289,7 @@ export default function EditResource() {
     return () => {
       active = false;
     };
-  }, [type, id]);
+  }, [normalizedType, id]);
 
   // Load roles
   useEffect(() => {
@@ -298,7 +322,7 @@ export default function EditResource() {
   }, []);
 
   if (!isAuthenticated()) {
-    redirectToLogin(navigate, `/resource/${type}/${id}`);
+    redirectToLogin(navigate, `/resource/${normalizedType}/${id}`, normalizedType);
     return null;
   }
 
@@ -440,9 +464,7 @@ export default function EditResource() {
   const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.title).trim() || "Titulo principal";
   const previewDescriptionEncoded = encodeMarkedFromHtml(richFields.description).trim() ||
     "Aqui veras una vista previa de la descripcion del recurso.";
-  const previewCardType = form.resourceType === "documents_presentations"
-    ? "doc_presentation"
-    : form.resourceType;
+  const previewCardType = form.resourceType;
   const previewCoverImage = PREVIEW_IMAGES[form.resourceType] || PREVIEW_IMAGES.report;
 
   const handleSubmit = async (event) => {
@@ -691,7 +713,7 @@ export default function EditResource() {
             </button>
             <button
               type="button"
-              onClick={() => navigate(`/resource/${type}/${id}`)}
+              onClick={() => navigate(`/resource/${normalizedType}/${id}`)}
               className="border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
               Cancelar

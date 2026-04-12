@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
+import ErrorPopup from "../components/ErrorPopup";
 import { startLogin, saveTokensFromPayload } from "../services/authService";
 
 const ERROR_MESSAGES = {
   session_expired: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+};
+
+const RESOURCE_LABELS = {
+  report: "reportes",
+  document: "documentos y presentaciones",
+  simulator: "simuladores",
+  visor: "visores",
 };
 
 export default function Login() {
@@ -12,6 +20,10 @@ export default function Login() {
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const contactEmail = import.meta.env.VITE_SUPPORT_EMAIL || "info@universidad.edu.co";
+  const loginParams = new URLSearchParams(location.search);
+  const resourceType = loginParams.get("resourceType");
+  const resourceLabel = RESOURCE_LABELS[resourceType] || "visores";
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -66,31 +78,19 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-blue-200 p-8 space-y-6">
+      <div className="w-full max-w-md bg-secondary-gray-soft rounded-xl shadow-lg border border-primary-blue-strong p-8 space-y-6">
 
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold text-primary-cyan-strong">
-            ¡Interactúa con nuestros visores!
+          <h1 className="text-3xl md:text-5xl font-bold font-serif italic text-primary-blue-strong">
+            Inicia sesión
           </h1>
-          <p className="text-sm text-gray-600">
-            Los visores son una herramienta esencial para investigadores,
-            estudiantes y personal administrativo.
+          <p className="text-md text-primary-blue-strong font-bold font-serif italic pt-3">
+            ¿Aún no tienes acceso? <a href={`mailto:${contactEmail}`} className="text-secondary-cyan-strong underline">
+             Escríbenos
+            </a>
           </p>
         </div>
-
-        {/* Section title */}
-        <div className="flex items-center gap-2 text-blue-600 font-medium">
-          <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
-          Producción científica
-        </div>
-
-        {/* Error */}
-        {errorMessage && (
-          <div className="text-sm text-red-700 bg-red-100 border border-red-200 px-4 py-2 font-sans rounded">
-            {errorMessage}
-          </div>
-        )}
 
         {/* Google login */}
         <button
@@ -99,7 +99,8 @@ export default function Login() {
             w-full flex items-center justify-center gap-3
             px-4 py-3 rounded-md
             border border-blue-300
-            text-blue-700 font-medium
+            text-black font-serif italic
+            font-bold
             hover:bg-blue-50
             transition
           "
@@ -109,7 +110,7 @@ export default function Login() {
             alt="Google logo"
             className="w-5 h-5"
           />
-          Iniciar sesión con Google
+          Continuar con Google
         </button>
 
         {/* Footer */}
@@ -117,6 +118,11 @@ export default function Login() {
           Al continuar, aceptas los términos y condiciones.
         </p>
       </div>
+
+      <ErrorPopup
+        error={errorMessage}
+        onClose={() => setErrorMessage(null)}
+      />
     </div>
   );
 }

@@ -5,11 +5,31 @@ const TYPE_ALIASES = {
   visors: "visor",
   simulator: "simulator",
   simulators: "simulator",
-  document: "document_presentation",
-  documents: "document_presentation",
-  document_presentation: "document_presentation",
-  documents_presentation: "document_presentation",
+  document: "document",
+  documents: "document",
+  document_presentation: "document",
+  documents_presentation: "document",
+  documents_presentations: "document",
 };
+
+const PRESENTATION_INFO = {
+  visor: {
+    title: "¡Accede a nuestros \\(visores interactivos\\)!",
+    text: "Los visores son plataformas ingteractivas que facilitan la lectura de grandes volúmenes de información y muestran el impacto real de la Facultad de Ciencias a través de visualizaciones dinámicas e intuitivas. Estas herramientas permiten que investigadores, estudiantes y personal administrativo accedan a bases de datos institucionales, realicen análisis personalizados y generen métricas según las necesidades"
+  },
+  simulator: {
+    title: "¡Accede a nuestros \\(simuladores\\)!",
+    text: "Son herramientas interactivas que modelan escenarios institucionales y pronostican sus efectos sobre la comunidad universitaria.\nCon ellos, la Facultad de Ciencias puede anticipar resultados e identificar oportunidades de mejora para fortalecer la experiencia educativa. Además, contribuyen a la toma de decisiones basada en evidencia."
+  },
+  document: {
+    title: "¡Accede a nuestros \\(documentos y presentaciones\\)!",
+    text: "Otra forma que utiliza el Observatorio para presentar información relevante son los documentos digitales de texto y las presentaciones con diapositivas. Los documentos consignan procesos como la revisión de literatura y establecimiento de soportes académicos en los que se enmarcan las distintas actividades del Observatorio.\nPor otro lado, se elaboraron presentaciones visuales con el fin de comunicar, ante los actores correspondientes, los principales hallazgos y resultados para la toma de decisiones. En esta sección, usted podrá encontrar algunos de estos documentos."
+  },
+  report: {
+    title: "¡Accede a nuestros \\(reportes\\)!",
+    text: "Otra forma que utiliza el Observatorio para presentar información relevante son los documentos digitales de texto y las presentaciones con diapositivas. Los documentos consignan procesos como la revisión de literatura y establecimiento de soportes académicos en los que se enmarcan las distintas actividades del Observatorio.\nPor otro lado, se elaboraron presentaciones visuales con el fin de comunicar, ante los actores correspondientes, los principales hallazgos y resultados para la toma de decisiones. En esta sección, usted podrá encontrar algunos de estos documentos."
+  }
+}
 
 function normalizeResourceType(resourceType) {
   if (!resourceType) return "report";
@@ -28,11 +48,16 @@ function inferMediaType(normalizedType, item) {
     return rawType || "visor_url";
   }
 
-  if (normalizedType === "report" || normalizedType === "simulator" || normalizedType === "document_presentation") {
+  if (normalizedType === "report" || normalizedType === "simulator" || normalizedType === "document") {
     return "pdf";
   }
 
   return (item?.type || "").toString().toLowerCase() || "unknown";
+}
+
+export function getPresentationInfo(resourceType) {
+  const normalizedType = normalizeResourceType(resourceType);
+  return PRESENTATION_INFO[normalizedType] || null;
 }
 
 export function toResourceCardModel(resourceType, item) {
@@ -56,7 +81,7 @@ export function toResourceDisplayModel(resourceType, item) {
     resourceDisplayable = item?.document_file_id ?? null;
   } else if (normalizedType === "simulator") {
     resourceDisplayable = item?.specs_file_id ?? null;
-  } else if (normalizedType === "document_presentation") {
+  } else if (normalizedType === "document") {
     resourceDisplayable = item?.file_id ?? null;
   } else if (normalizedType === "visor") {
     resourceDisplayable = item?.visor_url ?? null;
@@ -73,5 +98,5 @@ export function toResourceDisplayModel(resourceType, item) {
 }
 
 export function isPdfResource(resourceType) {
-  return ["report", "simulator", "document_presentation"].includes(normalizeResourceType(resourceType));
+  return ["report", "simulator", "document"].includes(normalizeResourceType(resourceType));
 }

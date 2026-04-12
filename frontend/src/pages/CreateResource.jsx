@@ -12,6 +12,29 @@ import {
 import { hasAdministratorRole } from "../services/dashboardUtils";
 import { parseColor, parseRichText } from "../services/stringServices.jsx";
 
+const TYPE_ALIASES = {
+  report: "report",
+  reports: "report",
+  document: "document",
+  documents: "document",
+  document_presentation: "document",
+  documents_presentation: "document",
+  documents_presentations: "document",
+  simulator: "simulator",
+  simulators: "simulator",
+  visor: "visor",
+  visors: "visor",
+};
+
+function normalizeResourceType(resourceType) {
+  if (!resourceType) {
+    return "report";
+  }
+
+  const key = String(resourceType).toLowerCase();
+  return TYPE_ALIASES[key] || key;
+}
+
 const RESOURCE_DEFINITIONS = {
   report: {
     label: "Reporte",
@@ -19,9 +42,9 @@ const RESOURCE_DEFINITIONS = {
     fileField: "document_file_id",
     fileLabel: "Archivo del reporte (PDF u otro)",
   },
-  documents_presentations: {
+  document: {
     label: "Documento o presentacion",
-    endpoint: "documents_presentations",
+    endpoint: "document",
     fileField: "file_id",
     fileLabel: "Archivo del documento/presentacion",
   },
@@ -54,7 +77,7 @@ const PREVIEW_IMAGES = {
   report: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
   simulator: "https://images.unsplash.com/photo-1491895200222-0fc4a4c35e18?auto=format&fit=crop&w=800&q=80",
   visor: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80",
-  documents_presentations: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
+  document: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
 };
 
 function getPlainFromHtml(html) {
@@ -146,7 +169,7 @@ export default function CreateResource() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const requestedType = params.get("type");
+    const requestedType = normalizeResourceType(params.get("type"));
     if (!requestedType || !RESOURCE_DEFINITIONS[requestedType]) {
       return;
     }
@@ -325,9 +348,7 @@ export default function CreateResource() {
   const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.title).trim() || "Titulo principal";
   const previewDescriptionEncoded = encodeMarkedFromHtml(richFields.description).trim() ||
     "Aqui veras una vista previa de la descripcion del recurso.";
-  const previewCardType = form.resourceType === "documents_presentations"
-    ? "doc_presentation"
-    : form.resourceType;
+  const previewCardType = form.resourceType;
   const previewCoverImage = PREVIEW_IMAGES[form.resourceType] || PREVIEW_IMAGES.report;
 
   const handleSubmit = async (event) => {
