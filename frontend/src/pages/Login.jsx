@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import ErrorPopup from "../components/ErrorPopup";
 import { startLogin, saveTokensFromPayload } from "../services/authService";
+import { capitalize } from '../services/stringServices'
 
 const ERROR_MESSAGES = {
   session_expired: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
@@ -77,12 +78,23 @@ export default function Login() {
   if (loading) return <Loading message="Redirigiendo a Google..." />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-secondary-gray-soft rounded-xl shadow-lg border border-primary-blue-strong p-8 space-y-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-6">
+      {resourceType ? (
+          <div className="w-full max-w-sm text-center space-y-2">
+          <h1 className="text-3xl font-bold font-serif italic text-primary-blue-strong">
+            ¡{capitalize(resourceLabel)} detallados a tu alcance!
+          </h1>
+          <p className="text-md text-primary-blue-strong">
+            Accede a los {resourceLabel} generados por el Observatorio de la Facultad de Ciencias
+          </p>
+        </div>
+      ) : null}
+
+      <div className="w-full max-w-sm bg-secondary-gray-soft rounded-xl shadow-lg border border-primary-blue-strong p-8 space-y-6">
 
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl md:text-5xl font-bold font-serif italic text-primary-blue-strong">
+          <h1 className="text-3xl md:text-4xl font-bold font-serif italic text-primary-blue-strong">
             Inicia sesión
           </h1>
           <p className="text-md text-primary-blue-strong font-bold font-serif italic pt-3">
@@ -96,12 +108,13 @@ export default function Login() {
         <button
           onClick={handleLogin}
           className="
-            w-full flex items-center justify-center gap-3
+            w-auto mx-auto flex items-center justify-center gap-3
             px-4 py-3 rounded-md
-            border border-blue-300
+            border border-secondary-cyan-strong
             text-black font-serif italic
             font-bold
-            hover:bg-blue-50
+            bg-white
+            hover:bg-secondary-cyan-soft
             transition
           "
         >
@@ -115,7 +128,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="text-xs text-center text-gray-500">
-          Al continuar, aceptas los términos y condiciones.
+          Al ingresar, aceptas nuestros Términos de Uso y reconoces haber leído nuestra Política de Privacidad 
         </p>
       </div>
 

@@ -1,4 +1,8 @@
-import React from "react";
+export function capitalize(text){
+  const clean = text.trim();
+  if (!clean) return "";
+  return clean[0].toUpperCase() + clean.slice(1).toLowerCase();
+};
 
 export function datetoString(date){
     return new Date(date).toLocaleDateString("es-ES", {
@@ -6,7 +10,6 @@ export function datetoString(date){
                 month: "long",
             }).replace(/^\w/, (c) => c.toUpperCase())
 }
-
 
 export function stripColorMarkers(text) {
   if (!text) return "";

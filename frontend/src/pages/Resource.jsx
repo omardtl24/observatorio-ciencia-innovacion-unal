@@ -88,8 +88,8 @@ export default function Resource() {
         </h2>
 
         {/* Description */}
-        <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed">
-          {parseRichText(resource.description, "text-primary-blue-strong")}
+        <div className="prose prose-lg max-w-none mb-8 text-primary-blue-strong leading-relaxed">
+          {parseRichText(resource.description, "text-primary-blue-strong font-semibold")}
         </div>
 
         {/* Resource Display */}
