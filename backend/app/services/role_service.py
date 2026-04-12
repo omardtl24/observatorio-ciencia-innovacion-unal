@@ -24,5 +24,5 @@ class RoleService(BaseService):
         """
         instance = Role.query.filter_by(name=name).first()
         if not instance:
-            raise NotFoundError(f"Role with name={name} not found")
+            raise NotFoundError(f"No se encontró el rol con nombre={name}")
         return instance

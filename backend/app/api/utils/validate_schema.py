@@ -33,7 +33,7 @@ def validate_schema(data: dict, schema_class: BaseModel):
             field = ".".join(str(x) for x in error["loc"])
             errors[field] = error["msg"]
         
-        raise SchemaValidationError("Request validation failed", details=errors)
+        raise SchemaValidationError("Los datos enviados no son válidos", details=errors)
     
     except Exception as e:
         raise SchemaValidationError(str(e))

@@ -42,12 +42,12 @@ class AuthService:
         try:
             payload = serializer.loads(state_token, max_age=max_age)
         except BadSignature as exc:
-            raise UnauthorizedError("Invalid OAuth state") from exc
+            raise UnauthorizedError("El estado de autenticación no es válido") from exc
         except Exception as exc:
-            raise UnauthorizedError("OAuth state expired or malformed") from exc
+            raise UnauthorizedError("El estado de autenticación expiró o está mal formado") from exc
 
         if payload.get("purpose") != "oauth_state" or not payload.get("nonce"):
-            raise UnauthorizedError("Invalid OAuth state payload")
+            raise UnauthorizedError("Los datos del estado de autenticación no son válidos")
 
         return payload
 

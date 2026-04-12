@@ -31,69 +31,37 @@ export default function ErrorPopup({ error, onClose, redirectTo, autoClose = fal
 
   if (!isVisible || !error) return null;
 
-  const errorMessage = typeof error === "string" ? error : error.message || "An unknown error occurred";
+  const errorMessage = typeof error === "string" ? error : error.message || "Ocurrió un error inesperado";
 
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-40 z-40 transition-opacity duration-300"
-        onClick={handleClose}
+        className={`
+          fixed inset-0 z-40
+          transition-colors duration-300 ease-in-out
+          ${isVisible ? "bg-secondary-gray-base" : "bg-white"}
+        `}
       />
 
       {/* Error Popup */}
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm px-4">
-        <div className="bg-white rounded-lg shadow-2xl overflow-hidden animate-slideIn">
-          {/* Header - Red accent for error */}
-          <div className="bg-red-500 h-1"></div>
+        <div className="bg-white rounded-lg border-secondary-gray-strong shadow-2xl overflow-hidden animate-slideIn">
 
           {/* Content */}
           <div className="p-6 flex gap-4">
-            {/* Error Icon */}
-            <div className="flex-shrink-0">
-              <svg
-                className="w-8 h-8 text-red-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-
             {/* Message */}
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Error</h3>
-              <p className="text-sm text-gray-600 break-words">{errorMessage}</p>
+              <h3 className="text-3xl font-bold text-secondary-gray-strong mb-2 text-center font-serif italic">Error</h3>
+              <p className="text-md text-secondary-gray-base text-center break-words px-5">{errorMessage}</p>
             </div>
-
-            {/* Close Button */}
-            <button
-              onClick={handleClose}
-              className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close error message"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
           </div>
 
           {/* Action Button */}
           <div className="px-6 pb-4">
             <button
               onClick={handleClose}
-              className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200"
+              className="mx-auto block w-fit bg-primary-blue-strong hover:bg-secondary-gray-strong text-white px-3 py-2 rounded-md transition-colors"
             >
               Regresar
             </button>

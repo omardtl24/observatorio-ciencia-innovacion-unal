@@ -32,7 +32,7 @@ def schema_validator(schema_class):
             data = request.get_json()
             
             if data is None:
-                raise SchemaValidationError("Request body must be JSON")
+                raise SchemaValidationError("El cuerpo de la solicitud debe estar en formato JSON")
             
             # Validate data using the util function (raises SchemaValidationError on failure)
             # This exception will be caught by the global error handler in app/__init__.py

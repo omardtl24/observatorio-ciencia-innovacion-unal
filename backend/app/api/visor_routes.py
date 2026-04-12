@@ -27,7 +27,6 @@ def create_visor():
     Payload:
         name (str, required): The name of the visor.
         description (str, optional): The description of the visor.
-        type (str, optional): The type of the visor.
         visor_url (str, optional): The URL of the visor.
     
     Returns:
@@ -62,7 +61,7 @@ def create_visor():
 
     visor = visor_service.get_by_id(visor.id)
 
-    include = ["id", "title", "description", "type", "visor_url", "updated_at"]
+    include = ["id", "title", "description", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     return jsonify(response), 201
@@ -98,7 +97,6 @@ def get_visor_by_id(visor_id):
     response = visor.to_dict(include=["id",
                                       "title",
                                       "description",
-                                      "type",
                                       "visor_url",
                                       "updated_at"])
     response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
@@ -117,7 +115,7 @@ def update_visor(visor_id):
     role_ids = update_data.pop("role_ids", None)
 
     if not update_data and role_ids is None:
-        raise SchemaValidationError("At least one field must be provided")
+        raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
 
     if update_data:
         VisorService.update(visor_id, **update_data)
@@ -135,7 +133,7 @@ def update_visor(visor_id):
                 RoleVisorRelation.add(role_id, visor_id)
 
     visor = VisorService.get_by_id(visor_id)
-    include = ["id", "title", "description", "type", "visor_url", "updated_at"]
+    include = ["id", "title", "description", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
@@ -152,12 +150,12 @@ def update_visor_roles(visor_id):
     payload = request.get_json(silent=True) or {}
     role_ids = payload.get("role_ids")
     if not isinstance(role_ids, list):
-        raise SchemaValidationError("role_ids must be a list")
+        raise SchemaValidationError("El campo role_ids debe ser una lista")
 
     try:
         selected_role_ids = list({int(role_id) for role_id in role_ids})
     except (TypeError, ValueError):
-        raise SchemaValidationError("role_ids must contain valid integers")
+        raise SchemaValidationError("El campo role_ids debe contener números enteros válidos")
 
     admin_role = RoleService.get_by_name("Administrador")
     for role_id in selected_role_ids:

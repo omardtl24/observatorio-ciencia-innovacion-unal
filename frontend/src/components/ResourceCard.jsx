@@ -13,11 +13,15 @@ export default function ResourceCard({
   number,
   spanishResourceType,
   resourceType = "report",
+  disableNavigation = false,
 }) {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
+    if (disableNavigation) {
+      return;
+    }
     navigate(`/resource/${resourceType}/${id}`);
   };
 

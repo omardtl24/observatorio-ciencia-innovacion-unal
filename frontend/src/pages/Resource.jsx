@@ -21,7 +21,7 @@ export default function Resource() {
     }
 
     if (!type || !id) {
-      setError("Resource type and ID are required");
+      setError("Debes indicar el tipo de recurso y su identificador");
       setLoading(false);
       return;
     }
@@ -51,7 +51,7 @@ export default function Resource() {
   if (loading) {
     return (
       <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading resource...</p>
+        <p className="text-lg text-gray-600">Cargando recurso...</p>
       </div>
     );
   }
@@ -59,9 +59,6 @@ export default function Resource() {
   if (error) {
     return (
       <>
-        <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-          <p className="text-lg text-red-600">Error: {error}</p>
-        </div>
         <ErrorPopup 
           error={error} 
           onClose={() => setError(null)}
@@ -74,7 +71,7 @@ export default function Resource() {
   if (!resource) {
     return (
       <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-        <p className="text-lg text-gray-600">Resource not found</p>
+        <p className="text-lg text-gray-600">No se encontró el recurso solicitado</p>
       </div>
     );
   }

@@ -35,7 +35,7 @@ function renderVisor(fileSrc) {
 function renderUnsupported() {
   return (
     <div className="w-full h-[600px] flex items-center justify-center">
-      <p className="text-lg text-gray-600">Resource type not supported for display.</p>
+      <p className="text-lg text-gray-600">Este tipo de recurso no se puede mostrar aquí.</p>
     </div>
   );
 }

@@ -8,7 +8,6 @@ class VisorCreateRequest(BaseModel):
     
     Attributes:
         title: The main title of the visor (required).
-        type: The type of the visor (required).
         description: The description of the visor (required).
         visor_url: The URL of the visor (required).
         updated_at: The last update timestamp of the visor (required).
@@ -20,7 +19,6 @@ class VisorCreateRequest(BaseModel):
             "example": {
                 "title": "Main Visor title",
                 "description": "Primary data visualization visor",
-                "type": "dashboard",
                 "visor_url": "https://example.com/visor",
                 "updated_at": "2026-02-14T21:01:51"
             }
@@ -28,7 +26,6 @@ class VisorCreateRequest(BaseModel):
     )
     
     title: str = Field(..., min_length=1, description="The main title of the visor")
-    type: str = Field(..., min_length=1, description="The type of the visor")
     description: str = Field(..., min_length=1, description="The description of the visor")
     visor_url: str = Field(..., min_length=1, description="The URL of the visor")
     role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the visor")
@@ -45,7 +42,6 @@ class VisorUpdateRequest(BaseModel):
             "example": {
                 "title": "Main Visor title updated",
                 "description": "Updated visor description",
-                "type": "dashboard",
                 "visor_url": "https://example.com/visor-updated",
                 "updated_at": "2026-02-15T00:00:00"
             }
@@ -53,7 +49,6 @@ class VisorUpdateRequest(BaseModel):
     )
 
     title: Optional[str] = Field(None, min_length=1, description="The main title of the visor")
-    type: Optional[str] = Field(None, min_length=1, description="The type of the visor")
     description: Optional[str] = Field(None, min_length=1, description="The description of the visor")
     visor_url: Optional[str] = Field(None, min_length=1, description="The URL of the visor")
     role_ids: Optional[List[int]] = Field(None, description="Role IDs with access to the visor")

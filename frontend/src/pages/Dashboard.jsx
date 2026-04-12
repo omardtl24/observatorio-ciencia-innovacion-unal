@@ -7,6 +7,7 @@ import {
   logout,
   redirectToLogin,
 } from "../services/authService";
+import ErrorPopup from "../components/ErrorPopup";
 import {
   RESOURCE_TABLES,
   fetchFirstAvailableResource,
@@ -391,18 +392,10 @@ export default function Dashboard() {
 
   if (!hasAdminAccess) {
     return (
-      <div className="p-10 flex flex-col items-center gap-4 text-center">
-        <h1 className="text-2xl font-bold text-primary-cyan-strong">Se requiere acceso de administrador</h1>
-        <p className="text-gray-700 max-w-xl">
-          Tu cuenta ha iniciado sesion, pero no incluye permisos de Administrador para este panel.
-        </p>
-        <button
-          onClick={handleLogout}
-          className="mt-4 bg-red-500 text-white px-6 py-3 rounded-xl text-lg shadow-md hover:bg-red-600 transition"
-        >
-          Cerrar sesion
-        </button>
-      </div>
+      <ErrorPopup
+        error="Tu cuenta no tiene permisos de Administrador para acceder a este panel."
+        onClose={() => handleLogout()}
+      />
     );
   }
 

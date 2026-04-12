@@ -45,7 +45,7 @@ class AccessChecker:
         elif resource_type == "document":
             return AccessChecker._check_document_presentation_access(user_email, resource_id)
         else:
-            raise ValueError(f"Unknown resource type: {resource_type}")
+            raise ValueError(f"Tipo de recurso no válido: {resource_type}")
     
     @staticmethod
     def _check_report_access(user_email, report_id):
@@ -167,7 +167,7 @@ class AccessChecker:
         elif resource_type == "document":
             return AccessChecker._grant_document_presentation_admin_access(admin_role.id, resource_id)
         else:
-            raise ValueError(f"Unknown resource type: {resource_type}")
+            raise ValueError(f"Tipo de recurso no válido: {resource_type}")
     
     @staticmethod
     def _grant_report_admin_access(admin_role_id, report_id):

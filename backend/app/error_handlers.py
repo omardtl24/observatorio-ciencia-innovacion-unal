@@ -29,7 +29,7 @@ def register_jwt_error_handlers(jwt, app):
         app.logger.error(f"JWT unauthorized: {reason}")
         return jsonify({
             "code": "unauthorized",
-            "message": reason,
+            "message": "Debes iniciar sesión para continuar",
             "details": None,
         }), 401
 
@@ -38,7 +38,7 @@ def register_jwt_error_handlers(jwt, app):
         app.logger.error(f"JWT invalid: {reason}")
         return jsonify({
             "code": "invalid_token",
-            "message": reason,
+            "message": "La sesión no es válida. Inicia sesión nuevamente",
             "details": None,
         }), 401
 
@@ -47,7 +47,7 @@ def register_jwt_error_handlers(jwt, app):
         app.logger.error("JWT expired")
         return jsonify({
             "code": "token_expired",
-            "message": "Token has expired",
+            "message": "La sesión expiró. Inicia sesión nuevamente",
             "details": None,
         }), 401
 
@@ -56,7 +56,7 @@ def register_jwt_error_handlers(jwt, app):
         app.logger.error("JWT needs fresh token")
         return jsonify({
             "code": "fresh_token_required",
-            "message": "Fresh token required",
+            "message": "Por seguridad, vuelve a iniciar sesión",
             "details": None,
         }), 401
 
@@ -65,7 +65,7 @@ def register_jwt_error_handlers(jwt, app):
         app.logger.error("JWT revoked")
         return jsonify({
             "code": "token_revoked",
-            "message": "Token has been revoked",
+            "message": "La sesión fue cerrada. Inicia sesión nuevamente",
             "details": None,
         }), 401
 
@@ -79,7 +79,7 @@ def register_api_error_handlers(app):
     def handle_http_exception(error):
         return jsonify({
             "code": "http_error",
-            "message": error.description or "HTTP error",
+            "message": error.description or "Ocurrió un error al procesar la solicitud",
             "details": None,
         }), error.code or 500
 
@@ -88,6 +88,6 @@ def register_api_error_handlers(app):
         app.logger.exception("Unhandled exception", exc_info=error)
         return jsonify({
             "code": "internal_server_error",
-            "message": "Internal server error",
+            "message": "Ocurrió un error interno del servidor",
             "details": None,
         }), 500

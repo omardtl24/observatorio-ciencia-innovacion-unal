@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { getUserInfo, isAuthenticated, redirectToLogin } from "../services/authService";
+import ErrorPopup from "../components/ErrorPopup";
 import ResourceCard from "../components/ResourceCard";
 import {
   fetchResource,
@@ -13,6 +14,18 @@ import {
 } from "../services/resourcesServices";
 import { hasAdministratorRole } from "../services/dashboardUtils";
 import { parseColor, parseRichText } from "../services/stringServices.jsx";
+import reportCoverImg from "../assets/cardImages/reports.png";
+import reportHoveredCoverImg from "../assets/cardImages/reportsHover.png";
+import visorCoverImg from "../assets/cardImages/visors.png";
+import visorHoveredCoverImg from "../assets/cardImages/visorsHover.png";
+import simulatorCoverImg from "../assets/cardImages/simulators.png";
+import simulatorHoveredCoverImg from "../assets/cardImages/simulatorsHover.png";
+import documentCoverImg from "../assets/cardImages/documents.png";
+import documentHoveredCoverImg from "../assets/cardImages/documentsHover.png";
+import reportIcon from "../assets/icons/resources/report-blue.svg";
+import visorIcon from "../assets/icons/resources/visor-blue.svg";
+import simulatorIcon from "../assets/icons/resources/simulator-blue.svg";
+import documentIcon from "../assets/icons/resources/document-blue.svg";
 
 const TYPE_ALIASES = {
   report: "report",
@@ -68,18 +81,40 @@ const INITIAL_FORM = {
   resourceType: "report",
   title: "",
   description: "",
-  visor_type: "",
   visor_url: "",
   file: null,
   role_ids: [],
   updated_date: "",
 };
 
-const PREVIEW_IMAGES = {
-  report: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80",
-  simulator: "https://images.unsplash.com/photo-1491895200222-0fc4a4c35e18?auto=format&fit=crop&w=800&q=80",
-  visor: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80",
-  document: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80",
+const TYPE_SPANISH_LABELS = {
+  report: "reporte",
+  simulator: "simulador",
+  visor: "visor",
+  document: "documento",
+};
+
+const PREVIEW_ASSETS = {
+  report: {
+    coverImage: reportCoverImg,
+    hoverCoverImage: reportHoveredCoverImg,
+    icon: reportIcon,
+  },
+  simulator: {
+    coverImage: simulatorCoverImg,
+    hoverCoverImage: simulatorHoveredCoverImg,
+    icon: simulatorIcon,
+  },
+  visor: {
+    coverImage: visorCoverImg,
+    hoverCoverImage: visorHoveredCoverImg,
+    icon: visorIcon,
+  },
+  document: {
+    coverImage: documentCoverImg,
+    hoverCoverImage: documentHoveredCoverImg,
+    icon: documentIcon,
+  },
 };
 
 function getPlainFromHtml(html) {
@@ -250,7 +285,6 @@ export default function EditResource() {
           resourceType: normalizedType,
           title: data.title || "",
           description: data.description || "",
-          visor_type: data.type || "",
           visor_url: data.visor_url || "",
           role_ids: parsedRoleIds,
           updated_date: formatDateOnly(data.updated_at || data.updatedAt || data.last_update),
@@ -329,14 +363,10 @@ export default function EditResource() {
   const user = getUserInfo();
   if (!hasAdministratorRole(user)) {
     return (
-      <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-        <div className="w-full max-w-xl bg-white border border-gray-200 rounded-xl shadow-md p-8 text-center">
-          <h1 className="text-2xl font-semibold text-primary-cyan-strong mb-2">Permisos insuficientes</h1>
-          <p className="text-gray-700">
-            Solo usuarios con rol Administrador pueden editar recursos.
-          </p>
-        </div>
-      </div>
+      <ErrorPopup
+        error="Solo usuarios con rol Administrador pueden editar recursos."
+        onClose={() => navigate("/")}
+      />
     );
   }
 
@@ -405,9 +435,6 @@ export default function EditResource() {
       if (!description) {
         return "La descripcion es obligatoria para visores";
       }
-      if (!form.visor_type.trim()) {
-        return "El tipo es obligatorio para visores";
-      }
       if (!form.visor_url.trim()) {
         return "La URL es obligatoria para visores";
       }
@@ -438,7 +465,6 @@ export default function EditResource() {
     }
 
     if (form.resourceType === "visor") {
-      basePayload.type = form.visor_type.trim();
       basePayload.visor_url = form.visor_url.trim();
     }
 
@@ -458,14 +484,13 @@ export default function EditResource() {
     : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
-  const previewType = form.resourceType === "visor"
-    ? (form.visor_type.trim() || "VISOR")
-    : "PDF";
+  const previewType = form.resourceType === "visor" ? "VISOR" : "PDF";
   const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.title).trim() || "Titulo principal";
   const previewDescriptionEncoded = encodeMarkedFromHtml(richFields.description).trim() ||
     "Aqui veras una vista previa de la descripcion del recurso.";
   const previewCardType = form.resourceType;
-  const previewCoverImage = PREVIEW_IMAGES[form.resourceType] || PREVIEW_IMAGES.report;
+  const previewAssets = PREVIEW_ASSETS[form.resourceType] || PREVIEW_ASSETS.report;
+  const previewSpanishType = TYPE_SPANISH_LABELS[form.resourceType] || "recurso";
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -589,16 +614,6 @@ export default function EditResource() {
 
           {form.resourceType === "visor" && (
             <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de visor *</label>
-                <input
-                  type="text"
-                  value={form.visor_type}
-                  onChange={(e) => updateField("visor_type", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  disabled={submitting}
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">URL del visor *</label>
                 <input
@@ -731,14 +746,19 @@ export default function EditResource() {
           <div className="space-y-8">
             <div>
               <p className="text-sm text-gray-600 mb-3">Vista de tarjeta:</p>
-              <div className="pointer-events-none">
+              <div>
                 <ResourceCard
                   id={0}
+                  number={1}
                   mainTitle={previewMainTitle}
+                  spanishResourceType={previewSpanishType}
                   type={previewType}
                   updatedAt={previewUpdatedAt}
-                  coverImage={previewCoverImage}
+                  resourceIcon={previewAssets.icon}
+                  coverImage={previewAssets.coverImage}
+                  hoverCoverImage={previewAssets.hoverCoverImage}
                   resourceType={previewCardType}
+                  disableNavigation
                 />
               </div>
             </div>
@@ -754,7 +774,7 @@ export default function EditResource() {
 
             <div>
               <p className="text-sm text-gray-600 mb-3">Vista de descripcion en detalle:</p>
-              <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed">
+              <div className="prose prose-lg max-w-none mb-8 text-primary-blue-strong leading-relaxed">
                 {parseRichText(previewDescriptionEncoded, "text-primary-blue-strong")}
               </div>
             </div>

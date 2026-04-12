@@ -27,7 +27,7 @@ class UserRoleRelation(BaseRelation):
         from app.domain.exceptions import NotFoundError
         user = User.query.filter_by(email=email).first()
         if not user:
-            raise NotFoundError(f"User {email} not found")
+            raise NotFoundError(f"No se encontró el usuario {email}")
         return user
     
     @classmethod
@@ -50,7 +50,7 @@ class UserRoleRelation(BaseRelation):
         
         from app.domain.exceptions import IllegalOperationError
         if role in user.roles:
-            raise IllegalOperationError(f"Role {role_id} is already assigned to user {user_email}")
+            raise IllegalOperationError(f"El rol {role_id} ya está asignado al usuario {user_email}")
         
         return cls.add(user.email, role_id)
     

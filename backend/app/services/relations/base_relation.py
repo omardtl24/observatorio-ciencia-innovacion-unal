@@ -22,7 +22,7 @@ class BaseRelation:
         """Get an instance of model_a by its ID."""
         instance = db.session.get(cls.model_a, resource_id)
         if not instance:
-            raise NotFoundError(f"{cls.model_a.__name__} with id={resource_id} not found")
+            raise NotFoundError(f"No se encontró {cls.model_a.__name__} con id={resource_id}")
         return instance
     
     @classmethod
@@ -30,7 +30,7 @@ class BaseRelation:
         """Get an instance of model_b by its ID."""
         instance = db.session.get(cls.model_b, resource_id)
         if not instance:
-            raise NotFoundError(f"{cls.model_b.__name__} with id={resource_id} not found")
+            raise NotFoundError(f"No se encontró {cls.model_b.__name__} con id={resource_id}")
         return instance
     
     @classmethod
@@ -55,7 +55,7 @@ class BaseRelation:
         relationship_collection = getattr(instance_a, cls.relationship_a)
         if instance_b in relationship_collection:
             raise IllegalOperationError(
-                f"{cls.model_b.__name__} {b_id} is already assigned to {cls.model_a.__name__} {a_id}"
+                f"{cls.model_b.__name__} {b_id} ya está asignado a {cls.model_a.__name__} {a_id}"
             )
         
         try:
@@ -88,7 +88,7 @@ class BaseRelation:
         relationship_collection = getattr(instance_a, cls.relationship_a)
         if instance_b not in relationship_collection:
             raise IllegalOperationError(
-                f"{cls.model_b.__name__} {b_id} is not assigned to {cls.model_a.__name__} {a_id}"
+                f"{cls.model_b.__name__} {b_id} no está asignado a {cls.model_a.__name__} {a_id}"
             )
         
         try:

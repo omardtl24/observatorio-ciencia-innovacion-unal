@@ -89,7 +89,7 @@ export default function Resources() {
   useEffect(() => {
 
     if (!type) {
-      setError("Resource type not specified");
+      setError("No se especificó el tipo de recurso");
       setLoading(false);
       return;
     }
@@ -115,7 +115,7 @@ export default function Resources() {
   if (loading) {
     return (
       <div className="min-h-screen px-6 py-12 flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading resources...</p>
+        <p className="text-lg text-gray-600">Cargando recursos...</p>
       </div>
     );
   }

@@ -43,9 +43,7 @@ function normalizeDate(item) {
 
 function inferMediaType(normalizedType, item) {
   if (normalizedType === "visor") {
-    const rawType = (item?.type || "").toString().toLowerCase();
-    if (rawType.includes("bi")) return "bi";
-    return rawType || "visor_url";
+    return "visor";
   }
 
   if (normalizedType === "report" || normalizedType === "simulator" || normalizedType === "document") {

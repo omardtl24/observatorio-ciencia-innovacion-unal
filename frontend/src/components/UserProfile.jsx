@@ -81,28 +81,30 @@ export default function UserProfile() {
       {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-1 rounded-full hover:bg-gray-200 transition"
+        className="flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-blue-base hover:bg-gray-200 transition"
         title="User Profile"
       >
-        {/* User Icon */}
-        <svg
-          className="w-8 h-8 text-gray-700"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-        </svg>
-        <span className="text-sm font-medium text-gray-800 hidden sm:inline">
-          Perfil
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt={fullName}
+            className="w-8 h-8 rounded-full object-cover border border-gray-300"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-primary-blue-strong text-white flex items-center justify-center text-xs font-bold">
+            {initials}
+          </div>
+        )}
+        <span className="text-sm font-serif italic text-white hidden sm:inline">
+          !Hola {userInfo.names? userInfo.names : "Usuario"}!
         </span>
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-50 overflow-hidden border border-gray-200">
+        <div className="absolute right-0 mt-2 w-64 bg-primary-blue-base rounded-lg shadow-xl z-50 overflow-hidden border border-gray-200">
           {/* User Info Section */}
-          <div className="bg-gradient-to-r from-primary-blue-strong to-blue-600 text-white p-4">
+          <div className="text-white px-3 pt-4 pb-3">
             <div className="flex items-center space-x-3">
               {imageSrc ? (
                 <img
@@ -116,40 +118,37 @@ export default function UserProfile() {
                 </div>
               )}
               <div className="flex-1">
-                <p className="font-semibold text-sm">{fullName}</p>
-                <p className="text-xs opacity-90">{userInfo.email}</p>
+                <p className="font-semibold font-serif italic text-sm">{fullName}</p>
+                <p className="text-xs font-serif italic">{userInfo.email}</p>
+                <p className="text-xs font-serif italic">Roles: {roleNames.length ? roleNames.join(", ") : "Sin roles asignados"}</p>
               </div>
             </div>
           </div>
 
-          {/* Roles */}
-          <div className="px-4 py-3 border-b border-gray-200">
-            <p className="text-xs text-gray-600 font-semibold">Roles:</p>
-            <p className="text-sm font-medium text-primary-blue mt-1">
-              {roleNames.length ? roleNames.join(", ") : "Sin roles asignados"}
-            </p>
-          </div>
-
-          {/* Logout Button */}
-          <div className="p-3">
-            {hasAdminRole && (
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate("/dashboard");
-                }}
-                className="w-full mb-2 bg-white border border-primary-blue text-black hover:bg-primary-blue hover:text-white font-semibold py-2 px-3 rounded transition"
-              >
-                Ir al Dashboard
-              </button>
-            )}
-            <button
-              onClick={() => logout(null, navigate)}
-              className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded transition flex items-center justify-center space-x-2"
-            >
-              <span>🚪</span>
-              <span>Logout</span>
-            </button>
+          {/* Buttons */}
+          <div className="px-3 pb-1">
+            <div className="flex items-start gap-3">
+              <div className="w-12" aria-hidden="true"></div>
+              <div className="flex-1">
+                {hasAdminRole && (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      navigate("/dashboard");
+                    }}
+                    className="inline-flex mb-2 bg-primary-blue-base hover:bg-white hover:text-primary-blue-strong hover:font-bold border border-primary-blue text-white hover:bg-primary-blue font-sans text-sm px-3 py-0.5 rounded-md transition"
+                  >
+                    Dashboard
+                  </button>
+                )}
+                <button
+                  onClick={() => logout(null, navigate)}
+                  className="inline-flex mb-2 bg-secondary-gray-light hover:bg-white  hover:font-bold border border border-primary-blue text-primary-blue-strong hover:bg-primary-blue font-sans text-sm px-3 py-0.5 rounded-md transition"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

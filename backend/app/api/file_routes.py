@@ -54,7 +54,7 @@ def upload():
         raise UnauthorizedError("El usuario no tiene permiso para cargar archivos")
 
     if "file" not in request.files:
-        raise SchemaValidationError("file is required")
+        raise SchemaValidationError("Debes adjuntar un archivo")
 
     uploaded = request.files["file"]
 

@@ -28,7 +28,7 @@ function normalizeApiEndpoint(type) {
 }
 
 function createTimeoutError(timeoutMs) {
-    const error = new Error(`Request timeout after ${timeoutMs}ms`);
+    const error = new Error(`La solicitud tardó demasiado (${timeoutMs} ms)`);
     error.name = "TimeoutError";
     return error;
 }
@@ -108,7 +108,7 @@ export async function fetchFromUrl(url) {
         throw err;
     }
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to fetch from ${url}`);
+        const message = await getErrorMessage(response, `No fue posible obtener la información solicitada`);
         throw new Error(message);
     }
     return response.json();
@@ -140,7 +140,7 @@ export async function fetchFileWithAuth(url, additionalParams = {}) {
         throw err;
     }
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to fetch file from ${url}`);
+        const message = await getErrorMessage(response, `No fue posible obtener el archivo solicitado`);
         throw new Error(message);
     }
     const blob = await response.blob();
@@ -166,7 +166,7 @@ export async function fetchResources(type) {
         throw err;
     }
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to fetch ${type} resources`);
+        const message = await getErrorMessage(response, `No fue posible consultar los recursos de tipo ${type}`);
         throw new Error(message);
     }
     return response.json();
@@ -190,7 +190,7 @@ export async function fetchAssignableRoles() {
         throw err;
     }
     if (!response.ok) {
-        const message = await getErrorMessage(response, "Failed to fetch roles");
+        const message = await getErrorMessage(response, "No fue posible consultar los roles");
         throw new Error(message);
     }
     return response.json();
@@ -215,7 +215,7 @@ export async function fetchRoleManagementData(options = {}) {
         throw err;
     }
     if (!response.ok) {
-        const message = await getErrorMessage(response, "Failed to fetch role management data");
+        const message = await getErrorMessage(response, "No fue posible consultar la información de gestión de roles");
         throw new Error(message);
     }
     return response.json();
@@ -247,7 +247,7 @@ export async function assignRoleToUser(userEmail, roleId) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, "Failed to assign role to user");
+        const message = await getErrorMessage(response, "No fue posible asignar el rol al usuario");
         throw new Error(message);
     }
 
@@ -280,7 +280,7 @@ export async function removeRoleFromUser(userEmail, roleId) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, "Failed to remove role from user");
+        const message = await getErrorMessage(response, "No fue posible retirar el rol del usuario");
         throw new Error(message);
     }
 
@@ -309,7 +309,7 @@ export async function fetchResource(type, id) {
     if (!response.ok) {
         const message = await getErrorMessage(
             response,
-            `Failed to fetch ${type} resource with ID ${id}`
+            `No fue posible consultar el recurso ${type} con id ${id}`
         );
         throw new Error(message);
     }
@@ -318,7 +318,7 @@ export async function fetchResource(type, id) {
 
 export async function uploadResourceFile(file) {
     if (!(file instanceof File)) {
-        throw new Error("A valid file is required");
+        throw new Error("Debes seleccionar un archivo válido");
     }
 
     const uploadUrl = `${import.meta.env.VITE_API_URL}/file/upload`;
@@ -344,7 +344,7 @@ export async function uploadResourceFile(file) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, "Failed to upload file");
+        const message = await getErrorMessage(response, "No fue posible cargar el archivo");
         throw new Error(message);
     }
 
@@ -380,7 +380,7 @@ export async function createResource(type, payload, updatedDate = null) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to create ${type}`);
+        const message = await getErrorMessage(response, `No fue posible crear el recurso de tipo ${type}`);
         throw new Error(message);
     }
 
@@ -416,7 +416,7 @@ export async function updateResource(type, id, payload, updatedDate = null) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to update ${type}`);
+        const message = await getErrorMessage(response, `No fue posible actualizar el recurso de tipo ${type}`);
         throw new Error(message);
     }
 
@@ -447,7 +447,7 @@ export async function updateResourceRoles(type, id, roleIds = []) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to update roles for ${type}`);
+        const message = await getErrorMessage(response, `No fue posible actualizar los roles del recurso ${type}`);
         throw new Error(message);
     }
 
@@ -477,7 +477,7 @@ export async function deleteResource(type, id, cascade = true) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to delete ${type} with ID ${id}`);
+        const message = await getErrorMessage(response, `No fue posible eliminar el recurso ${type} con id ${id}`);
         throw new Error(message);
     }
 }
@@ -503,7 +503,7 @@ export async function deleteFileById(fileId) {
     }
 
     if (!response.ok) {
-        const message = await getErrorMessage(response, `Failed to delete file ${fileId}`);
+        const message = await getErrorMessage(response, `No fue posible eliminar el archivo ${fileId}`);
         throw new Error(message);
     }
 }

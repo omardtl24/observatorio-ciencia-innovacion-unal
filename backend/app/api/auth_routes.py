@@ -176,7 +176,7 @@ def callback():
         code = request.args.get("code")
 
         if not state or not code:
-            raise UnauthorizedError("Missing OAuth callback parameters")
+            raise UnauthorizedError("Faltan datos para completar el inicio de sesión")
 
         state_payload = auth_service.validate_oauth_state(state)
 
@@ -242,7 +242,7 @@ def callback():
         message_data = {
             "status": "error",
             "error_code": "internal_error",
-            "message": "An unexpected error occurred during authentication",
+            "message": "Ocurrió un error inesperado durante la autenticación",
         }
         html_response = _build_auth_popup_html(
             title='<span class="error">Error inesperado</span>',
@@ -278,7 +278,7 @@ def get_session():
         current_app.logger.warning("Session access attempt without valid session")
         return jsonify({
             "code": "unauthorized",
-            "message": "No active session. Please authenticate first.",
+            "message": "No hay una sesión activa. Inicia sesión para continuar.",
             "details": None
         }), 401
     
@@ -296,7 +296,7 @@ def get_session():
         current_app.logger.error(f"Error issuing access token: {str(exc)}")
         return jsonify({
             "code": "token_error",
-            "message": "Failed to issue access token",
+            "message": "No fue posible generar el token de acceso",
             "details": None
         }), 401
 
@@ -310,7 +310,7 @@ def get_cached_profile_image(image_id):
     if image_id != expected_image_id:
         return jsonify({
             "code": "forbidden",
-            "message": "Image does not belong to authenticated user",
+            "message": "La imagen solicitada no pertenece al usuario autenticado",
             "details": None
         }), 403
 
@@ -318,7 +318,7 @@ def get_cached_profile_image(image_id):
     if not image_path:
         return jsonify({
             "code": "not_found",
-            "message": "Image not found",
+            "message": "No se encontró la imagen solicitada",
             "details": None
         }), 404
 

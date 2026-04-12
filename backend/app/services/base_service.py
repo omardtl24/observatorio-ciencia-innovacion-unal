@@ -55,7 +55,7 @@ class BaseService:
         """
         instance = db.session.get(cls.model, resource_id)
         if not instance:
-            raise NotFoundError(f"{cls.model.__name__} with id={resource_id} not found")
+            raise NotFoundError(f"No se encontró {cls.model.__name__} con id={resource_id}")
         return instance
 
     @classmethod
@@ -99,7 +99,7 @@ class BaseService:
         instance = cls.get_by_id(resource_id)
         instance = db.session.get(cls.model, resource_id)
         if not instance:
-            raise NotFoundError(f"{cls.model.__name__} with id={resource_id} not found")
+            raise NotFoundError(f"No se encontró {cls.model.__name__} con id={resource_id}")
         try:
             instance.delete()
             return True

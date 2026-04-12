@@ -4,6 +4,7 @@ import Loading from "../components/Loading";
 import ErrorPopup from "../components/ErrorPopup";
 import { startLogin, saveTokensFromPayload } from "../services/authService";
 import { capitalize } from '../services/stringServices'
+import googleIcon from '../assets/icons/google.svg'
 
 const ERROR_MESSAGES = {
   session_expired: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
@@ -119,7 +120,7 @@ export default function Login() {
           "
         >
           <img
-            src="https://developers.google.com/identity/images/g-logo.png"
+            src={googleIcon}
             alt="Google logo"
             className="w-5 h-5"
           />

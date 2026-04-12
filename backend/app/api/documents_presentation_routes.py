@@ -98,7 +98,7 @@ def update_document_presentation(document_id):
 
     update_data = request.validated_data.dict(exclude_unset=True)
     if not update_data:
-        raise SchemaValidationError("At least one field must be provided")
+        raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
 
     document_presentation = DocumentPresentationService.update(document_id, **update_data)
 
@@ -119,12 +119,12 @@ def update_document_presentation_roles(document_id):
     payload = request.get_json(silent=True) or {}
     role_ids = payload.get("role_ids")
     if not isinstance(role_ids, list):
-        raise SchemaValidationError("role_ids must be a list")
+        raise SchemaValidationError("El campo role_ids debe ser una lista")
 
     try:
         selected_role_ids = list({int(role_id) for role_id in role_ids})
     except (TypeError, ValueError):
-        raise SchemaValidationError("role_ids must contain valid integers")
+        raise SchemaValidationError("El campo role_ids debe contener números enteros válidos")
 
     admin_role = RoleService.get_by_name("Administrador")
     for role_id in selected_role_ids:

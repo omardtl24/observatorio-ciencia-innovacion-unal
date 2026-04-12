@@ -6,7 +6,7 @@ class DomainError(HTTPException):
 
     code = 400
     error_code = "domain_error"
-    default_message = "A domain error occurred"
+    default_message = "Ocurrió un error en la operación solicitada"
 
     def __init__(self, message: str | None = None, *, details=None):
         self.message = message or self.default_message
@@ -24,36 +24,36 @@ class DomainError(HTTPException):
 class IllegalOperationError(DomainError):
     code = 400
     error_code = "illegal_operation"
-    default_message = "Illegal operation"
+    default_message = "La operación solicitada no es válida"
 
 
 class NotFoundError(DomainError):
     code = 404
     error_code = "not_found"
-    default_message = "Resource not found"
+    default_message = "No se encontró el recurso solicitado"
 
 
 class ForbiddenError(DomainError):
     code = 403
     error_code = "forbidden"
-    default_message = "Operation not allowed"
+    default_message = "No tienes permiso para realizar esta operación"
 
 class UnauthorizedError(DomainError):
     code = 401
     error_code = "unauthorized"
-    default_message = "Operation not authorized"
+    default_message = "No estás autorizado para realizar esta operación"
 
 
 class SchemaValidationError(DomainError):
     code = 400
     error_code = "schema_validation_error"
-    default_message = "Request validation failed"
+    default_message = "Los datos enviados no son válidos"
 
 
 class DatabaseConnectionError(DomainError):
     code = 503
     error_code = "database_connection_error"
-    default_message = "Database service unavailable. Please try again later."
+    default_message = "El servicio de base de datos no está disponible. Intenta nuevamente más tarde."
 
 
 IllegalOperation = IllegalOperationError

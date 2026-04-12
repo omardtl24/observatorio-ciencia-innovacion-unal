@@ -12,7 +12,7 @@ const profileImageBlobCache = new Map();
 const profileImagePendingRequests = new Map();
 
 function createTimeoutError(timeoutMs) {
-  const error = new Error(`Request timeout after ${timeoutMs}ms`);
+  const error = new Error(`La solicitud tardó demasiado (${timeoutMs} ms)`);
   error.name = "TimeoutError";
   return error;
 }
@@ -140,7 +140,7 @@ export function openAuthPopup() {
     );
     
     if (!popup) {
-      reject(new Error("Failed to open authentication popup. Please allow popups in your browser."));
+      reject(new Error("No fue posible abrir la ventana de autenticación. Habilita los popups e intenta nuevamente."));
       return;
     }
 
@@ -163,6 +163,9 @@ export function openAuthPopup() {
         return;
       }
       isSettled = true;
+      if (popup && !popup.closed) {
+        popup.close();
+      }
       cleanup();
       fn(value);
     };
@@ -196,7 +199,7 @@ export function openAuthPopup() {
 
         settle(resolve);
       } else if (event.data.status === "error") {
-        settle(reject, new Error(event.data.message || "Authentication failed"));
+        settle(reject, new Error(event.data.message || "No fue posible completar la autenticación"));
       }
     };
     
@@ -208,13 +211,13 @@ export function openAuthPopup() {
       if (!popup.closed) {
         popup.close();
       }
-      settle(reject, new Error("Authentication timeout"));
+      settle(reject, new Error("La autenticación tardó demasiado. Intenta nuevamente."));
     }, 600000);
 
     // If user closes popup manually, reject immediately so login can be retried.
     closedCheckId = setInterval(() => {
       if (!isSettled && popup.closed) {
-        settle(reject, new Error("Authentication popup was closed by user"));
+        settle(reject, new Error("La ventana de autenticación fue cerrada por el usuario"));
       }
     }, 300);
   });
@@ -241,14 +244,14 @@ export async function getAccessToken() {
     
     if (!response.ok) {
       if (response.status === 401) {
-        throw new Error("Not authenticated. Please log in.");
+        throw new Error("No hay una sesión activa. Inicia sesión para continuar.");
       }
-      throw new Error(`Failed to retrieve access token: ${response.statusText}`);
+      throw new Error("No fue posible obtener el token de acceso");
     }
     
     const data = await response.json();
     if (!data.access_token) {
-      throw new Error("No access token in response");
+      throw new Error("La respuesta no incluyó un token de acceso");
     }
     
     // Store token in memory only (never in URLs)
@@ -410,7 +413,7 @@ export async function fetchProfileImage(imageId) {
     }
 
     if (!response.ok) {
-      throw new Error(`Failed to load profile image: ${response.status}`);
+      throw new Error("No fue posible cargar la imagen de perfil");
     }
 
     await writeProfileImageToPersistentCache(imageId, response);
@@ -521,7 +524,7 @@ export async function startLogin(origin = "/") {
     });
     
     if (!response.ok) {
-      throw new Error('API is not responding correctly');
+      throw new Error("El servicio no está respondiendo correctamente");
     }
     
     // Open authentication popup
@@ -534,19 +537,19 @@ export async function startLogin(origin = "/") {
     window.location.href = result.redirectTo;
   } catch (error) {
     console.error("Login error:", error);
-    if (error.message.includes("closed by user")) {
+    if (error?.message?.includes("closed by user")) {
       throw error;
     }
-    if (error.message.includes("popup")) {
-      window.location.href = `/login?error=popup_blocked&message=${encodeURIComponent(error.message)}`;
-    } else if (isBackendUnavailableError(error)) {
-      const encodedOrigin = encodeURIComponent(window.location.pathname);
-      window.location.href = `/connection-error?origin=${encodedOrigin}`;
-    } else if (error.message.includes("timeout")) {
-      window.location.href = `/login?error=timeout&message=${encodeURIComponent("Authentication took too long")}`;
-    } else {
-      window.location.href = `/login?error=auth_failed&message=${encodeURIComponent(error.message || "Authentication failed")}`;
+    if (error?.message?.includes("popup")) {
+      throw new Error("No fue posible abrir la ventana de autenticacion. Habilita los popups e intenta nuevamente.");
     }
+    if (isBackendUnavailableError(error)) {
+      throw new Error("No fue posible conectar con el servidor. Intenta nuevamente en unos minutos.");
+    }
+    if (error?.message?.includes("timeout")) {
+      throw new Error("La autenticacion tardó demasiado. Intenta nuevamente.");
+    }
+    throw new Error(error?.message || "No fue posible completar el inicio de sesion.");
   }
 }
 
