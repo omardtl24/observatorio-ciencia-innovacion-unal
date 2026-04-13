@@ -16,7 +16,6 @@ class TestVisorServiceCreate:
             visor_data = {
                 "title": "Test Visor",
                 "description": "A test visor",
-                "type": "analytics",
                 "visor_url": "http://example.com/visor",
                 "updated_at": datetime.utcnow()
             }
@@ -26,7 +25,6 @@ class TestVisorServiceCreate:
             assert visor.id is not None
             assert visor.title == "Test Visor"
             assert visor.description == "A test visor"
-            assert visor.type == "analytics"
             assert visor.visor_url == "http://example.com/visor"
             assert visor.created_at is not None
             assert isinstance(visor.created_at, datetime)
@@ -44,7 +42,6 @@ class TestVisorServiceCreate:
             assert visor.id is not None
             assert visor.title == "Minimal Visor"
             assert visor.description is None
-            assert visor.type is None
             assert visor.visor_url is None
             assert visor.created_at is not None
     
@@ -116,7 +113,6 @@ class TestVisorServiceRead:
         with app.app_context():
             visor = VisorService.create(
                 title="Dict Visor",
-                type="analytics",
                 updated_at=datetime.utcnow()
             )
             
@@ -124,7 +120,6 @@ class TestVisorServiceRead:
             
             assert len(visors_dict) == 1
             assert visors_dict[0]["title"] == "Dict Visor"
-            assert visors_dict[0]["type"] == "analytics"
             assert "id" in visors_dict[0]
             assert "created_at" in visors_dict[0]
     
@@ -134,16 +129,14 @@ class TestVisorServiceRead:
             VisorService.create(
                 title="Include Test Visor",
                 description="Test description",
-                type="report",
                 updated_at=datetime.utcnow()
             )
             
-            visors_dict = VisorService.get_all_dict(include=["id", "title", "type"])
+            visors_dict = VisorService.get_all_dict(include=["id", "title"])
             
             assert len(visors_dict) == 1
             assert "id" in visors_dict[0]
             assert "title" in visors_dict[0]
-            assert "type" in visors_dict[0]
             assert "description" not in visors_dict[0]
     
     def test_get_all_visors_dict_with_exclude(self, app):
@@ -210,7 +203,6 @@ class TestVisorServiceUpdate:
             visor = VisorService.create(
                 title="Original Visor",
                 description="Original description",
-                type="old_type",
                 updated_at=datetime.utcnow()
             )
             
@@ -218,14 +210,12 @@ class TestVisorServiceUpdate:
                 visor.id,
                 title="New Visor Name",
                 description="New description",
-                type="new_type",
                 visor_url="http://new-url.com",
                 updated_at=datetime.utcnow()
             )
             
             assert updated_visor.title == "New Visor Name"
             assert updated_visor.description == "New description"
-            assert updated_visor.type == "new_type"
             assert updated_visor.visor_url == "http://new-url.com"
     
     def test_update_nonexistent_visor_raises_error(self, app):
@@ -302,7 +292,6 @@ class TestVisorServiceIntegration:
             visor = VisorService.create(
                 title="CRUD Test Visor",
                 description="Test description",
-                type="analytics",
                 visor_url="http://test.com",
                 updated_at=datetime.utcnow()
             )
@@ -352,9 +341,9 @@ class TestVisorServiceIntegration:
         """Test creating and retrieving multiple visors with different data."""
         with app.app_context():
             visor_data_list = [
-                {"title": "Analytics Visor", "type": "analytics", "description": "For analytics"},
-                {"title": "Report Visor", "type": "report", "description": "For reports"},
-                {"title": "Dashboard Visor", "type": "dashboard", "description": "For dashboards"},
+                {"title": "Analytics Visor", "description": "For analytics"},
+                {"title": "Report Visor", "description": "For reports"},
+                {"title": "Dashboard Visor", "description": "For dashboards"},
             ]
             
             created_visors = []

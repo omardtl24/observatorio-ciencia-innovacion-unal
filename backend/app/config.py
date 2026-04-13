@@ -50,11 +50,15 @@ class Config:
     OAUTH_STATE_TTL_SECONDS = int(os.getenv("OAUTH_STATE_TTL_SECONDS", "300"))
     SESSION_LIFETIME_SECONDS = int(os.getenv("SESSION_LIFETIME_SECONDS", "7200"))
 
+    # --- PROD ----
+    POPULATE = os.getenv("POPULATE", "false").lower() == "true"
+
 
 class TestingConfig(Config):
     """Configuration for testing."""
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     TEST = True
+    POPULATE = False
     JWT_SECRET_KEY = "test-secret-key"
     PROFILE_IMAGE_CACHE_TTL_SECONDS = 60
     PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = 60

@@ -722,7 +722,7 @@ export default function EditResource() {
             <button
               type="submit"
               disabled={submitting}
-              className="bg-primary-cyan-strong text-white px-5 py-2.5 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-secondary-cyan-strong text-white px-5 py-2.5 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Actualizando..." : "Actualizar recurso"}
             </button>

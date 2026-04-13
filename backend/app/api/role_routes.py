@@ -10,6 +10,8 @@ from app.services.relations.user_role_relation import UserRoleRelation
 
 role_bp = Blueprint("role", __name__, url_prefix="/role")
 
+VALID_RESOURCE_TYPES = {"report", "visor", "document", "simulator"}
+
 
 def _assert_admin():
     user_email = get_jwt_identity()
@@ -46,6 +48,27 @@ def _serialize_user(user):
             for role in getattr(user, "roles", [])
         ],
     }
+
+
+def _parse_resource_access_validation_params():
+    resource_id = request.args.get("id")
+    resource_type = request.args.get("resourceType")
+
+    if resource_id is None or resource_type is None:
+        raise SchemaValidationError("Los parámetros id y resourceType son obligatorios")
+
+    try:
+        parsed_resource_id = int(resource_id)
+    except (TypeError, ValueError):
+        raise SchemaValidationError("El parámetro id debe ser un número entero")
+
+    normalized_resource_type = str(resource_type).strip().lower()
+    if normalized_resource_type not in VALID_RESOURCE_TYPES:
+        raise SchemaValidationError(
+            "El tipo de recurso no es válido. Usa report, visor, document o simulator"
+        )
+
+    return parsed_resource_id, normalized_resource_type
 
 
 @role_bp.get("/all")
@@ -115,3 +138,20 @@ def remove_role_from_user():
 
     user = UserRoleRelation.get_user_by_email(user_email)
     return jsonify(_serialize_user(user)), 200
+
+
+@role_bp.get("/validate")
+@jwt_required()
+def validate_resource_access():
+    user_email = get_jwt_identity()
+    resource_id, resource_type = _parse_resource_access_validation_params()
+
+    has_access = AccessChecker.check_access(user_email, resource_id, resource_type)
+
+    return jsonify(
+        {
+            "has_access": has_access,
+            "resource_id": resource_id,
+            "resourceType": resource_type,
+        }
+    ), 200

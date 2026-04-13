@@ -91,10 +91,11 @@ def create_app(config_name="production"):
     app.register_blueprint(documents_presentation_bp)
     app.register_blueprint(permission_bp)
     app.register_blueprint(role_bp)
-
     
-    with app.app_context():
-        BootstrapService.initialize_minimals()
+    populate = app.config.get("POPULATE") is True
+    if populate:
+        with app.app_context():
+            BootstrapService.initialize_minimals()
 
     os.makedirs(app.config["FILE_STORAGE_ROOT"], exist_ok=True)
     os.makedirs(app.config["PROFILE_IMAGE_CACHE_DIR"], exist_ok=True)
