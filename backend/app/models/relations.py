@@ -42,6 +42,12 @@ role_simulators = db.Table(
     db.Column('simulator_id', db.Integer, db.ForeignKey('simulators.id'), primary_key=True)
 )
 
+role_data_sources = db.Table(
+    'role_data_sources',
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
+    db.Column('data_source_id', db.Integer, db.ForeignKey('data_sources.id'), primary_key=True)
+)
+
 role_documents_presentations = db.Table(
     'role_documents_presentations',
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),

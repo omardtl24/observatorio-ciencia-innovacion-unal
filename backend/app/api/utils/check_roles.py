@@ -2,6 +2,7 @@ from app.services.relations.user_role_relation import UserRoleRelation
 from app.services.relations.document_presentation_role_relation import DocumentPresentationRoleRelation
 from app.services.relations.role_report_relation import RoleReportRelation
 from app.services.relations.role_simulator_relation import RoleSimulatorRelation
+from app.services.relations.role_data_source_relation import RoleDataSourceRelation
 from app.services.relations.role_visor_relation import RoleVisorRelation
 from app.services.role_service import RoleService
 from app.domain.exceptions import NotFoundError
@@ -20,6 +21,13 @@ class AccessChecker:
             return False
     
     @staticmethod
+    def _normalize_resource_type(resource_type):
+        normalized = str(resource_type).strip().lower().replace("-", "_")
+        if normalized == "datasource":
+            return "data_source"
+        return normalized
+
+    @staticmethod
     def check_access(user_email, resource_id, resource_type):
         """Check if user has access to a resource based on its type.
         
@@ -34,7 +42,7 @@ class AccessChecker:
         Raises:
             ValueError: If resource_type is not recognized.
         """
-        resource_type = resource_type.lower()
+        resource_type = AccessChecker._normalize_resource_type(resource_type)
         
         if resource_type == "report":
             return AccessChecker._check_report_access(user_email, resource_id)
@@ -44,6 +52,8 @@ class AccessChecker:
             return AccessChecker._check_visor_access(user_email, resource_id)
         elif resource_type == "document":
             return AccessChecker._check_document_presentation_access(user_email, resource_id)
+        elif resource_type == "data_source":
+            return AccessChecker._check_data_source_access(user_email, resource_id)
         else:
             raise ValueError(f"Tipo de recurso no válido: {resource_type}")
     
@@ -138,6 +148,29 @@ class AccessChecker:
             return False
         except NotFoundError:
             return False
+
+    @staticmethod
+    def _check_data_source_access(user_email, data_source_id):
+        """Check if user has a role that grants access to a data source.
+
+        Args:
+            user_email: The email of the user.
+            data_source_id: The ID of the data source.
+
+        Returns:
+            bool: True if user has access through a role, False otherwise.
+        """
+        try:
+            user_roles = UserRoleRelation.get_all_b_for_a(user_email)
+            for role in user_roles:
+                try:
+                    if RoleDataSourceRelation.exists(role.id, data_source_id):
+                        return True
+                except NotFoundError:
+                    continue
+            return False
+        except NotFoundError:
+            return False
     
     @staticmethod
     def grant_admin_access(resource_id, resource_type):
@@ -155,7 +188,7 @@ class AccessChecker:
             NotFoundError: If admin role or resource does not exist.
             IllegalOperationError: If the relationship already exists or operation fails.
         """
-        resource_type = resource_type.lower()
+        resource_type = AccessChecker._normalize_resource_type(resource_type)
         admin_role = RoleService.get_by_name("Administrador")
         
         if resource_type == "report":
@@ -166,6 +199,8 @@ class AccessChecker:
             return AccessChecker._grant_visor_admin_access(admin_role.id, resource_id)
         elif resource_type == "document":
             return AccessChecker._grant_document_presentation_admin_access(admin_role.id, resource_id)
+        elif resource_type == "data_source":
+            return AccessChecker._grant_data_source_admin_access(admin_role.id, resource_id)
         else:
             raise ValueError(f"Tipo de recurso no válido: {resource_type}")
     
@@ -220,6 +255,19 @@ class AccessChecker:
             tuple: (document_instance, admin_role_instance)
         """
         return DocumentPresentationRoleRelation.add(document_id, admin_role_id)
+
+    @staticmethod
+    def _grant_data_source_admin_access(admin_role_id, data_source_id):
+        """Grant admin role access to a data source.
+
+        Args:
+            admin_role_id: The ID of the admin role.
+            data_source_id: The ID of the data source.
+
+        Returns:
+            tuple: (admin_role_instance, data_source_instance)
+        """
+        return RoleDataSourceRelation.add(admin_role_id, data_source_id)
 
 
 

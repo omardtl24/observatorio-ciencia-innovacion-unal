@@ -131,6 +131,12 @@ CREATE TABLE role_simulators (
     PRIMARY KEY (role_id, simulator_id)
 );
 
+CREATE TABLE role_data_sources (
+    role_id INTEGER REFERENCES roles(id),
+    data_source_id INTEGER REFERENCES data_sources(id),
+    PRIMARY KEY (role_id, data_source_id)
+);
+
 CREATE TABLE user_roles (
     email VARCHAR(120) REFERENCES users(email) ON DELETE CASCADE,
     role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,

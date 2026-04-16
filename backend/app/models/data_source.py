@@ -28,5 +28,11 @@ class DataSource(db.Model, TimestampMixin, BaseModel):
         back_populates="data_sources"
     )
 
+    roles = db.relationship(
+        "Role",
+        secondary="role_data_sources",
+        back_populates="data_sources"
+    )
+
     def __repr__(self):
         return f"<DataSource {self.name}>"

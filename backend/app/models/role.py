@@ -23,6 +23,10 @@ class Role(db.Model, TimestampMixin, BaseModel):
     simulators = db.relationship("Simulator",
                                  secondary="role_simulators",
                                  back_populates="roles")
+
+    data_sources = db.relationship("DataSource",
+                                   secondary="role_data_sources",
+                                   back_populates="roles")
                                  
     documents_presentations = db.relationship(
         "DocumentPresentation",

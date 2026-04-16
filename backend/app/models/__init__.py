@@ -13,5 +13,6 @@ from app.models.relations import (
     simulator_data_sources,
     role_reports,
     role_visors,
-    role_simulators
+    role_simulators,
+    role_data_sources,
 )

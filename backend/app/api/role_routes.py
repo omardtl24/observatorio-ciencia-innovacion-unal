@@ -10,7 +10,7 @@ from app.services.relations.user_role_relation import UserRoleRelation
 
 role_bp = Blueprint("role", __name__, url_prefix="/role")
 
-VALID_RESOURCE_TYPES = {"report", "visor", "document", "simulator"}
+VALID_RESOURCE_TYPES = {"report", "visor", "document", "simulator", "data_source"}
 
 
 def _assert_admin():
@@ -62,10 +62,10 @@ def _parse_resource_access_validation_params():
     except (TypeError, ValueError):
         raise SchemaValidationError("El parámetro id debe ser un número entero")
 
-    normalized_resource_type = str(resource_type).strip().lower()
+    normalized_resource_type = AccessChecker._normalize_resource_type(resource_type)
     if normalized_resource_type not in VALID_RESOURCE_TYPES:
         raise SchemaValidationError(
-            "El tipo de recurso no es válido. Usa report, visor, document o simulator"
+            "El tipo de recurso no es válido. Usa report, visor, document, simulator o data_source"
         )
 
     return parsed_resource_id, normalized_resource_type
