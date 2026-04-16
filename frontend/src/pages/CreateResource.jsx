@@ -8,6 +8,8 @@ import {
   createResource,
   deleteFileById,
   fetchAssignableRoles,
+  fetchDataSources,
+  syncResourceDataSources,
   uploadResourceFile,
 } from "../services/resourcesServices";
 import { hasAdministratorRole } from "../services/dashboardUtils";
@@ -75,6 +77,12 @@ const RESOURCE_DEFINITIONS = {
   },
 };
 
+const RESOURCE_TYPES_WITH_DATA_SOURCES = new Set(["report", "visor", "simulator"]);
+
+function supportsDataSources(type) {
+  return RESOURCE_TYPES_WITH_DATA_SOURCES.has(type);
+}
+
 const INITIAL_FORM = {
   resourceType: "report",
   title: "",
@@ -82,6 +90,7 @@ const INITIAL_FORM = {
   visor_url: "",
   file: null,
   role_ids: [],
+  data_source_ids: [],
   updated_date: "",
 };
 
@@ -192,6 +201,8 @@ export default function CreateResource() {
   const [submitting, setSubmitting] = useState(false);
   const [rolesLoading, setRolesLoading] = useState(false);
   const [availableRoles, setAvailableRoles] = useState([]);
+  const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
+  const [availableDataSources, setAvailableDataSources] = useState([]);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [formatMessage, setFormatMessage] = useState("");
   const mainTitleRef = useRef(null);
@@ -244,6 +255,35 @@ export default function CreateResource() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadDataSources = async () => {
+      setDataSourcesLoading(true);
+      try {
+        const dataSources = await fetchDataSources();
+        if (!active) {
+          return;
+        }
+        setAvailableDataSources(Array.isArray(dataSources) ? dataSources : []);
+      } catch {
+        if (active) {
+          setAvailableDataSources([]);
+        }
+      } finally {
+        if (active) {
+          setDataSourcesLoading(false);
+        }
+      }
+    };
+
+    loadDataSources();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   if (!isAuthenticated()) {
     redirectToLogin(navigate, "/resources/create");
     return null;
@@ -279,6 +319,19 @@ export default function CreateResource() {
         role_ids: alreadySelected
           ? roleIds.filter((id) => id !== roleId)
           : [...roleIds, roleId],
+      };
+    });
+  };
+
+  const toggleDataSourceSelection = (dataSourceId) => {
+    setForm((prev) => {
+      const currentIds = Array.isArray(prev.data_source_ids) ? prev.data_source_ids : [];
+      const alreadySelected = currentIds.includes(dataSourceId);
+      return {
+        ...prev,
+        data_source_ids: alreadySelected
+          ? currentIds.filter((id) => id !== dataSourceId)
+          : [...currentIds, dataSourceId],
       };
     });
   };
@@ -400,7 +453,19 @@ export default function CreateResource() {
       }
 
       const payload = buildPayload(uploadedFileId);
-      await createResource(currentDefinition.endpoint, payload, toMidnightISOString(form.updated_date));
+      const createdResource = await createResource(
+        currentDefinition.endpoint,
+        payload,
+        toMidnightISOString(form.updated_date)
+      );
+
+      if (supportsDataSources(currentDefinition.endpoint) && createdResource?.id) {
+        await syncResourceDataSources(
+          currentDefinition.endpoint,
+          createdResource.id,
+          form.data_source_ids
+        );
+      }
       navigate("/dashboard");
     } catch (error) {
       // If resource creation fails after file upload, rollback orphan file.
@@ -556,6 +621,43 @@ export default function CreateResource() {
               </div>
             )}
           </div>
+
+          {supportsDataSources(form.resourceType) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fuentes de datos asociadas
+              </label>
+
+              {dataSourcesLoading && (
+                <p className="text-sm text-gray-500">Cargando fuentes de datos...</p>
+              )}
+
+              {!dataSourcesLoading && availableDataSources.length === 0 && (
+                <p className="text-sm text-gray-500">No hay fuentes de datos disponibles.</p>
+              )}
+
+              {!dataSourcesLoading && availableDataSources.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-gray-200 p-3">
+                  {availableDataSources.map((dataSource) => {
+                    const dataSourceId = dataSource?.id;
+                    const isChecked = Array.isArray(form.data_source_ids)
+                      && form.data_source_ids.includes(dataSourceId);
+                    return (
+                      <label key={dataSourceId} className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleDataSourceSelection(dataSourceId)}
+                          disabled={submitting}
+                        />
+                        <span>{dataSource?.name || "Fuente de datos sin nombre"}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de actualización personalizada (opcional)</label>

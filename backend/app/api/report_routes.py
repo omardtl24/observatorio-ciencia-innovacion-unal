@@ -160,6 +160,53 @@ def update_report(report_id):
                                            "updated_at"])), 200
 
 
+@report_bp.get("/<int:report_id>/data-sources")
+@jwt_required()
+def get_report_data_sources(report_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.check_access(user_email, report_id, "report"):
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este reporte")
+
+    data_sources = ReportDataSourceRelation.get_all_b_for_a(report_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
+@report_bp.post("/<int:report_id>/data-sources/<int:data_source_id>")
+@jwt_required()
+def add_report_data_source(report_id, data_source_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este reporte")
+
+    ReportDataSourceRelation.add_data_source_to_report(report_id, data_source_id)
+    data_sources = ReportDataSourceRelation.get_all_b_for_a(report_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
+@report_bp.delete("/<int:report_id>/data-sources/<int:data_source_id>")
+@jwt_required()
+def remove_report_data_source(report_id, data_source_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este reporte")
+
+    ReportDataSourceRelation.remove_data_source_from_report(report_id, data_source_id)
+    data_sources = ReportDataSourceRelation.get_all_b_for_a(report_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
 @report_bp.patch("/<int:report_id>/roles")
 @jwt_required()
 def update_report_roles(report_id):

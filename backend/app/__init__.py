@@ -9,6 +9,7 @@ from app.api.simulator_routes import simulator_bp
 from app.api.documents_presentation_routes import documents_presentation_bp
 from app.api.permission_routes import permission_bp
 from app.api.role_routes import role_bp
+from app.api.data_source_routes import data_source_bp
 from app.models.base import db
 from app.config import Config, TestingConfig
 from app.error_handlers import (
@@ -91,6 +92,7 @@ def create_app(config_name="production"):
     app.register_blueprint(documents_presentation_bp)
     app.register_blueprint(permission_bp)
     app.register_blueprint(role_bp)
+    app.register_blueprint(data_source_bp)
     
     populate = app.config.get("POPULATE") is True
     if populate:

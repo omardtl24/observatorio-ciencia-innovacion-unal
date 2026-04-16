@@ -140,6 +140,53 @@ def update_visor(visor_id):
     return jsonify(response), 200
 
 
+@visor_bp.get("/<int:visor_id>/data-sources")
+@jwt_required()
+def get_visor_data_sources(visor_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.check_access(user_email, visor_id, "visor"):
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este visor")
+
+    data_sources = VisorDataSourceRelation.get_all_b_for_a(visor_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
+@visor_bp.post("/<int:visor_id>/data-sources/<int:data_source_id>")
+@jwt_required()
+def add_visor_data_source(visor_id, data_source_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este visor")
+
+    VisorDataSourceRelation.add_data_source_to_visor(visor_id, data_source_id)
+    data_sources = VisorDataSourceRelation.get_all_b_for_a(visor_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
+@visor_bp.delete("/<int:visor_id>/data-sources/<int:data_source_id>")
+@jwt_required()
+def remove_visor_data_source(visor_id, data_source_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este visor")
+
+    VisorDataSourceRelation.remove_data_source_from_visor(visor_id, data_source_id)
+    data_sources = VisorDataSourceRelation.get_all_b_for_a(visor_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
 @visor_bp.patch("/<int:visor_id>/roles")
 @jwt_required()
 def update_visor_roles(visor_id):

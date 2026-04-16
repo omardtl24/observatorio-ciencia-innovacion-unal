@@ -18,6 +18,8 @@ const API_ENDPOINT_ALIASES = {
     document: "document",
 };
 
+const RESOURCE_TYPES_WITH_DATA_SOURCES = new Set(["report", "visor", "simulator"]);
+
 function normalizeApiEndpoint(type) {
     if (!type) {
         return type;
@@ -25,6 +27,11 @@ function normalizeApiEndpoint(type) {
 
     const normalized = String(type).toLowerCase();
     return API_ENDPOINT_ALIASES[normalized] || normalized;
+}
+
+function supportsDataSources(type) {
+    const endpoint = normalizeApiEndpoint(type);
+    return RESOURCE_TYPES_WITH_DATA_SOURCES.has(endpoint);
 }
 
 function createTimeoutError(timeoutMs) {
@@ -194,6 +201,134 @@ export async function fetchAssignableRoles() {
         throw new Error(message);
     }
     return response.json();
+}
+
+export async function fetchDataSources() {
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/data-source/all`;
+    const token = getToken();
+    let response;
+    try {
+        response = await fetchWithTimeout(fetchUrl, {
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible consultar las fuentes de datos");
+        throw new Error(message);
+    }
+    return response.json();
+}
+
+export async function fetchResourceDataSources(type, id) {
+    if (!supportsDataSources(type)) {
+        return [];
+    }
+
+    const endpoint = normalizeApiEndpoint(type);
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}/data-sources`;
+    const token = getToken();
+    let response;
+    try {
+        response = await fetchWithTimeout(fetchUrl, {
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible consultar las fuentes de datos del recurso");
+        throw new Error(message);
+    }
+
+    const payload = await response.json();
+    return Array.isArray(payload) ? payload : [];
+}
+
+export async function syncResourceDataSources(type, id, desiredDataSourceIds = []) {
+    if (!supportsDataSources(type)) {
+        return [];
+    }
+
+    const endpoint = normalizeApiEndpoint(type);
+    const token = getToken();
+    const desiredIds = Array.isArray(desiredDataSourceIds)
+        ? Array.from(new Set(desiredDataSourceIds.map((value) => Number(value)).filter(Number.isFinite)))
+        : [];
+
+    const currentDataSources = await fetchResourceDataSources(endpoint, id);
+    const currentIds = currentDataSources
+        .map((item) => Number(item?.id))
+        .filter(Number.isFinite);
+
+    const currentSet = new Set(currentIds);
+    const desiredSet = new Set(desiredIds);
+
+    const toAdd = desiredIds.filter((dataSourceId) => !currentSet.has(dataSourceId));
+    const toRemove = currentIds.filter((dataSourceId) => !desiredSet.has(dataSourceId));
+
+    for (const dataSourceId of toAdd) {
+        const addUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}/data-sources/${dataSourceId}`;
+        let response;
+        try {
+            response = await fetchWithTimeout(addUrl, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+            });
+        } catch (err) {
+            if (isBackendUnavailableError(err)) {
+                redirectToConnectionError();
+            }
+            throw err;
+        }
+
+        if (!response.ok) {
+            const message = await getErrorMessage(response, `No fue posible asociar la fuente de datos ${dataSourceId}`);
+            throw new Error(message);
+        }
+    }
+
+    for (const dataSourceId of toRemove) {
+        const removeUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}/data-sources/${dataSourceId}`;
+        let response;
+        try {
+            response = await fetchWithTimeout(removeUrl, {
+                method: "DELETE",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+            });
+        } catch (err) {
+            if (isBackendUnavailableError(err)) {
+                redirectToConnectionError();
+            }
+            throw err;
+        }
+
+        if (!response.ok) {
+            const message = await getErrorMessage(response, `No fue posible desasociar la fuente de datos ${dataSourceId}`);
+            throw new Error(message);
+        }
+    }
+
+    return fetchResourceDataSources(endpoint, id);
 }
 
 export async function fetchRoleManagementData(options = {}) {
@@ -504,6 +639,92 @@ export async function deleteFileById(fileId) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, `No fue posible eliminar el archivo ${fileId}`);
+        throw new Error(message);
+    }
+}
+
+export async function createDataSource(payload) {
+    const url = `${import.meta.env.VITE_API_URL}/data-source`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible crear la fuente de datos");
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function updateDataSource(dataSourceId, payload) {
+    const url = `${import.meta.env.VITE_API_URL}/data-source/${dataSourceId}`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "PUT",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible actualizar la fuente de datos");
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
+export async function deleteDataSource(dataSourceId) {
+    const url = `${import.meta.env.VITE_API_URL}/data-source/${dataSourceId}`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible eliminar la fuente de datos");
         throw new Error(message);
     }
 }

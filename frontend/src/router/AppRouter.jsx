@@ -7,12 +7,10 @@ import EditResource from "../pages/EditResource";
 import Landing from "../pages/Landing";
 import Resources from "../pages/Resources";
 import Resource from "../pages/Resource";
+import DataSources from "../pages/DataSources";
+import CreateDataSource from "../pages/CreateDataSource";
+import EditDataSource from "../pages/EditDataSource";
 import ConnectionError from "../pages/ConnectionError";
-
-import Bg1 from "../assets/backgrounds/bg-pattern-1.svg?react";
-import Bg2 from "../assets/backgrounds/bg-pattern-2.svg?react";
-import Bg3 from "../assets/backgrounds/bg-pattern-3.svg?react";
-import Bg4 from "../assets/backgrounds/bg-pattern-4.svg?react";
 
 // --- Define all routes in a collection ---
 const routeConfig = [
@@ -21,32 +19,33 @@ const routeConfig = [
     backgroundClass: "bg-white" },
   { path: "/dashboard", 
     component: Dashboard, 
-    backgroundClass: "bg-primary-cyan-soft" },
+    backgroundClass: "bg-primary-green-soft" },
   { path: "/resources/create",
     component: CreateResource,
-    backgroundSVGImage: Bg3,
-    svgFillClass: "text-primary-cyan-strong",
-    backgroundClass: "bg-gray-100" },
+    backgroundClass: "bg-primary-blue-soft" },
   { path: "/resources/:type", 
     component: Resources, 
     backgroundClass: "bg-white" },
   { path: "/resource/edit/:type/:id",
     component: EditResource,
-    backgroundSVGImage: Bg3,
-    svgFillClass: "text-primary-cyan-strong",
     backgroundClass: "bg-gray-100" },
   { path: "/resource/:type/:id", 
     component: Resource, 
     backgroundClass: "bg-secondary-gray-soft" },
+  { path: "/data-sources",
+    component: DataSources,
+    backgroundClass: "bg-white" },
+  { path: "/data-sources/create",
+    component: CreateDataSource,
+    backgroundClass: "bg-primary-blue-soft" },
+  { path: "/data-sources/edit/:id",
+    component: EditDataSource,
+    backgroundClass: "bg-gray-100" },
   { path: "/", 
     component: Landing, 
-    backgroundSVGImage: Bg2, 
-    svgFillClass: "text-primary-cyan-base",
     backgroundClass: "bg-gray-100"},
   { path: "/connection-error",
     component: ConnectionError,
-    backgroundSVGImage: Bg4,
-    svgFillClass: "text-primary-cyan-base",
     backgroundClass: "bg-gray-100"},
 ];
 

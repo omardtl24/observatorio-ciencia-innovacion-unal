@@ -105,6 +105,53 @@ def update_simulator(simulator_id):
     ), 200
 
 
+@simulator_bp.get("/<int:simulator_id>/data-sources")
+@jwt_required()
+def get_simulator_data_sources(simulator_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.check_access(user_email, simulator_id, "simulator"):
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este simulador")
+
+    data_sources = SimulatorDataSourceRelation.get_all_b_for_a(simulator_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
+@simulator_bp.post("/<int:simulator_id>/data-sources/<int:data_source_id>")
+@jwt_required()
+def add_simulator_data_source(simulator_id, data_source_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este simulador")
+
+    SimulatorDataSourceRelation.add_data_source_to_simulator(simulator_id, data_source_id)
+    data_sources = SimulatorDataSourceRelation.get_all_b_for_a(simulator_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
+@simulator_bp.delete("/<int:simulator_id>/data-sources/<int:data_source_id>")
+@jwt_required()
+def remove_simulator_data_source(simulator_id, data_source_id):
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError("El usuario no tiene permiso para actualizar este simulador")
+
+    SimulatorDataSourceRelation.remove_data_source_from_simulator(simulator_id, data_source_id)
+    data_sources = SimulatorDataSourceRelation.get_all_b_for_a(simulator_id)
+    payload = [
+        data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
+        for data_source in data_sources
+    ]
+    return jsonify(payload), 200
+
+
 @simulator_bp.patch("/<int:simulator_id>/roles")
 @jwt_required()
 def update_simulator_roles(simulator_id):
