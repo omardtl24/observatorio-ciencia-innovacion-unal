@@ -137,7 +137,7 @@ export default function ResourceDataSourcesList({
       <button
         type="button"
         onClick={() => setIsModalOpen(true)}
-        className="inline-flex items-center justify-center rounded-lg border border-primary-blue bg-white px-3 py-2 text-sm font-semibold text-primary-blue transition hover:bg-blue-50"
+        className="inline-flex items-center justify-center rounded-lg border bg-primary-blue-base px-3 py-2 text-sm font-semibold text-white transition hover:border-primary-blue-strong hover:bg-white hover:text-primary-blue-strong"
       >
         Ver fuentes de datos
       </button>
@@ -159,7 +159,7 @@ export default function ResourceDataSourcesList({
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+                className="rounded-md px-2 py-1 text-sm text-white border border-primary-blue-base bg-primary-blue-strong transition hover:border-primary-blue-strong hover:bg-white hover:text-primary-blue-strong"
                 aria-label="Cerrar fuentes de datos"
                 title="Cerrar"
               >
@@ -171,7 +171,7 @@ export default function ResourceDataSourcesList({
               {dataSources.map((dataSource) => (
                 <div
                   key={dataSource.id}
-                  className="rounded-lg border border-gray-200 bg-white p-3 hover:bg-gray-50 transition"
+                  className="rounded-lg border border-secondary-gray-soft bg-white p-3 hover:bg-secondary-gray-soft transition"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -185,8 +185,7 @@ export default function ResourceDataSourcesList({
                         type="button"
                         onClick={() => handleDownload(dataSource)}
                         disabled={!dataSource.file_id}
-                        className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Descargar fuente de datos"
+                        className="inline-flex items-center justify-center rounded-lg border px-2 py-1 transition disabled:cursor-not-allowed disabled:border-gray-300 bg-primary-green-strong text-white hover:bg-primary-green-soft hover:border-primary-green-strong hover:text-black"
                         aria-label="Descargar fuente de datos"
                       >
                         <svg
@@ -204,7 +203,7 @@ export default function ResourceDataSourcesList({
                       <button
                         type="button"
                         onClick={() => toggleDetails(dataSource.id)}
-                        className="inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1 transition"
+                        className="inline-flex items-center justify-center rounded-lg border px-2 py-1 bg-primary-blue-base text-white hover:bg-primary-blue-soft hover:border-primary-blue-strong hover:text-black"
                         title="Ver más detalles de la fuente de datos"
                         aria-label="Ver más detalles de la fuente de datos"
                       >

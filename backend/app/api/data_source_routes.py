@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from app.api.utils.check_roles import AccessChecker
+from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.serializers import serialize_data_source
 from app.domain.exceptions import UnauthorizedError
 from app.middleware import schema_validator
 from app.schemas.data_source_schema import DataSourceCreateRequest
@@ -18,26 +19,11 @@ from app.services.relations.role_data_source_relation import RoleDataSourceRelat
 data_source_bp = Blueprint("data_source", __name__, url_prefix="/data-source")
 
 
-def _assert_admin():
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para gestionar fuentes de datos")
-
-
-def _serialize_data_source(data_source):
-    payload = data_source.to_dict(include=["id", "name", "description", "file_id", "updated_at"])
-    payload["role_ids"] = [role.id for role in getattr(data_source, "roles", [])]
-    payload["report_ids"] = [report.id for report in getattr(data_source, "reports", [])]
-    payload["visor_ids"] = [visor.id for visor in getattr(data_source, "visors", [])]
-    payload["simulator_ids"] = [simulator.id for simulator in getattr(data_source, "simulators", [])]
-    return payload
-
-
 @data_source_bp.post("")
 @jwt_required()
 @schema_validator(DataSourceCreateRequest)
 def create_data_source():
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para gestionar fuentes de datos")
 
     data_source_data = request.validated_data.model_dump()
     data_source = DataSourceService.create(**data_source_data)
@@ -46,14 +32,14 @@ def create_data_source():
     AccessChecker.grant_admin_access(data_source.id, "data_source")
     data_source = DataSourceService.get_by_id(data_source.id)
 
-    return jsonify(_serialize_data_source(data_source)), 201
+    return jsonify(serialize_data_source(data_source)), 201
 
 
 @data_source_bp.get("/all")
 @jwt_required()
 def get_data_sources():
     data_sources = DataSourceService.get_all()
-    payload = [_serialize_data_source(data_source) for data_source in data_sources]
+    payload = [serialize_data_source(data_source) for data_source in data_sources]
     return jsonify(payload), 200
 
 
@@ -65,7 +51,7 @@ def get_data_source_by_id(data_source_id):
         raise UnauthorizedError("El usuario no tiene permiso para acceder a esta fuente de datos")
 
     data_source = DataSourceService.get_by_id(data_source_id)
-    return jsonify(_serialize_data_source(data_source)), 200
+    return jsonify(serialize_data_source(data_source)), 200
 
 
 @data_source_bp.delete("/<int:data_source_id>")
@@ -87,7 +73,7 @@ def delete_data_source(data_source_id):
         404: If data_source_id does not exist.
     """
     
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para eliminar fuentes de datos")
     
     cascade = request.args.get("cascade", "false").lower() == "true"
     
@@ -106,7 +92,7 @@ def delete_data_source(data_source_id):
 @data_source_bp.post("/<int:data_source_id>/report/<int:report_id>")
 @jwt_required()
 def add_data_source_to_report(data_source_id, report_id):
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
 
     ReportService.get_by_id(report_id)
     DataSourceService.get_by_id(data_source_id)
@@ -121,7 +107,7 @@ def add_data_source_to_report(data_source_id, report_id):
 @data_source_bp.delete("/<int:data_source_id>/report/<int:report_id>")
 @jwt_required()
 def remove_data_source_from_report(data_source_id, report_id):
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
 
     ReportService.get_by_id(report_id)
     DataSourceService.get_by_id(data_source_id)
@@ -136,7 +122,7 @@ def remove_data_source_from_report(data_source_id, report_id):
 @data_source_bp.post("/<int:data_source_id>/visor/<int:visor_id>")
 @jwt_required()
 def add_data_source_to_visor(data_source_id, visor_id):
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
 
     VisorService.get_by_id(visor_id)
     DataSourceService.get_by_id(data_source_id)
@@ -151,7 +137,7 @@ def add_data_source_to_visor(data_source_id, visor_id):
 @data_source_bp.delete("/<int:data_source_id>/visor/<int:visor_id>")
 @jwt_required()
 def remove_data_source_from_visor(data_source_id, visor_id):
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
 
     VisorService.get_by_id(visor_id)
     DataSourceService.get_by_id(data_source_id)
@@ -166,7 +152,7 @@ def remove_data_source_from_visor(data_source_id, visor_id):
 @data_source_bp.post("/<int:data_source_id>/simulator/<int:simulator_id>")
 @jwt_required()
 def add_data_source_to_simulator(data_source_id, simulator_id):
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
 
     SimulatorService.get_by_id(simulator_id)
     DataSourceService.get_by_id(data_source_id)
@@ -181,7 +167,7 @@ def add_data_source_to_simulator(data_source_id, simulator_id):
 @data_source_bp.delete("/<int:data_source_id>/simulator/<int:simulator_id>")
 @jwt_required()
 def remove_data_source_from_simulator(data_source_id, simulator_id):
-    _assert_admin()
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
 
     SimulatorService.get_by_id(simulator_id)
     DataSourceService.get_by_id(data_source_id)

@@ -7,16 +7,12 @@ from app.services.relations.role_report_relation import RoleReportRelation
 from app.domain.exceptions import DomainError, SchemaValidationError, UnauthorizedError
 from app.schemas.report_schema import ReportCreateRequest, ReportUpdateRequest
 from app.middleware import schema_validator
-from app.api.utils.check_roles import AccessChecker
+from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.serializers import serialize_resource_with_roles
 from app.services.role_service import RoleService
 
 report_bp = Blueprint("report", __name__, url_prefix="/report")
 
-
-def _report_to_dict_with_roles(report):
-    payload = report.to_dict()
-    payload["roles"] = [role.name for role in getattr(report, "roles", [])]
-    return payload
 
 @report_bp.post("")
 @jwt_required()
@@ -37,9 +33,7 @@ def create_report():
         400: If validation fails.
         401: If not authenticated.
     """
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para crear reportes")
+    assert_admin("El usuario no tiene permiso para crear reportes")
 
     report_service = ReportService()
     report_data = request.validated_data.dict()
@@ -85,7 +79,7 @@ def get_reports():
             payload.append(item)
         return jsonify(payload), 200
 
-    payload = [_report_to_dict_with_roles(report) for report in reports]
+    payload = [serialize_resource_with_roles(report) for report in reports]
     return jsonify(payload), 200
 
 @report_bp.get("/<int:report_id>")
@@ -143,9 +137,7 @@ def update_report(report_id):
         404: If report_id does not exist.
     """
 
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este reporte")
+    assert_admin("El usuario no tiene permiso para actualizar este reporte")
 
     update_data = request.validated_data.dict(exclude_unset=True)
     if not update_data:
@@ -178,9 +170,7 @@ def get_report_data_sources(report_id):
 @report_bp.post("/<int:report_id>/data-sources/<int:data_source_id>")
 @jwt_required()
 def add_report_data_source(report_id, data_source_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este reporte")
+    assert_admin("El usuario no tiene permiso para actualizar este reporte")
 
     ReportDataSourceRelation.add_data_source_to_report(report_id, data_source_id)
     data_sources = ReportDataSourceRelation.get_all_b_for_a(report_id)
@@ -194,9 +184,7 @@ def add_report_data_source(report_id, data_source_id):
 @report_bp.delete("/<int:report_id>/data-sources/<int:data_source_id>")
 @jwt_required()
 def remove_report_data_source(report_id, data_source_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este reporte")
+    assert_admin("El usuario no tiene permiso para actualizar este reporte")
 
     ReportDataSourceRelation.remove_data_source_from_report(report_id, data_source_id)
     data_sources = ReportDataSourceRelation.get_all_b_for_a(report_id)
@@ -210,9 +198,7 @@ def remove_report_data_source(report_id, data_source_id):
 @report_bp.patch("/<int:report_id>/roles")
 @jwt_required()
 def update_report_roles(report_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este reporte")
+    assert_admin("El usuario no tiene permiso para actualizar roles de este reporte")
 
     payload = request.get_json(silent=True) or {}
     role_ids = payload.get("role_ids")
@@ -259,9 +245,7 @@ def delete_report(report_id):
         404: If report_id does not exist.
     """
     
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para eliminar este reporte")
+    assert_admin("El usuario no tiene permiso para eliminar este reporte")
 
     cascade = request.args.get("cascade", "false").lower() == "true"
     

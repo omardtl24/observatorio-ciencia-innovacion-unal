@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from app.api.utils.check_roles import AccessChecker
+from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.serializers import serialize_resource_with_roles
 from app.domain.exceptions import SchemaValidationError, UnauthorizedError
 from app.middleware import schema_validator
 from app.schemas.documents_presentation_schema import (
@@ -18,19 +19,11 @@ documents_presentation_bp = Blueprint(
 )
 
 
-def _document_to_dict_with_roles(document_presentation):
-    payload = document_presentation.to_dict()
-    payload["roles"] = [role.name for role in getattr(document_presentation, "roles", [])]
-    return payload
-
-
 @documents_presentation_bp.post("")
 @jwt_required()
 @schema_validator(DocumentPresentationCreateRequest)
 def create_document_presentation():
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para crear documentos de presentacion")
+    assert_admin("El usuario no tiene permiso para crear documentos de presentacion")
 
     document_data = request.validated_data.dict()
     role_ids = document_data.pop("role_ids", [])
@@ -68,7 +61,7 @@ def get_documents_presentations():
             payload.append(item)
         return jsonify(payload), 200
 
-    payload = [_document_to_dict_with_roles(document_presentation) for document_presentation in documents_presentations]
+    payload = [serialize_resource_with_roles(document_presentation) for document_presentation in documents_presentations]
     return jsonify(payload), 200
 
 
@@ -92,9 +85,7 @@ def get_document_presentation_by_id(document_id):
 @jwt_required()
 @schema_validator(DocumentPresentationUpdateRequest)
 def update_document_presentation(document_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este documento de presentacion")
+    assert_admin("El usuario no tiene permiso para actualizar este documento de presentacion")
 
     update_data = request.validated_data.dict(exclude_unset=True)
     if not update_data:
@@ -112,9 +103,7 @@ def update_document_presentation(document_id):
 @documents_presentation_bp.patch("/<int:document_id>/roles")
 @jwt_required()
 def update_document_presentation_roles(document_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este documento de presentacion")
+    assert_admin("El usuario no tiene permiso para actualizar roles de este documento de presentacion")
 
     payload = request.get_json(silent=True) or {}
     role_ids = payload.get("role_ids")
@@ -146,9 +135,7 @@ def update_document_presentation_roles(document_id):
 @documents_presentation_bp.delete("/<int:document_id>")
 @jwt_required()
 def delete_document_presentation(document_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para eliminar este documento de presentacion")
+    assert_admin("El usuario no tiene permiso para eliminar este documento de presentacion")
 
     cascade = request.args.get("cascade", "false").lower() == "true"
 

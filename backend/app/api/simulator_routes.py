@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from app.api.utils.check_roles import AccessChecker
+from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.serializers import serialize_resource_with_roles
 from app.domain.exceptions import SchemaValidationError, UnauthorizedError
 from app.middleware import schema_validator
 from app.schemas.simulator_schema import SimulatorCreateRequest, SimulatorUpdateRequest
@@ -14,19 +15,11 @@ from app.services.simulator_service import SimulatorService
 simulator_bp = Blueprint("simulator", __name__, url_prefix="/simulator")
 
 
-def _simulator_to_dict_with_roles(simulator):
-    payload = simulator.to_dict()
-    payload["roles"] = [role.name for role in getattr(simulator, "roles", [])]
-    return payload
-
-
 @simulator_bp.post("")
 @jwt_required()
 @schema_validator(SimulatorCreateRequest)
 def create_simulator():
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para crear simuladores")
+    assert_admin("El usuario no tiene permiso para crear simuladores")
 
     simulator_data = request.validated_data.dict()
     role_ids = simulator_data.pop("role_ids", [])
@@ -64,7 +57,7 @@ def get_simulators():
             payload.append(item)
         return jsonify(payload), 200
 
-    payload = [_simulator_to_dict_with_roles(simulator) for simulator in simulators]
+    payload = [serialize_resource_with_roles(simulator) for simulator in simulators]
     return jsonify(payload), 200
 
 
@@ -88,9 +81,7 @@ def get_simulator_by_id(simulator_id):
 @jwt_required()
 @schema_validator(SimulatorUpdateRequest)
 def update_simulator(simulator_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este simulador")
+    assert_admin("El usuario no tiene permiso para actualizar este simulador")
 
     update_data = request.validated_data.dict(exclude_unset=True)
     if not update_data:
@@ -123,9 +114,7 @@ def get_simulator_data_sources(simulator_id):
 @simulator_bp.post("/<int:simulator_id>/data-sources/<int:data_source_id>")
 @jwt_required()
 def add_simulator_data_source(simulator_id, data_source_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este simulador")
+    assert_admin("El usuario no tiene permiso para actualizar este simulador")
 
     SimulatorDataSourceRelation.add_data_source_to_simulator(simulator_id, data_source_id)
     data_sources = SimulatorDataSourceRelation.get_all_b_for_a(simulator_id)
@@ -139,9 +128,7 @@ def add_simulator_data_source(simulator_id, data_source_id):
 @simulator_bp.delete("/<int:simulator_id>/data-sources/<int:data_source_id>")
 @jwt_required()
 def remove_simulator_data_source(simulator_id, data_source_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este simulador")
+    assert_admin("El usuario no tiene permiso para actualizar este simulador")
 
     SimulatorDataSourceRelation.remove_data_source_from_simulator(simulator_id, data_source_id)
     data_sources = SimulatorDataSourceRelation.get_all_b_for_a(simulator_id)
@@ -155,9 +142,7 @@ def remove_simulator_data_source(simulator_id, data_source_id):
 @simulator_bp.patch("/<int:simulator_id>/roles")
 @jwt_required()
 def update_simulator_roles(simulator_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este simulador")
+    assert_admin("El usuario no tiene permiso para actualizar roles de este simulador")
 
     payload = request.get_json(silent=True) or {}
     role_ids = payload.get("role_ids")
@@ -189,9 +174,7 @@ def update_simulator_roles(simulator_id):
 @simulator_bp.delete("/<int:simulator_id>")
 @jwt_required()
 def delete_simulator(simulator_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para eliminar este simulador")
+    assert_admin("El usuario no tiene permiso para eliminar simuladores")
 
     cascade = request.args.get("cascade", "false").lower() == "true"
 

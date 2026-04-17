@@ -7,16 +7,12 @@ from app.services.relations.role_visor_relation import RoleVisorRelation
 from app.domain.exceptions import DomainError, UnauthorizedError, SchemaValidationError
 from app.schemas.visor_schema import VisorCreateRequest, VisorUpdateRequest
 from app.middleware import schema_validator
-from app.api.utils.check_roles import AccessChecker
+from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.serializers import serialize_resource_with_roles
 from app.services.role_service import RoleService
 
 visor_bp = Blueprint("visor", __name__, url_prefix="/visor")
 
-
-def _visor_to_dict_with_roles(visor):
-    payload = visor.to_dict()
-    payload["roles"] = [role.name for role in getattr(visor, "roles", [])]
-    return payload
 
 @visor_bp.post("")
 @jwt_required()
@@ -37,9 +33,7 @@ def create_visor():
         401: If not authenticated.
     """
 
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para crear visores")
+    assert_admin("El usuario no tiene permiso para crear visores")
 
     visor_service = VisorService()
     visor_data = request.validated_data.dict()
@@ -81,7 +75,7 @@ def get_visor():
             payload.append(item)
         return jsonify(payload), 200
 
-    payload = [_visor_to_dict_with_roles(visor) for visor in visors]
+    payload = [serialize_resource_with_roles(visor) for visor in visors]
     return jsonify(payload), 200
 
 @visor_bp.get("/<int:visor_id>")
@@ -91,7 +85,7 @@ def get_visor_by_id(visor_id):
     Returns:
     """
 
-    #TODO: validate user permissions to delete files
+    #TODO: validate user permissions to retreive visor
 
     visor = VisorService.get_by_id(visor_id)
     response = visor.to_dict(include=["id",
@@ -107,9 +101,7 @@ def get_visor_by_id(visor_id):
 @jwt_required()
 @schema_validator(VisorUpdateRequest)
 def update_visor(visor_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este visor")
+    assert_admin("El usuario no tiene permiso para actualizar este visor")
 
     update_data = request.validated_data.dict(exclude_unset=True)
     role_ids = update_data.pop("role_ids", None)
@@ -158,9 +150,7 @@ def get_visor_data_sources(visor_id):
 @visor_bp.post("/<int:visor_id>/data-sources/<int:data_source_id>")
 @jwt_required()
 def add_visor_data_source(visor_id, data_source_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este visor")
+    assert_admin("El usuario no tiene permiso para actualizar este visor")
 
     VisorDataSourceRelation.add_data_source_to_visor(visor_id, data_source_id)
     data_sources = VisorDataSourceRelation.get_all_b_for_a(visor_id)
@@ -174,9 +164,7 @@ def add_visor_data_source(visor_id, data_source_id):
 @visor_bp.delete("/<int:visor_id>/data-sources/<int:data_source_id>")
 @jwt_required()
 def remove_visor_data_source(visor_id, data_source_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar este visor")
+    assert_admin("El usuario no tiene permiso para actualizar este visor")
 
     VisorDataSourceRelation.remove_data_source_from_visor(visor_id, data_source_id)
     data_sources = VisorDataSourceRelation.get_all_b_for_a(visor_id)
@@ -190,9 +178,7 @@ def remove_visor_data_source(visor_id, data_source_id):
 @visor_bp.patch("/<int:visor_id>/roles")
 @jwt_required()
 def update_visor_roles(visor_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar roles de este visor")
+    assert_admin("El usuario no tiene permiso para actualizar roles de este visor")
 
     payload = request.get_json(silent=True) or {}
     role_ids = payload.get("role_ids")
@@ -224,9 +210,7 @@ def update_visor_roles(visor_id):
 @visor_bp.delete("/<int:visor_id>")
 @jwt_required()
 def delete_visor(visor_id):
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para eliminar visores")
+    assert_admin("El usuario no tiene permiso para eliminar visores")
     
     #TODO: validate user permissions to delete files
 

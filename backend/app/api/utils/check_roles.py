@@ -5,7 +5,8 @@ from app.services.relations.role_simulator_relation import RoleSimulatorRelation
 from app.services.relations.role_data_source_relation import RoleDataSourceRelation
 from app.services.relations.role_visor_relation import RoleVisorRelation
 from app.services.role_service import RoleService
-from app.domain.exceptions import NotFoundError
+from app.domain.exceptions import NotFoundError, UnauthorizedError
+from flask_jwt_extended import get_jwt_identity
 
 
 class AccessChecker:
@@ -268,6 +269,21 @@ class AccessChecker:
             tuple: (admin_role_instance, data_source_instance)
         """
         return RoleDataSourceRelation.add(admin_role_id, data_source_id)
+
+
+def assert_admin(error_message="El usuario no tiene permiso para realizar esta acción"):
+    """Assert that the current user has admin permissions.
+    
+    Args:
+        error_message (str): Custom error message to display if user lacks permissions.
+    
+    Raises:
+        UnauthorizedError: If the user is not an admin.
+    """
+    user_email = get_jwt_identity()
+    if not AccessChecker.is_admin(user_email):
+        raise UnauthorizedError(error_message)
+
 
 
 

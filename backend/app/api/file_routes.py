@@ -1,33 +1,14 @@
 import os
-import hashlib
 from uuid import uuid4
 from flask import Blueprint, jsonify, current_app, send_file, request
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.file_service import FileService
 from app.domain.exceptions import IllegalOperationError, SchemaValidationError, UnauthorizedError
-from app.api.utils.check_roles import AccessChecker
+from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.file_utils import compute_sha256, validate_sha256
 
 file_bp = Blueprint("file", __name__, url_prefix="/file")
-
-def compute_sha256(path, chunk_size=8192):
-    """
-    Computes SHA256 checksum of a file on disk.
-    """
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(chunk_size), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def validate_sha256(path, expected_checksum):
-    """
-    Validates file integrity before persistence.
-    """
-    computed = compute_sha256(path)
-    return computed == expected_checksum
-
 
 @file_bp.post("/upload")
 @jwt_required()
@@ -49,9 +30,7 @@ def upload():
         401: If not authenticated (when JWT is enabled).
     """
 
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para cargar archivos")
+    assert_admin("El usuario no tiene permiso para cargar archivos")
 
     if "file" not in request.files:
         raise SchemaValidationError("Debes adjuntar un archivo")
@@ -112,9 +91,7 @@ def update(file_id):
         404: If file_id does not exist.
     """
 
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para actualizar archivos")
+    assert_admin("El usuario no tiene permiso para actualizar archivos")
 
     if "file" not in request.files:
         raise SchemaValidationError("El archivo es requerido")
@@ -227,9 +204,7 @@ def metadata(file_id):
         404: If file_id does not exist.
     """
     
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para ver los metadatos del archivo")
+    assert_admin("El usuario no tiene permiso para ver los metadatos del archivo")
 
     file = FileService.get_by_id(file_id)
 
@@ -249,9 +224,7 @@ def all_files():
         401: If not authenticated (when JWT is enabled).
     """
 
-    user_email = get_jwt_identity()
-    if not AccessChecker.is_admin(user_email):
-        raise UnauthorizedError("El usuario no tiene permiso para ver todos los archivos")
+    assert_admin("El usuario no tiene permiso para ver todos los archivos")
 
     files = FileService.get_all_dict(include=["id",
                                               "filename", 
@@ -278,8 +251,7 @@ def delete(file_id):
         404: If file_id does not exist.
     """
 
-    if not AccessChecker.is_admin(get_jwt_identity()):
-        raise UnauthorizedError("El usuario no tiene permiso para eliminar archivos")
+    assert_admin("El usuario no tiene permiso para eliminar archivos")
 
     file = FileService.get_by_id(file_id)
     storage_path = file.storage_path
