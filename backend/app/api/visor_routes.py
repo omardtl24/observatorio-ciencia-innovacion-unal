@@ -1,10 +1,9 @@
-from urllib.parse import urlencode
-from flask import Blueprint, jsonify, current_app, redirect, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.visor_service import VisorService
 from app.services.relations.visor_data_source_relation import VisorDataSourceRelation
 from app.services.relations.role_visor_relation import RoleVisorRelation
-from app.domain.exceptions import DomainError, UnauthorizedError, SchemaValidationError
+from app.domain.exceptions import UnauthorizedError, SchemaValidationError
 from app.schemas.visor_schema import VisorCreateRequest, VisorUpdateRequest
 from app.middleware import schema_validator
 from app.api.utils.check_roles import AccessChecker, assert_admin

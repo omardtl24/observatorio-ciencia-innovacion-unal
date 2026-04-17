@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token  # type: ignore
+from app.domain.exceptions import UnauthorizedError
 
 
 def _auth_headers(app, identity="admin@unal.edu.co"):
@@ -14,7 +15,7 @@ class TestPermissionRoutes:
         headers = _auth_headers(app)
 
         with (
-            patch("app.api.permission_routes.AccessChecker.is_admin", return_value=True),
+            patch("app.api.permission_routes.assert_admin"),
             patch("app.api.permission_routes.PermissionService") as mock_permission_service_class,
         ):
             mock_permission_service = Mock()
@@ -37,7 +38,7 @@ class TestPermissionRoutes:
         headers = _auth_headers(app, identity="user@unal.edu.co")
 
         with (
-            patch("app.api.permission_routes.AccessChecker.is_admin", return_value=False),
+            patch("app.api.permission_routes.assert_admin", side_effect=UnauthorizedError("forbidden")),
             patch("app.api.permission_routes.PermissionService") as mock_permission_service_class,
         ):
             response = client.post(
@@ -52,7 +53,7 @@ class TestPermissionRoutes:
     def test_update_refresh_token_validates_schema(self, app, client):
         headers = _auth_headers(app)
 
-        with patch("app.api.permission_routes.AccessChecker.is_admin", return_value=True):
+        with patch("app.api.permission_routes.assert_admin"):
             response = client.post(
                 "/permissions/update-refresh-token",
                 json={"invalid": "payload"},

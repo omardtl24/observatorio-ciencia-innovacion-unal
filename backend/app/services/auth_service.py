@@ -8,7 +8,7 @@ from flask_jwt_extended import create_access_token
 from app.services.user_service import UserService
 from app.services.role_service import RoleService
 from app.services.relations.user_role_relation import UserRoleRelation
-from app.domain.exceptions import ForbiddenError, IllegalOperationError, NotFoundError, UnauthorizedError
+from app.domain.exceptions import IllegalOperationError, NotFoundError, UnauthorizedError
 from datetime import datetime, timedelta
 
 class AuthService:

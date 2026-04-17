@@ -5,7 +5,7 @@ from app.api.utils.check_roles import AccessChecker, assert_admin
 from app.api.utils.serializers import serialize_user
 from app.api.utils.parsers import parse_role_assignment_payload, parse_resource_access_validation_params
 from app.api.utils.filters import filter_exclude_admin
-from app.domain.exceptions import IllegalOperationError, SchemaValidationError, UnauthorizedError
+from app.domain.exceptions import IllegalOperationError
 from app.services.role_service import RoleService
 from app.services.user_service import UserService
 from app.services.relations.user_role_relation import UserRoleRelation

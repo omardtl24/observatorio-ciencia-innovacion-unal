@@ -1,8 +1,7 @@
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from app.api.utils.check_roles import AccessChecker, assert_admin
-from app.domain.exceptions import UnauthorizedError
+from app.api.utils.check_roles import assert_admin
 from app.middleware import schema_validator
 from app.schemas.permission_schema import PermissionRefreshTokenUpdateRequest
 from app.services.permission_service import PermissionService

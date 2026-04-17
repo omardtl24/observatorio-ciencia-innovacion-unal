@@ -1,6 +1,3 @@
-import json
-from html import escape
-from urllib.parse import urlencode
 from flask import Blueprint, jsonify, current_app, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.auth_service import AuthService
