@@ -12,6 +12,7 @@ from app.services.visor_service import VisorService
 from app.services.relations.report_data_source_relation import ReportDataSourceRelation
 from app.services.relations.simulator_data_source_relation import SimulatorDataSourceRelation
 from app.services.relations.visor_data_source_relation import VisorDataSourceRelation
+from app.services.relations.role_data_source_relation import RoleDataSourceRelation
 
 
 data_source_bp = Blueprint("data_source", __name__, url_prefix="/data-source")
@@ -65,6 +66,41 @@ def get_data_source_by_id(data_source_id):
 
     data_source = DataSourceService.get_by_id(data_source_id)
     return jsonify(_serialize_data_source(data_source)), 200
+
+
+@data_source_bp.delete("/<int:data_source_id>")
+@jwt_required()
+def delete_data_source(data_source_id):
+    """Delete a data source from the system.
+    
+    Path Parameters:
+        data_source_id (int): The ID of the data source to delete.
+    
+    Query Parameters:
+        cascade (str, optional): Set to 'true' to also remove all relationship entries.
+    
+    Returns:
+        Empty response with status 204 (No Content).
+    
+    Raises:
+        401: If not authenticated (when JWT is enabled).
+        404: If data_source_id does not exist.
+    """
+    
+    _assert_admin()
+    
+    cascade = request.args.get("cascade", "false").lower() == "true"
+    
+    if cascade:
+        # Remove all associations with reports, visors, simulators, and roles
+        ReportDataSourceRelation.remove_all_b_for_a(data_source_id)
+        VisorDataSourceRelation.remove_all_b_for_a(data_source_id)
+        SimulatorDataSourceRelation.remove_all_b_for_a(data_source_id)
+        RoleDataSourceRelation.remove_all_b_for_a(data_source_id)
+        
+    DataSourceService.delete(data_source_id)
+    
+    return "", 204
 
 
 @data_source_bp.post("/<int:data_source_id>/report/<int:report_id>")

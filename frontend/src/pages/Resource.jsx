@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ResourceDisplay from "../components/ResourceDisplay";
+import ResourceDataSourcesList from "../components/ResourceDataSourcesList";
 import ErrorPopup from "../components/ErrorPopup";
 import { fetchResource, parseResourcesText } from "../services/resourcesServices";
 import { parseRichText, parseColor } from "../services/stringServices.jsx";
@@ -87,6 +88,11 @@ export default function Resource() {
         {/* Description */}
         <div className="prose prose-lg max-w-none mb-8 text-primary-blue-strong leading-relaxed">
           {parseRichText(resource.description, "text-primary-blue-strong font-semibold")}
+        </div>
+
+        {/* Data Sources */}
+        <div className="mb-10">
+          <ResourceDataSourcesList resourceType={type} resourceId={id} />
         </div>
 
         {/* Resource Display */}
