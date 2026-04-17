@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchResourceDataSources, fetchFromUrl } from "../services/resourcesServices";
+import { fetchResourceDataSources, fetchFromUrl, fetchFileWithAuth } from "../services/resourcesServices";
 
 export default function ResourceDataSourcesList({ 
   resourceType, 
@@ -11,8 +11,7 @@ export default function ResourceDataSourcesList({
   const [canDisplay, setCanDisplay] = useState(false);
   const [fileNames, setFileNames] = useState({});
   const [expandedDataSourceId, setExpandedDataSourceId] = useState(null);
-
-  console.log("Entered", resourceType, resourceId);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!resourceType || !resourceId) {
@@ -86,23 +85,39 @@ export default function ResourceDataSourcesList({
     loadDataSources();
   }, [resourceType, resourceId]);
 
-  const handleDownload = (dataSource) => {
+  const handleDownload = async (dataSource) => {
     if (!dataSource.file_id) {
       return;
     }
 
-    // Direct download using file API endpoint
-    const downloadUrl = `${import.meta.env.VITE_API_URL}/file/download/${dataSource.file_id}`;
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.setAttribute("download", fileNames[dataSource.id] || `data-source-${dataSource.id}`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const downloadUrl = `${import.meta.env.VITE_API_URL}/file/download/${dataSource.file_id}`;
+      const objectUrl = await fetchFileWithAuth(downloadUrl, {
+        resource: resourceType,
+        id: resourceId,
+        display: "true",
+        data_source_id: dataSource.id,
+      });
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.setAttribute("download", fileNames[dataSource.id] || `data-source-${dataSource.id}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      // Silent fail to avoid breaking the UI flow.
+    }
   };
 
   const toggleDetails = (dataSourceId) => {
     setExpandedDataSourceId((current) => (current === dataSourceId ? null : dataSourceId));
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setExpandedDataSourceId(null);
   };
 
   if (!resourceType || !resourceId) {
@@ -118,76 +133,113 @@ export default function ResourceDataSourcesList({
   }
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      <h4 className="text-sm font-semibold text-gray-700">Fuentes de datos asociadas</h4>
-      <div className="space-y-2">
-        {dataSources.map((dataSource) => (
+    <div className={className}>
+      <button
+        type="button"
+        onClick={() => setIsModalOpen(true)}
+        className="inline-flex items-center justify-center rounded-lg border border-primary-blue bg-white px-3 py-2 text-sm font-semibold text-primary-blue transition hover:bg-blue-50"
+      >
+        Ver fuentes de datos
+      </button>
+
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Fuentes de datos asociadas"
+          onClick={closeModal}
+        >
           <div
-            key={dataSource.id}
-            className="rounded-lg border border-gray-200 bg-white p-3 hover:bg-gray-50 transition"
+            className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-xl"
+            onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {dataSource.name || "Sin nombre"}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => handleDownload(dataSource)}
-                  disabled={!dataSource.file_id}
-                  className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Descargar fuente de datos"
-                  aria-label="Descargar fuente de datos"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="w-4 h-4"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 14.899A7 7 0 1 1 15.71 8m-6.85 11m7-9-7 7m7 0-7-7" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={() => toggleDetails(dataSource.id)}
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1 transition"
-                  title="Ver más detalles de la fuente de datos"
-                  aria-label="Ver más detalles de la fuente de datos"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="w-4 h-4"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-                  </svg>
-                </button>
-              </div>
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+              <h4 className="text-base font-semibold text-gray-800">Fuentes de datos asociadas</h4>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+                aria-label="Cerrar fuentes de datos"
+                title="Cerrar"
+              >
+                Cerrar
+              </button>
             </div>
 
-            {expandedDataSourceId === dataSource.id && (
-              <div className="mt-3 rounded-md bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600 space-y-1">
-                {fileNames[dataSource.id] ? (
-                  <p>
-                    Archivo: <span className="font-medium text-gray-800">{fileNames[dataSource.id]}</span>
-                  </p>
-                ) : (
-                  <p>No tiene archivo asociado.</p>
-                )}
-                {dataSource.description && <p>{dataSource.description}</p>}
-              </div>
-            )}
+            <div className="max-h-[calc(85vh-65px)] space-y-2 overflow-y-auto p-4">
+              {dataSources.map((dataSource) => (
+                <div
+                  key={dataSource.id}
+                  className="rounded-lg border border-gray-200 bg-white p-3 hover:bg-gray-50 transition"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {dataSource.name || "Sin nombre"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(dataSource)}
+                        disabled={!dataSource.file_id}
+                        className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Descargar fuente de datos"
+                        aria-label="Descargar fuente de datos"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-4 h-4"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v10m0 0-4-4m4 4 4-4M5 20h14" />
+                        </svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleDetails(dataSource.id)}
+                        className="inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1 transition"
+                        title="Ver más detalles de la fuente de datos"
+                        aria-label="Ver más detalles de la fuente de datos"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-4 h-4"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {expandedDataSourceId === dataSource.id && (
+                    <div className="mt-3 rounded-md bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600 space-y-1">
+                      {fileNames[dataSource.id] ? (
+                        <p>
+                          Archivo: <span className="font-medium text-gray-800">{fileNames[dataSource.id]}</span>
+                        </p>
+                      ) : (
+                        <p>No tiene archivo asociado.</p>
+                      )}
+                      {dataSource.description ? <p>{dataSource.description}</p> : <p>Sin descripcion.</p>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
