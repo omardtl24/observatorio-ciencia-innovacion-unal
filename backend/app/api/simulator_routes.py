@@ -4,8 +4,8 @@ from flask_jwt_extended import get_jwt_identity, jwt_required # type: ignore
 from app.api.utils.check_roles import AccessChecker, assert_admin
 from app.api.utils.resource_urls import build_resource_url
 from app.api.utils.serializers import serialize_resource_with_roles
+from app.api.utils.validate_schema import validate_schema
 from app.domain.exceptions import SchemaValidationError, UnauthorizedError
-from app.middleware import schema_validator
 from app.schemas.simulator_schema import SimulatorCreateRequest, SimulatorUpdateRequest
 from app.services.relations.role_simulator_relation import RoleSimulatorRelation
 from app.services.relations.simulator_data_source_relation import SimulatorDataSourceRelation
@@ -16,13 +16,28 @@ from app.services.simulator_service import SimulatorService
 simulator_bp = Blueprint("simulator", __name__, url_prefix="/simulator")
 
 
+def _get_simulator_payload(schema_class):
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict(flat=True)
+        role_ids = request.form.getlist("role_ids")
+        if role_ids:
+            data["role_ids"] = role_ids
+
+    return validate_schema(data, schema_class).model_dump(exclude_unset=True)
+
+
 @simulator_bp.post("")
 @jwt_required()
-@schema_validator(SimulatorCreateRequest)
 def create_simulator():
     assert_admin("El usuario no tiene permiso para crear simuladores")
 
-    simulator_data = request.validated_data.dict()
+    simulator_data = _get_simulator_payload(SimulatorCreateRequest)
+    r_program = request.files.get("r_program")
+    if r_program is None:
+        raise SchemaValidationError("Debes adjuntar el archivo r_program")
+
     role_ids = simulator_data.pop("role_ids", [])
     selected_role_ids = list({int(role_id) for role_id in role_ids})
     admin_role = RoleService.get_by_name("Administrador")
@@ -33,7 +48,7 @@ def create_simulator():
     simulator = SimulatorService.create(**simulator_data)
     SimulatorService.update(
         simulator.id,
-        simulator_url=build_resource_url("simulator", simulator.id),
+        simulator_url=build_resource_url(r_program),
     )
     simulator = SimulatorService.get_by_id(simulator.id)
 
@@ -84,19 +99,21 @@ def get_simulator_by_id(simulator_id):
 
 @simulator_bp.patch("/<int:simulator_id>")
 @jwt_required()
-@schema_validator(SimulatorUpdateRequest)
 def update_simulator(simulator_id):
     assert_admin("El usuario no tiene permiso para actualizar este simulador")
 
-    update_data = request.validated_data.dict(exclude_unset=True)
-    if not update_data:
+    update_data = _get_simulator_payload(SimulatorUpdateRequest)
+    r_program = request.files.get("r_program")
+    if not update_data and r_program is None:
         raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
 
-    simulator = SimulatorService.update(simulator_id, **update_data)
-    simulator = SimulatorService.update(
-        simulator_id,
-        simulator_url=build_resource_url("simulator", simulator_id),
-    )
+    if update_data:
+        SimulatorService.update(simulator_id, **update_data)
+
+    if r_program is not None:
+        SimulatorService.update(simulator_id, simulator_url=build_resource_url(r_program))
+
+    simulator = SimulatorService.get_by_id(simulator_id)
 
     return jsonify(
         simulator.to_dict(
