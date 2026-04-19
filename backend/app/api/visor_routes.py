@@ -7,6 +7,7 @@ from app.domain.exceptions import UnauthorizedError, SchemaValidationError
 from app.schemas.visor_schema import VisorCreateRequest, VisorUpdateRequest
 from app.middleware import schema_validator
 from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.resource_urls import build_resource_url
 from app.api.utils.serializers import serialize_resource_with_roles
 from app.services.role_service import RoleService
 
@@ -22,7 +23,6 @@ def create_visor():
     Payload:
         name (str, required): The name of the visor.
         description (str, optional): The description of the visor.
-        visor_url (str, optional): The URL of the visor.
     
     Returns:
         dict: The created visor with status code 201.
@@ -44,6 +44,7 @@ def create_visor():
         RoleService.get_by_id(role_id)
 
     visor = visor_service.create(**visor_data)
+    visor_service.update(visor.id, visor_url=build_resource_url("visor", visor.id))
     visor = visor_service.get_by_id(visor.id)
     
     # Grant admin role access to the newly created visor
@@ -110,6 +111,8 @@ def update_visor(visor_id):
 
     if update_data:
         VisorService.update(visor_id, **update_data)
+
+    VisorService.update(visor_id, visor_url=build_resource_url("visor", visor_id))
 
     if role_ids is not None:
         selected_role_ids = list({int(role_id) for role_id in role_ids})

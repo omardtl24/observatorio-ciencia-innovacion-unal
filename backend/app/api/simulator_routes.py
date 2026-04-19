@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request # type: ignore
 from flask_jwt_extended import get_jwt_identity, jwt_required # type: ignore
 
 from app.api.utils.check_roles import AccessChecker, assert_admin
+from app.api.utils.resource_urls import build_resource_url
 from app.api.utils.serializers import serialize_resource_with_roles
 from app.domain.exceptions import SchemaValidationError, UnauthorizedError
 from app.middleware import schema_validator
@@ -30,6 +31,10 @@ def create_simulator():
         RoleService.get_by_id(role_id)
 
     simulator = SimulatorService.create(**simulator_data)
+    SimulatorService.update(
+        simulator.id,
+        simulator_url=build_resource_url("simulator", simulator.id),
+    )
     simulator = SimulatorService.get_by_id(simulator.id)
 
     AccessChecker.grant_admin_access(simulator.id, "simulator")
@@ -39,7 +44,7 @@ def create_simulator():
 
     simulator = SimulatorService.get_by_id(simulator.id)
 
-    include = ["id", "title", "description", "specs_file_id", "updated_at"]
+    include = ["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"]
     response = simulator.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     return jsonify(response), 201
@@ -70,7 +75,7 @@ def get_simulator_by_id(simulator_id):
 
     simulator = SimulatorService.get_by_id(simulator_id)
     response = simulator.to_dict(
-        include=["id", "title", "description", "specs_file_id", "updated_at"]
+        include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"]
     )
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
@@ -88,10 +93,14 @@ def update_simulator(simulator_id):
         raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
 
     simulator = SimulatorService.update(simulator_id, **update_data)
+    simulator = SimulatorService.update(
+        simulator_id,
+        simulator_url=build_resource_url("simulator", simulator_id),
+    )
 
     return jsonify(
         simulator.to_dict(
-            include=["id", "title", "description", "specs_file_id", "updated_at"]
+            include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"]
         )
     ), 200
 
@@ -165,7 +174,7 @@ def update_simulator_roles(simulator_id):
             RoleSimulatorRelation.add(role_id, simulator_id)
 
     simulator = SimulatorService.get_by_id(simulator_id)
-    response = simulator.to_dict(include=["id", "title", "description", "specs_file_id", "updated_at"])
+    response = simulator.to_dict(include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"])
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
     return jsonify(response), 200

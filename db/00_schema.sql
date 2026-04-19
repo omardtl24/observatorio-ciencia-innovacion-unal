@@ -42,6 +42,7 @@ CREATE TABLE simulators (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
+    simulator_url TEXT,
     specs_file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()

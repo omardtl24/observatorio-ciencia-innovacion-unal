@@ -159,7 +159,7 @@ def add_data_source_to_simulator(data_source_id, simulator_id):
     SimulatorDataSourceRelation.add_data_source_to_simulator(simulator_id, data_source_id)
 
     simulator = SimulatorService.get_by_id(simulator_id)
-    response = simulator.to_dict(include=["id", "title", "description", "specs_file_id", "updated_at"])
+    response = simulator.to_dict(include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"])
     response["data_source_ids"] = [data_source.id for data_source in getattr(simulator, "data_sources", [])]
     return jsonify(response), 200
 
@@ -174,6 +174,6 @@ def remove_data_source_from_simulator(data_source_id, simulator_id):
     SimulatorDataSourceRelation.remove_data_source_from_simulator(simulator_id, data_source_id)
 
     simulator = SimulatorService.get_by_id(simulator_id)
-    response = simulator.to_dict(include=["id", "title", "description", "specs_file_id", "updated_at"])
+    response = simulator.to_dict(include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"])
     response["data_source_ids"] = [data_source.id for data_source in getattr(simulator, "data_sources", [])]
     return jsonify(response), 200
