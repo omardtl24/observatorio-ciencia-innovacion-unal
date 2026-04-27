@@ -135,8 +135,9 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env.**
 .env
+.env.dev
+.env.prod
 .envrc
 .venv
 env/
@@ -211,6 +212,7 @@ __marimo__/
 #Test_files that are real reports for official demo
 test_files/**.pdf
 backend/app/files/
+shared_files/
 
 #Credentials files
 credentials/**

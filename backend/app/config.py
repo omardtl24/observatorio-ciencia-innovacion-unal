@@ -37,12 +37,7 @@ class Config:
         if os.path.isabs(_FILE_STORAGE_ROOT_ENV)
         else os.path.join(BASE_DIR, _FILE_STORAGE_ROOT_ENV)
     )
-    _RESOURCES_SHARED_FOLDER_ENV = os.getenv("RESOURCES_SHARED_FOLDER", "shared_files")
-    RESOURCES_SHARED_FOLDER = (
-        _RESOURCES_SHARED_FOLDER_ENV
-        if os.path.isabs(_RESOURCES_SHARED_FOLDER_ENV)
-        else os.path.join(BASE_DIR, _RESOURCES_SHARED_FOLDER_ENV)
-    )
+    RESOURCES_SHARED_FOLDER = os.path.join(FILE_STORAGE_ROOT, "shiny-apps")
     RESOURCES_BASE_URL = os.getenv("RESOURCES_BASE_URL", "")
     PROFILE_IMAGE_CACHE_DIR = os.path.join(FILE_STORAGE_ROOT, "profile_images_cache")
     PROFILE_IMAGE_CACHE_TTL_SECONDS = int(os.getenv("PROFILE_IMAGE_CACHE_TTL_SECONDS", "86400"))
