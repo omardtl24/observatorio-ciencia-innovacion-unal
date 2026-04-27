@@ -64,6 +64,7 @@ services:
     volumes:
       - ${SHINY_SERVER_APP_DIR}:/srv/shiny-server
       - renv_cache_dev:/renv/cache
+      - r_libs_dev:/usr/local/lib/R/site-library
 
   nginx:
     image: nginx:1.27-alpine
@@ -73,13 +74,16 @@ services:
     depends_on:
       - backend
       - shiny
+      - frontend
     ports:
-      - "8081:80"
+      - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/templates/default.conf.template:ro
 
 volumes:
-  postgres_data_dev:
-    driver: local
   renv_cache_dev:
+    driver: local
+  r_libs_dev:
+    driver: local
+  postgres_data_dev:
     driver: local
