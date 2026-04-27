@@ -81,7 +81,7 @@ export default function UserProfile() {
       {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-blue-base hover:bg-gray-200 transition"
+        className="flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-blue-base border border-white hover:bg-secondary-gray-strong hover:border-primary-blue-strong transition"
         title="User Profile"
       >
         {imageSrc ? (

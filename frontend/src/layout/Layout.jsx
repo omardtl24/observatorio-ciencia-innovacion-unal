@@ -1,15 +1,30 @@
+import { useEffect, useState } from "react";
 import UserProfile from "../components/UserProfile";
 import { isAuthenticated } from "../services/authService";
 
 export default function Layout({
   children,
   backgroundClass,
+  profileBackgroundClass,
   backgroundImage,
   backgroundSVGImage,
   svgFillClass = "text-black",
   path
 }) {
   const BgSVG = backgroundSVGImage;
+  const [hasVisibleErrorPopup, setHasVisibleErrorPopup] = useState(false);
+
+  useEffect(() => {
+    const handleErrorPopupVisibility = (event) => {
+      setHasVisibleErrorPopup(Boolean(event?.detail?.visible));
+    };
+
+    window.addEventListener("error-popup-visibility", handleErrorPopupVisibility);
+
+    return () => {
+      window.removeEventListener("error-popup-visibility", handleErrorPopupVisibility);
+    };
+  }, []);
 
   const backgroundStyle = backgroundImage
     ? {
@@ -41,13 +56,19 @@ export default function Layout({
 
       {/* USER PROFILE BUTTON - Upper Right (only if authenticated) */}
       {isAuthenticated() && (
-        <div className="absolute top-4 right-4 z-40">
-          <UserProfile />
+        <div
+          className={`relative z-20 w-full ${
+            hasVisibleErrorPopup ? "bg-secondary-gray-base" : (profileBackgroundClass || backgroundClass || "")
+          }`}
+        >
+          <div className="mx-auto flex max-w-6xl justify-end px-6 pt-3 pb-0">
+            <UserProfile />
+          </div>
         </div>
       )}
 
       {/* CONTENT */}
-      <main className={`relative z-10 flex-1 mb-32 ${isAuthenticated() ? "pt-5" : ""}`}>
+      <main className="relative z-10 flex-1 mb-32">
         {children}
       </main>
     </div>

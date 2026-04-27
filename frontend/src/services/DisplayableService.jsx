@@ -32,6 +32,22 @@ function renderVisor(fileSrc) {
   );
 }
 
+function renderSimulator(fileSrc) {
+  return (
+    <div className="w-full h-[600px]">
+      {fileSrc && (
+        <iframe
+          src={fileSrc}
+          title="Simulator Resource"
+          width="100%"
+          height="100%"
+          frameBorder="0"
+        />
+      )}
+    </div>
+  );
+}
+
 function renderUnsupported() {
   return (
     <div className="w-full h-[600px] flex items-center justify-center">
@@ -42,12 +58,18 @@ function renderUnsupported() {
 
 // Meta function that centralizes scenario selection.
 export function getDisplayableKind(type) {
+  const normalizedType = String(type || "").toLowerCase();
+
   if (isPdfResource(type)) {
     return "pdf";
   }
 
-  if (type === "visor") {
+  if (normalizedType === "visor") {
     return "visor";
+  }
+
+  if (normalizedType === "simulator" || normalizedType === "simulators") {
+    return "simulator";
   }
 
   return "unsupported";
@@ -62,6 +84,10 @@ export function renderDisplayableContent(type, fileSrc) {
 
   if (kind === "visor") {
     return renderVisor(fileSrc);
+  }
+
+  if (kind === "simulator") {
+    return renderSimulator(fileSrc);
   }
 
   return renderUnsupported();
@@ -88,6 +114,10 @@ export async function loadDisplayableResource({
   }
 
   if (displayableKind === "visor") {
+    return resourceDisplayable;
+  }
+
+  if (displayableKind === "simulator") {
     return resourceDisplayable;
   }
 

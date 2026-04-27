@@ -46,7 +46,11 @@ function inferMediaType(normalizedType, item) {
     return "visor";
   }
 
-  if (normalizedType === "report" || normalizedType === "simulator" || normalizedType === "document") {
+  if (normalizedType === "simulator") {
+    return "simulator";
+  }
+
+  if (normalizedType === "report" || normalizedType === "document") {
     return "pdf";
   }
 
@@ -78,7 +82,7 @@ export function toResourceDisplayModel(resourceType, item) {
   if (normalizedType === "report") {
     resourceDisplayable = item?.document_file_id ?? null;
   } else if (normalizedType === "simulator") {
-    resourceDisplayable = item?.specs_file_id ?? null;
+    resourceDisplayable = item?.simulator_url ?? null;
   } else if (normalizedType === "document") {
     resourceDisplayable = item?.file_id ?? null;
   } else if (normalizedType === "visor") {
@@ -96,5 +100,5 @@ export function toResourceDisplayModel(resourceType, item) {
 }
 
 export function isPdfResource(resourceType) {
-  return ["report", "simulator", "document"].includes(normalizeResourceType(resourceType));
+  return ["report", "document"].includes(normalizeResourceType(resourceType));
 }

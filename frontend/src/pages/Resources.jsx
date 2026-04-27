@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ResourceCard from "../components/ResourceCard";
+import ErrorPopup from "../components/ErrorPopup";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
 import { datetoString } from "../services/stringServices.jsx";
 import { getPresentationInfo } from "../services/resourceModels";
@@ -121,20 +122,28 @@ export default function Resources() {
   }
 
   if (error) {
-    return null;
+    return (
+      <ErrorPopup
+        error={error}
+        onClose={() => setError(null)}
+        redirectTo="/dashboard"
+      />
+    );
   }
   
   return (
-    <div className="min-h-screen px-6 py-12">
-      <div className="max-w-6xl mx-auto mb-10 rounded-3xl border-2 border-primary-blue-strong bg-white/90 px-6 py-8 shadow-lg">
-        <h1 className="text-4xl md:text-5xl font-serif italic font-bold text-primary-blue-strong">
-          {parseColor(presentationInfo?.title || `Recursos ${typeSpanish}`, "text-secondary-cyan-strong")}
-        </h1>
-        {presentationInfo?.text ? (
-          <div className="mt-4 space-y-4 text-base leading-7 text-gray-700 whitespace-pre-line">
-            {parseRichText(presentationInfo.text, "text-gray-700")}
-          </div>
-        ) : null}
+    <div className="min-h-screen px-8 pt-0 pb-6">
+      <div className="mb-10 -mx-6 w-[calc(100%+4rem)] bg-secondary-gray-soft px-12 py-8">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-serif italic font-bold text-primary-blue-strong">
+            {parseColor(presentationInfo?.title || `Recursos ${typeSpanish}`, "text-secondary-cyan-strong")}
+          </h1>
+          {presentationInfo?.text ? (
+            <div className="mt-4 space-y-4 text-lg leading-7 text-primary-blue-strong whitespace-pre-line">
+              {parseRichText(presentationInfo.text, "text-gray-700")}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">

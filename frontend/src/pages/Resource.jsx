@@ -78,11 +78,11 @@ export default function Resource() {
   }
 
   return (
-    <div className="min-h-screen px-6 py-12">
+    <div className="min-h-screen px-6 py-6">
       <div className="max-w-4xl mx-auto">
         {/* Main Title */}
         <h2 className="text-3xl font-serif italic font-bold text-primary-blue-strong mb-4">
-          {parseColor(resource.mainTitle, "text-primary-cyan-base")}
+          {parseColor(resource.mainTitle, "text-secondary-cyan-strong")}
         </h2>
 
         {/* Description */}

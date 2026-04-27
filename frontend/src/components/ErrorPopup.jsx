@@ -5,9 +5,18 @@ export default function ErrorPopup({ error, onClose, redirectTo, autoClose = fal
   const [isVisible, setIsVisible] = useState(!!error);
   const navigate = useNavigate();
 
+  const notifyVisibilityChange = (visible) => {
+    window.dispatchEvent(
+      new CustomEvent("error-popup-visibility", {
+        detail: { visible },
+      })
+    );
+  };
+
   useEffect(() => {
     if (error) {
       setIsVisible(true);
+      notifyVisibilityChange(true);
 
       let timer;
       if (autoClose) {
@@ -18,9 +27,14 @@ export default function ErrorPopup({ error, onClose, redirectTo, autoClose = fal
 
       return () => clearTimeout(timer);
     }
+
+    notifyVisibilityChange(false);
+
+    return undefined;
   }, [error, autoClose, autoCloseDelay]);
 
   const handleClose = () => {
+    notifyVisibilityChange(false);
     setIsVisible(false);
     onClose?.();
     
