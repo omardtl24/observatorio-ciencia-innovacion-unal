@@ -729,6 +729,18 @@ export async function deleteDataSource(dataSourceId) {
     }
 }
 
+export async function createRole(payload) {
+    return createResource("role", payload);
+}
+
+export async function updateRole(roleId, payload) {
+    return updateResource("role", roleId, payload);
+}
+
+export async function deleteRole(roleId) {
+    return deleteResource("role", roleId, true);
+}
+
 export function parseResourcesForCards(type, data) {
     if (!Array.isArray(data) || data.length === 0) return [];
     return data.map((item) => toResourceCardModel(type, item));

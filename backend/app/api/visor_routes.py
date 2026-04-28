@@ -213,8 +213,6 @@ def update_visor_roles(visor_id):
 @jwt_required()
 def delete_visor(visor_id):
     assert_admin("El usuario no tiene permiso para eliminar visores")
-    
-    #TODO: validate user permissions to delete files
 
     cascade = request.args.get("cascade", "false").lower() == "true"
     

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   fetchProfileImage,
@@ -18,6 +18,7 @@ import {
 } from "../services/dashboardUtils";
 import {
   assignRoleToUser,
+  deleteRole,
   deleteFileById,
   deleteResource,
   fetchResource,
@@ -62,6 +63,148 @@ function getRoleNamesFromItem(item) {
       return "";
     })
     .filter(Boolean);
+}
+
+function RoleManagementTable({ roles, onDelete }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="w-full max-w-5xl mt-8 bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden">
+      {/* HEADER */}
+      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 className="text-xl font-semibold text-gray-800">
+          Role Management
+        </h3>
+
+        <button
+          onClick={() => navigate("/create-role")}
+          className="border border-primary-blue text-primary-blue px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-50 transition"
+        >
+          Create New Role
+        </button>
+      </div>
+
+      {/* TABLE */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-gray-50 text-gray-700 uppercase tracking-wide text-xs">
+            <tr>
+              <th className="px-6 py-3">Nombre</th>
+              <th className="px-6 py-3">Descripción</th>
+              <th className="px-6 py-3">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {roles.length === 0 ? (
+              <tr className="border-t border-gray-100">
+                <td colSpan={4} className="px-6 py-4 text-gray-500">
+                  No roles available.
+                </td>
+              </tr>
+            ) : (
+              roles.map((role) => (
+                <tr
+                  key={role.id}
+                  className="border-t border-gray-100 hover:bg-gray-50 transition"
+                >
+
+                  <td className="px-6 py-3 text-gray-900 font-medium">
+                    {role.name}
+                  </td>
+
+                  <td className="px-6 py-3 text-gray-700">
+                    {role.description || (
+                      <span className="text-gray-400">
+                        No description
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-2">
+                      {/* EDIT BUTTON */}
+                      <button
+                        onClick={() =>
+                          navigate(`/edit-role/${role.id}`)
+                        }
+                        className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition"
+                        title="Edit Role"
+                        aria-label="Edit Role"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                          />
+                        </svg>
+                      </button>
+
+                      {/* DELETE BUTTON */}
+                      <button
+                        onClick={() => onDelete(role.id)}
+                        className="inline-flex items-center justify-center rounded-lg border border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 transition"
+                        title="Delete Role"
+                        aria-label="Delete Role"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 6h18"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M8 6V4h8v2"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 6l-1 14H6L5 6"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M10 11v6"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M14 11v6"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 export default function Dashboard() {
@@ -382,6 +525,23 @@ export default function Dashboard() {
       setActionMessage(error?.message || "No fue posible eliminar la fuente de datos.");
     } finally {
       setDeletingKey(null);
+    }
+  };
+
+  const handleDeleteRole = async (roleId) => {
+    const confirmed = window.confirm("¿Seguro que deseas eliminar este rol?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteRole(roleId);
+      setManageableRoles((prevRoles) => prevRoles.filter((role) => role.id !== roleId));
+      setRoleManagerMessage("Rol eliminado correctamente.");
+      setRoleManagerMessageType("success");
+    } catch (error) {
+      setRoleManagerMessage(error?.message || "No fue posible eliminar el rol.");
+      setRoleManagerMessageType("error");
     }
   };
 
@@ -755,6 +915,10 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ROLE */}
+      <RoleManagementTable roles={manageableRoles} onDelete={handleDeleteRole} />
+
+      {/* ROLE MANAGEMENT SECTION */}
       <div className="w-full max-w-5xl mt-10 bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-xl font-semibold text-gray-800">Gestor de roles</h3>

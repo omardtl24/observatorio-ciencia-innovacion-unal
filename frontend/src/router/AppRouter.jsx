@@ -11,6 +11,8 @@ import DataSources from "../pages/DataSources";
 import CreateDataSource from "../pages/CreateDataSource";
 import EditDataSource from "../pages/EditDataSource";
 import ConnectionError from "../pages/ConnectionError";
+import CreateRole from "../pages/CreateRole";
+import EditRole from "../pages/EditRole";
 
 // --- Define all routes in a collection ---
 const routeConfig = [
@@ -58,6 +60,14 @@ const routeConfig = [
     component: ConnectionError,
     backgroundClass: "bg-gray-100",
     profileBackgroundClass: "bg-gray-100"},
+  { path: "/create-role", 
+    component: CreateRole, 
+    backgroundClass: "bg-white",
+    profileBackgroundClass: "bg-white" },
+  { path: "/edit-role/:roleId", 
+    component: EditRole, 
+    backgroundClass: "bg-white",
+    profileBackgroundClass: "bg-white" },
 ];
 
 export default function AppRouter() {

@@ -9,6 +9,11 @@ from app.domain.exceptions import IllegalOperationError
 from app.services.role_service import RoleService
 from app.services.user_service import UserService
 from app.services.relations.user_role_relation import UserRoleRelation
+from app.services.relations.role_report_relation import RoleReportRelation
+from app.services.relations.role_simulator_relation import RoleSimulatorRelation
+from app.services.relations.role_visor_relation import RoleVisorRelation
+from app.services.relations.role_data_source_relation import RoleDataSourceRelation
+from app.services.relations.document_presentation_role_relation import DocumentPresentationRoleRelation
 
 
 role_bp = Blueprint("role", __name__, url_prefix="/role")
@@ -34,7 +39,7 @@ def get_role_management_data():
     assert_admin("El usuario no tiene permiso para gestionar roles")
 
     exclude_admin = request.args.get("exclude_admin", "true").lower() == "true"
-    roles = RoleService.get_all_dict(include=["id", "name"])
+    roles = RoleService.get_all_dict(include=["id", "name", "description"])
     if exclude_admin:
         roles = filter_exclude_admin(roles)
 
@@ -98,3 +103,53 @@ def validate_resource_access():
             "resourceType": resource_type,
         }
     ), 200
+
+
+@role_bp.post("")
+@jwt_required()
+def create_role():
+    assert_admin("El usuario no tiene permiso para crear roles")
+
+    data = request.get_json()
+    name = data.get("name")
+    description = data.get("description")
+
+    if not name:
+        return jsonify({"error": "El nombre del rol es obligatorio"}), 400
+
+    new_role = RoleService.create(name=name, description=description)
+    return jsonify(new_role.to_dict()), 201
+
+
+@role_bp.patch("/<int:role_id>")
+@jwt_required()
+def update_role(role_id):
+    assert_admin("El usuario no tiene permiso para actualizar roles")
+
+    data = request.get_json()
+    name = data.get("name")
+    description = data.get("description")
+
+    updated_role = RoleService.update(role_id, name=name, description=description)
+    return jsonify(updated_role.to_dict()), 200
+
+
+
+@role_bp.delete("/<int:role_id>")
+@jwt_required()
+def delete_role(role_id):
+    assert_admin("El usuario no tiene permiso para eliminar roles")
+
+    cascade = request.args.get("cascade", "false").lower() == "true"
+
+    if cascade:
+        RoleReportRelation.remove_all_b_for_a(role_id)
+        RoleSimulatorRelation.remove_all_b_for_a(role_id)
+        RoleVisorRelation.remove_all_b_for_a(role_id)
+        RoleDataSourceRelation.remove_all_b_for_a(role_id)
+        DocumentPresentationRoleRelation.remove_all_a_for_b(role_id)
+        UserRoleRelation.remove_all_a_for_b(role_id)
+
+    RoleService.delete(role_id)
+    return "", 204
+
