@@ -23,7 +23,14 @@ ENV RENV_CONFIG_SANDBOX_ENABLED=false
 # site library FIX (IMPORTANT)
 ENV R_LIBS_USER=/usr/local/lib/R/site-library
 
-RUN mkdir -p /renv/cache /usr/local/lib/R/site-library
+# Create required directories
+RUN mkdir -p /renv/cache /usr/local/lib/R/site-library /scripts
+
+# Copy restore script
+COPY restore_app.sh /scripts/restore_app.sh
+
+# Make script executable
+RUN chmod +x /scripts/restore_app.sh
 
 # entrypoint
 COPY entrypoint.sh /entrypoint.sh
