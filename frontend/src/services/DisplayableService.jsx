@@ -1,24 +1,28 @@
 import { isPdfResource } from "./resourceModels";
 import { fetchFileWithAuth } from "./resourcesServices";
 
-function renderPdf(fileSrc) {
+function renderPdf(fileSrc, options = {}) {
+  const height = options.isFullscreen ? "100%" : "600";
+
   return (
-    <div>
+    <div className={options.isFullscreen ? "h-full w-full" : ""}>
       {fileSrc && (
         <embed
           src={fileSrc}
           type="application/pdf"
           width="100%"
-          height="600"
+          height={height}
         />
       )}
     </div>
   );
 }
 
-function renderVisor(fileSrc) {
+function renderVisor(fileSrc, options = {}) {
+  const containerClassName = options.isFullscreen ? "w-full h-full" : "w-full h-[600px]";
+
   return (
-    <div className="w-full h-[600px]">
+    <div className={containerClassName}>
       {fileSrc && (
         <iframe
           src={fileSrc}
@@ -32,9 +36,11 @@ function renderVisor(fileSrc) {
   );
 }
 
-function renderSimulator(fileSrc) {
+function renderSimulator(fileSrc, options = {}) {
+  const containerClassName = options.isFullscreen ? "w-full h-full" : "w-full h-[600px]";
+
   return (
-    <div className="w-full h-[600px]">
+    <div className={containerClassName}>
       {fileSrc && (
         <iframe
           src={fileSrc}
@@ -75,19 +81,19 @@ export function getDisplayableKind(type) {
   return "unsupported";
 }
 
-export function renderDisplayableContent(type, fileSrc) {
+export function renderDisplayableContent(type, fileSrc, options = {}) {
   const kind = getDisplayableKind(type);
 
   if (kind === "pdf") {
-    return renderPdf(fileSrc);
+    return renderPdf(fileSrc, options);
   }
 
   if (kind === "visor") {
-    return renderVisor(fileSrc);
+    return renderVisor(fileSrc, options);
   }
 
   if (kind === "simulator") {
-    return renderSimulator(fileSrc);
+    return renderSimulator(fileSrc, options);
   }
 
   return renderUnsupported();

@@ -13,6 +13,7 @@ export default function Layout({
 }) {
   const BgSVG = backgroundSVGImage;
   const [hasVisibleErrorPopup, setHasVisibleErrorPopup] = useState(false);
+  const [hasVisibleResourceFullscreen, setHasVisibleResourceFullscreen] = useState(false);
 
   useEffect(() => {
     const handleErrorPopupVisibility = (event) => {
@@ -23,6 +24,18 @@ export default function Layout({
 
     return () => {
       window.removeEventListener("error-popup-visibility", handleErrorPopupVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleResourceFullscreenVisibility = (event) => {
+      setHasVisibleResourceFullscreen(Boolean(event?.detail?.visible));
+    };
+
+    window.addEventListener("resource-fullscreen-visibility", handleResourceFullscreenVisibility);
+
+    return () => {
+      window.removeEventListener("resource-fullscreen-visibility", handleResourceFullscreenVisibility);
     };
   }, []);
 
@@ -55,7 +68,7 @@ export default function Layout({
       )}
 
       {/* USER PROFILE BUTTON - Upper Right (only if authenticated) */}
-      {isAuthenticated() && (
+      {isAuthenticated() && !hasVisibleResourceFullscreen && (
         <div
           className={`relative z-20 w-full ${
             hasVisibleErrorPopup ? "bg-secondary-gray-base" : (profileBackgroundClass || backgroundClass || "")
