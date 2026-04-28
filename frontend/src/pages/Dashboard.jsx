@@ -10,11 +10,12 @@ import {
 import ErrorPopup from "../components/ErrorPopup";
 import {
   RESOURCE_TABLES,
+  NON_RESOURCE_TABLES,
   fetchFirstAvailableResource,
   formatDate,
   getItemLastUpdate,
   getMostRecentDate,
-  hasAdministratorRole,
+  hasAdministratorRole
 } from "../services/dashboardUtils";
 import {
   assignRoleToUser,
@@ -73,7 +74,7 @@ function RoleManagementTable({ roles, onDelete }) {
       {/* HEADER */}
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h3 className="text-xl font-semibold text-gray-800">
-          Role Management
+          Roles
         </h3>
 
         <button
@@ -98,107 +99,112 @@ function RoleManagementTable({ roles, onDelete }) {
           <tbody>
             {roles.length === 0 ? (
               <tr className="border-t border-gray-100">
-                <td colSpan={4} className="px-6 py-4 text-gray-500">
+                <td colSpan={3} className="px-6 py-4 text-gray-500">
                   No roles available.
                 </td>
               </tr>
             ) : (
-              roles.map((role) => (
-                <tr
-                  key={role.id}
-                  className="border-t border-gray-100 hover:bg-gray-50 transition"
-                >
+              roles.map((role) => {
+                const isAdmin = role.name === "Administrador";
 
-                  <td className="px-6 py-3 text-gray-900 font-medium">
-                    {role.name}
-                  </td>
+                return (
+                  <tr
+                    key={role.id}
+                    className="border-t border-gray-100 hover:bg-gray-50 transition"
+                  >
+                    <td className="px-6 py-3 text-gray-900 font-medium">
+                      {role.name}
+                    </td>
 
-                  <td className="px-6 py-3 text-gray-700">
-                    {role.description || (
-                      <span className="text-gray-400">
-                        No description
-                      </span>
-                    )}
-                  </td>
+                    <td className="px-6 py-3 text-gray-700">
+                      {role.description || (
+                        <span className="text-gray-400">
+                          No description
+                        </span>
+                      )}
+                    </td>
 
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      {/* EDIT BUTTON */}
-                      <button
-                        onClick={() =>
-                          navigate(`/edit-role/${role.id}`)
-                        }
-                        className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition"
-                        title="Edit Role"
-                        aria-label="Edit Role"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="w-4 h-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                      </button>
+                    <td className="px-6 py-3">
+                      {!isAdmin && (
+                        <div className="flex items-center gap-2">
+                          {/* EDIT BUTTON */}
+                          <button
+                            onClick={() =>
+                              navigate(`/edit-role/${role.id}`)
+                            }
+                            className="inline-flex items-center justify-center rounded-lg border border-primary-blue text-primary-blue hover:bg-blue-50 px-2 py-1 transition"
+                            title="Edit Role"
+                            aria-label="Edit Role"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                              />
+                            </svg>
+                          </button>
 
-                      {/* DELETE BUTTON */}
-                      <button
-                        onClick={() => onDelete(role.id)}
-                        className="inline-flex items-center justify-center rounded-lg border border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 transition"
-                        title="Delete Role"
-                        aria-label="Delete Role"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="w-4 h-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 6h18"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M8 6V4h8v2"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 6l-1 14H6L5 6"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M10 11v6"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M14 11v6"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                          {/* DELETE BUTTON */}
+                          <button
+                            onClick={() => onDelete(role.id)}
+                            className="inline-flex items-center justify-center rounded-lg border border-red-300 text-red-600 hover:bg-red-50 px-2 py-1 transition"
+                            title="Delete Role"
+                            aria-label="Delete Role"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3 6h18"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8 6V4h8v2"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19 6l-1 14H6L5 6"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M10 11v6"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M14 11v6"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -269,7 +275,7 @@ export default function Dashboard() {
       setTablesLoading(true);
 
       const entries = await Promise.all(
-        RESOURCE_TABLES.map(async (resourceTable) => {
+        [...NON_RESOURCE_TABLES, ...RESOURCE_TABLES].map(async (resourceTable) => {
           const result = await fetchFirstAvailableResource(resourceTable.endpointCandidates);
           return [resourceTable.key, result];
         })
@@ -560,7 +566,7 @@ export default function Dashboard() {
   const lastName = userInfo?.lastNames || "";
   const email = userInfo?.email || "desconocido";
 
-  const summaryRows = RESOURCE_TABLES.map((resource) => {
+  const summaryRows = [...RESOURCE_TABLES, ...NON_RESOURCE_TABLES].map((resource) => {
     const resourceResult = resourcesByType[resource.key];
     const data = resourceResult?.data || [];
     const lastUpdateDate = getMostRecentDate(data);
@@ -619,13 +625,13 @@ export default function Dashboard() {
       <div className="w-full max-w-5xl mt-12 bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-primary-cyan-strong">Resumen de recursos</h2>
+            <h2 className="text-2xl font-semibold text-secondary-cyan-strong">Resumen de recursos</h2>
             <p className="text-sm text-gray-600 mt-1">Recursos disponibles por categoria para administradores.</p>
           </div>
           <button
             onClick={handleRefresh}
             disabled={tablesLoading}
-            className="bg-primary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-secondary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {tablesLoading ? "Actualizando..." : "Actualizar datos"}
           </button>
@@ -982,7 +988,7 @@ export default function Dashboard() {
                 <button
                   onClick={handleAssignRole}
                   disabled={roleActionLoading}
-                  className="bg-primary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-secondary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Agregar usuario al rol
                 </button>

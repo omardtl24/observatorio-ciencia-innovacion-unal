@@ -9,7 +9,7 @@ export default function ConnectionError() {
   return (
     <div className="min-h-screen px-6 py-16 flex items-center justify-center">
       <div className="relative w-full max-w-3xl">
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary-cyan-soft rounded-full blur-2xl opacity-60" />
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-secondary-cyan-soft rounded-full blur-2xl opacity-60" />
         <div className="absolute -bottom-12 -right-8 w-44 h-44 bg-primary-blue-strong rounded-full blur-2xl opacity-20" />
 
         <div className="relative bg-white/90 backdrop-blur border border-gray-200 rounded-2xl shadow-xl p-8 md:p-12">
@@ -33,7 +33,7 @@ export default function ConnectionError() {
             </div>
 
             <div className="flex-1">
-              <p className="text-sm uppercase tracking-widest text-primary-cyan-strong font-semibold">
+              <p className="text-sm uppercase tracking-widest text-secondary-cyan-strong font-semibold">
                 Estado del servicio
               </p>
               <h1 className="mt-2 text-3xl md:text-4xl font-serif italic font-bold text-primary-blue-strong">
@@ -46,7 +46,7 @@ export default function ConnectionError() {
                 Intenta nuevamente en unos minutos. Si el error continúa, escríbenos a
                 {" "}
                 <a
-                  className="text-primary-cyan-strong underline underline-offset-4"
+                  className="text-secondary-cyan-strong underline underline-offset-4"
                   href={`mailto:${supportEmail}`}
                 >
                   {supportEmail}
@@ -58,7 +58,7 @@ export default function ConnectionError() {
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => navigate(origin)}
-                  className="px-6 py-3 rounded-lg bg-primary-cyan-strong text-white font-semibold hover:brightness-110 transition"
+                  className="px-6 py-3 rounded-lg bg-secondary-cyan-strong text-white font-semibold hover:brightness-110 transition"
                 >
                   Reintentar
                 </button>

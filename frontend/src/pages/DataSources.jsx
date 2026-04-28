@@ -100,7 +100,7 @@ export default function DataSources() {
           </div>
           <button
             onClick={() => navigate("/data-sources/create")}
-            className="bg-primary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition"
+            className="bg-secondary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition"
           >
             Crear fuente de datos
           </button>

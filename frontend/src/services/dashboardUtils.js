@@ -20,8 +20,21 @@ export const RESOURCE_TABLES = [
     key: "document",
     title: "Documentos y Presentaciones",
     endpointCandidates: ["document"],
-  },
+  }
 ];
+
+export const NON_RESOURCE_TABLES = [
+  {
+    key: "data_source",
+    title: "Fuentes de Datos",
+    endpointCandidates: ["data-source"],
+  },
+  {
+    key: 'role',
+    title: 'Roles',
+    endpointCandidates: ['role'],
+  }
+]
 
 export function hasAdministratorRole(user) {
   if (!user || !Array.isArray(user.roles)) {

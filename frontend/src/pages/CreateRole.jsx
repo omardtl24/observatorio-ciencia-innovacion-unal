@@ -102,7 +102,7 @@ export default function CreateRole() {
               placeholder="Ej: Investigador"
               required
               disabled={submitting}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-primary-cyan-strong focus:ring-1 focus:ring-primary-cyan-strong disabled:bg-gray-100"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
           </div>
 
@@ -117,7 +117,7 @@ export default function CreateRole() {
               placeholder="Describe brevemente este rol..."
               rows="4"
               disabled={submitting}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-primary-cyan-strong focus:ring-1 focus:ring-primary-cyan-strong disabled:bg-gray-100"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
           </div>
 

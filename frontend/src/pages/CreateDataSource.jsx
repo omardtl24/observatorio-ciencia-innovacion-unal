@@ -138,7 +138,7 @@ export default function CreateDataSource() {
               placeholder="Ej: Base de datos COVID-19"
               required
               disabled={submitting || uploading}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-primary-cyan-strong focus:ring-1 focus:ring-primary-cyan-strong disabled:bg-gray-100"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
           </div>
 
@@ -154,7 +154,7 @@ export default function CreateDataSource() {
               placeholder="Describe brevemente esta fuente de datos..."
               rows="4"
               disabled={submitting || uploading}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-primary-cyan-strong focus:ring-1 focus:ring-primary-cyan-strong disabled:bg-gray-100"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
           </div>
 
@@ -167,7 +167,7 @@ export default function CreateDataSource() {
               type="file"
               onChange={handleFileChange}
               disabled={submitting || uploading}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-primary-cyan-strong focus:ring-1 focus:ring-primary-cyan-strong disabled:bg-gray-100"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
             {file && (
               <p className="text-sm text-gray-600 mt-2">

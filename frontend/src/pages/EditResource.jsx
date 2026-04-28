@@ -632,7 +632,7 @@ export default function EditResource() {
     <div className="min-h-screen px-6 py-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
-          <h1 className="text-3xl font-semibold text-primary-cyan-strong mb-2">Editar recurso</h1>
+          <h1 className="text-3xl font-semibold text-secondary-cyan-strong mb-2">Editar recurso</h1>
           <p className="text-gray-600 mb-8">
             Actualiza los campos necesarios para modificar este recurso.
           </p>
@@ -858,7 +858,7 @@ export default function EditResource() {
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8 lg:sticky lg:top-8">
-          <h2 className="text-2xl font-semibold text-primary-cyan-strong mb-1">Vista previa</h2>
+          <h2 className="text-2xl font-semibold text-secondary-cyan-strong mb-1">Vista previa</h2>
           <p className="text-sm text-gray-600 mb-6">
             Asi se vera la tarjeta y el titulo en el detalle del recurso.
           </p>
@@ -887,7 +887,7 @@ export default function EditResource() {
               <p className="text-sm text-gray-600 mb-3">Vista del titulo en detalle:</p>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <h2 className="text-3xl font-serif italic font-bold text-primary-blue-strong mb-1">
-                  {parseColor(previewMainTitleEncoded, "text-primary-cyan-base")}
+                  {parseColor(previewMainTitleEncoded, "text-secondary-cyan-base")}
                 </h2>
               </div>
             </div>

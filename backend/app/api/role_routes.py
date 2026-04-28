@@ -25,7 +25,7 @@ def get_roles():
     assert_admin("El usuario no tiene permiso para gestionar roles")
 
     exclude_admin = request.args.get("exclude_admin", "false").lower() == "true"
-    roles = RoleService.get_all_dict(include=["id", "name"])
+    roles = RoleService.get_all_dict(include=["id", "name", "description","updated_at"])
 
     if exclude_admin:
         roles = filter_exclude_admin(roles)
@@ -39,7 +39,7 @@ def get_role_management_data():
     assert_admin("El usuario no tiene permiso para gestionar roles")
 
     exclude_admin = request.args.get("exclude_admin", "true").lower() == "true"
-    roles = RoleService.get_all_dict(include=["id", "name", "description"])
+    roles = RoleService.get_all_dict(include=["id", "name", "description","updated_at"])
     if exclude_admin:
         roles = filter_exclude_admin(roles)
 
