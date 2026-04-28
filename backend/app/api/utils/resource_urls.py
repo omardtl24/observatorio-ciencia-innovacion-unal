@@ -1,10 +1,141 @@
+import os
+import shutil
+import subprocess
+import tempfile
+import zipfile
+
 from flask import current_app
 
+from app.domain.exceptions import IllegalOperationError, NotFoundError
 
-def build_resource_url(file) -> str:
-    #TODO: It receives a file. It saves it in the resources shared folder and returns the URL to access it.
-    return f"{current_app.config['RESOURCES_BASE_URL']}/{file}"
 
-def delete_resource_file(file_path) -> None:
-    #TODO: Deletes a file from the resources shared folder given its path.
-    return
+def build_resource_url(file, resource_id, type) -> str:
+    """Build a resource URL by processing an uploaded zip file.
+    
+    This function:
+    1. Extracts the zip file to a temporary directory
+    2. Validates that the extracted content has required files (renv.lock and app.R)
+    3. Moves the unzipped content to the shared resources folder
+    4. Runs the restore_app.sh script in the shiny-server container
+    5. Returns the resource URL
+    
+    Args:
+        file: The uploaded zip file object
+        resource_id: The unique identifier for the resource
+        type: The type of resource (e.g., 'simulator', 'visor')
+        
+    Returns:
+        str: The URL to access the resource
+        
+    Raises:
+        IllegalOperationError: If the zip file doesn't contain required files
+    """
+    # Create a temporary directory to extract the zip file
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Extract the zip file
+        zip_path = os.path.join(temp_dir, "app.zip")
+        file.save(zip_path)
+        
+        extract_dir = os.path.join(temp_dir, "extracted")
+        os.makedirs(extract_dir)
+        
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
+        except zipfile.BadZipFile:
+            raise IllegalOperationError("El archivo no es un ZIP válido")
+        
+        # Check for required files (renv.lock and app.R)
+        required_files = ['renv.lock', 'app.R']
+        found_files = []
+        
+        for root, dirs, files in os.walk(extract_dir):
+            found_files.extend(files)
+        
+        missing_files = [f for f in required_files if f not in found_files]
+        if missing_files:
+            raise IllegalOperationError(
+                f"El archivo ZIP debe contener los archivos: {', '.join(required_files)}. "
+                f"Archivos faltantes: {', '.join(missing_files)}"
+            )
+        
+        # Create the target folder in the shared resources directory
+        target_folder = f"{current_app.config['RESOURCES_SHARED_FOLDER']}/{type}/{resource_id}"
+        os.makedirs(target_folder, exist_ok=True)
+        
+        # Move the extracted content to the target folder
+        # First, remove any existing content in the target folder
+        shutil.rmtree(target_folder)
+        os.makedirs(target_folder)
+        
+        # Move only the contents of the extracted archive, not the wrapper folder itself.
+        for item in os.listdir(extract_dir):
+            src = os.path.join(extract_dir, item)
+            if os.path.isdir(src):
+                for nested_item in os.listdir(src):
+                    nested_src = os.path.join(src, nested_item)
+                    nested_dst = os.path.join(target_folder, nested_item)
+                    shutil.move(nested_src, nested_dst)
+            else:
+                shutil.move(src, os.path.join(target_folder, item))
+        
+        # Run the restore_app.sh script in the shiny-server container
+        try:
+            # Construct the container name based on environment
+            container_name = current_app.config.get('SHINY_CONTAINER_NAME', 'app_shiny_dev')
+            
+            # Run the restore_app.sh script inside the container
+            cmd = [
+                'docker', 'exec', container_name,
+                'bash', 'scripts/restore_app.sh', str(type) , str(resource_id)
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            current_app.logger.info(f"restore_app.sh executed for {resource_id}: {result.stdout}")
+        except subprocess.TimeoutExpired:
+            raise IllegalOperationError("El tiempo de procesamiento de la aplicación Shiny ha excedido el límite")
+        except subprocess.CalledProcessError as e:
+            current_app.logger.error(f"restore_app.sh failed for {resource_id}: {e.stderr}")
+            raise IllegalOperationError(
+                f"Error al procesar la aplicación Shiny: {e.stderr}"
+            )
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error running restore_app.sh: {str(e)}")
+            raise IllegalOperationError("Error inesperado al procesar la aplicación Shiny")
+        
+    return os.path.join(current_app.config['RESOURCES_BASE_URL'], type, str(resource_id),'')
+
+
+def delete_resource_file(resource_id, type) -> None:
+    """Delete a resource file and its contents from the shared resources folder.
+    
+    Args:
+        resource_id: The unique identifier for the resource
+        type: The type of resource (e.g., 'simulator', 'visor')
+        
+    Raises:
+        NotFoundError: If the resource doesn't exist in the shared resources folder
+    """
+    target_folder = f"{current_app.config['RESOURCES_SHARED_FOLDER']}/{type}/{resource_id}"
+    
+    # Check that the resource exists
+    if not os.path.exists(target_folder):
+        raise NotFoundError(
+            f"No se encontró el recurso con ID {resource_id} de tipo {type}"
+        )
+    
+    # Delete the resource folder and all its content
+    try:
+        shutil.rmtree(target_folder)
+    except Exception as e:
+        current_app.logger.error(f"Error deleting resource folder {target_folder}: {str(e)}")
+        raise NotFoundError(
+            f"Error al eliminar el recurso: {str(e)}"
+        )

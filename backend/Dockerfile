@@ -6,7 +6,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         libpq-dev \
-        gcc && \
+        gcc \
+        docker-cli && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

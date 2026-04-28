@@ -38,6 +38,7 @@ services:
     volumes:
       - ./backend:/app
       - ${FILE_STORAGE_ROOT}:${FILE_STORAGE_ROOT}
+      - /var/run/docker.sock:/var/run/docker.sock
     command: ["python", "run.py"]
 
   frontend:

@@ -69,14 +69,14 @@ const RESOURCE_DEFINITIONS = {
   simulator: {
     label: "Simulador",
     endpoint: "simulator",
-    fileField: "specs_file_id",
-    fileLabel: "Archivo de especificaciones",
+    uploadField: "r_program",
+    fileLabel: "Archivo de la aplicacion (ZIP)",
   },
   visor: {
     label: "Visor",
     endpoint: "visor",
-    fileField: null,
-    fileLabel: null,
+    uploadField: "r_program",
+    fileLabel: "Archivo de la aplicacion (ZIP)",
   },
 };
 
@@ -330,9 +330,10 @@ export default function EditResource() {
           const fileId = data[RESOURCE_DEFINITIONS[normalizedType].fileField];
           if (fileId) {
             setExistingFileId(fileId);
-            // Extract filename from the data if available
             setExistingFileName(`Archivo actual: ${normalizedType}`);
           }
+        } else if (RESOURCE_DEFINITIONS[normalizedType].uploadField && (data.simulator_url || data.visor_url)) {
+          setExistingFileName("Archivo actual cargado");
         }
       } catch (error) {
         if (active) {
@@ -513,9 +514,6 @@ export default function EditResource() {
       if (!description) {
         return "La descripcion es obligatoria para visores";
       }
-      if (!form.visor_url.trim()) {
-        return "La URL es obligatoria para visores";
-      }
     }
 
     if (currentDefinition.fileField && !form.file && !existingFileId) {
@@ -529,6 +527,19 @@ export default function EditResource() {
     const encodedMainTitle = encodeMarkedFromHtml(richFields.title);
     const encodedDescription = encodeMarkedFromHtml(richFields.description);
 
+    if (currentDefinition.uploadField && form.file) {
+      const formData = new FormData();
+      formData.append("title", encodedMainTitle.trim());
+
+      if (encodedDescription.trim()) {
+        formData.append("description", encodedDescription);
+      }
+
+      formData.append(currentDefinition.uploadField, form.file);
+
+      return formData;
+    }
+
     const basePayload = {
       title: encodedMainTitle.trim(),
     };
@@ -540,10 +551,6 @@ export default function EditResource() {
 
     if (encodedDescription.trim()) {
       basePayload.description = encodedDescription;
-    }
-
-    if (form.resourceType === "visor") {
-      basePayload.visor_url = form.visor_url.trim();
     }
 
     if (currentDefinition.fileField && fileId) {
@@ -562,7 +569,7 @@ export default function EditResource() {
     : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
-  const previewType = form.resourceType === "visor" ? "VISOR" : "PDF";
+  const previewType = form.resourceType === "visor" || form.resourceType === "simulator" ? "ZIP" : "PDF";
   const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.title).trim() || "Titulo principal";
   const previewDescriptionEncoded = encodeMarkedFromHtml(richFields.description).trim() ||
     "Aqui veras una vista previa de la descripcion del recurso.";
@@ -695,22 +702,7 @@ export default function EditResource() {
             </p>
           )}
 
-          {form.resourceType === "visor" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL del visor *</label>
-                <input
-                  type="url"
-                  value={form.visor_url}
-                  onChange={(e) => updateField("visor_url", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  disabled={submitting}
-                />
-              </div>
-            </>
-          )}
-
-          {currentDefinition.fileField && (
+          {(currentDefinition.fileField || currentDefinition.uploadField) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {currentDefinition.fileLabel} (Opcional)
@@ -725,7 +717,9 @@ export default function EditResource() {
                 disabled={submitting}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Carga un nuevo archivo si deseas reemplazar el actual.
+                {currentDefinition.uploadField
+                  ? "Carga un nuevo ZIP si deseas reemplazar la aplicacion actual."
+                  : "Carga un nuevo archivo si deseas reemplazar el actual."}
               </p>
             </div>
           )}

@@ -98,6 +98,10 @@ async function getErrorMessage(response, fallbackMessage) {
     return fallbackMessage;
 }
 
+function isMultipartPayload(payload) {
+    return typeof FormData !== "undefined" && payload instanceof FormData;
+}
+
 export async function fetchFromUrl(url) {
     const token = getToken();
     let response;
@@ -491,9 +495,21 @@ export async function createResource(type, payload, updatedDate = null) {
     const createUrl = `${import.meta.env.VITE_API_URL}/${endpoint}`;
     const token = getToken();
 
-    const payloadToSend = { ...payload };
+    const multipartPayload = isMultipartPayload(payload);
+    const payloadToSend = multipartPayload ? payload : { ...payload };
     if (updatedDate) {
-        payloadToSend.updated_at = updatedDate;
+        if (multipartPayload) {
+            payloadToSend.append("updated_at", updatedDate);
+        } else {
+            payloadToSend.updated_at = updatedDate;
+        }
+    }
+
+    const headers = {
+        "Authorization": `Bearer ${token}`,
+    };
+    if (!multipartPayload) {
+        headers["Content-Type"] = "application/json";
     }
 
     let response;
@@ -501,11 +517,8 @@ export async function createResource(type, payload, updatedDate = null) {
         response = await fetchWithTimeout(createUrl, {
             method: "POST",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(payloadToSend),
+            headers,
+            body: multipartPayload ? payloadToSend : JSON.stringify(payloadToSend),
         });
     } catch (err) {
         if (isBackendUnavailableError(err)) {
@@ -527,9 +540,21 @@ export async function updateResource(type, id, payload, updatedDate = null) {
     const updateUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}`;
     const token = getToken();
 
-    const payloadToSend = { ...payload };
+    const multipartPayload = isMultipartPayload(payload);
+    const payloadToSend = multipartPayload ? payload : { ...payload };
     if (updatedDate) {
-        payloadToSend.updated_at = updatedDate;
+        if (multipartPayload) {
+            payloadToSend.append("updated_at", updatedDate);
+        } else {
+            payloadToSend.updated_at = updatedDate;
+        }
+    }
+
+    const headers = {
+        "Authorization": `Bearer ${token}`,
+    };
+    if (!multipartPayload) {
+        headers["Content-Type"] = "application/json";
     }
 
     let response;
@@ -537,11 +562,8 @@ export async function updateResource(type, id, payload, updatedDate = null) {
         response = await fetchWithTimeout(updateUrl, {
             method: "PATCH",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(payloadToSend),
+            headers,
+            body: multipartPayload ? payloadToSend : JSON.stringify(payloadToSend),
         });
     } catch (err) {
         if (isBackendUnavailableError(err)) {

@@ -66,14 +66,14 @@ const RESOURCE_DEFINITIONS = {
   simulator: {
     label: "Simulador",
     endpoint: "simulator",
-    fileField: "specs_file_id",
-    fileLabel: "Archivo de especificaciones",
+    uploadField: "r_program",
+    fileLabel: "Archivo de la aplicacion (ZIP)",
   },
   visor: {
     label: "Visor",
     endpoint: "visor",
-    fileField: null,
-    fileLabel: null,
+    uploadField: "r_program",
+    fileLabel: "Archivo de la aplicacion (ZIP)",
   },
 };
 
@@ -369,12 +369,9 @@ export default function CreateResource() {
       if (!description) {
         return "La descripcion es obligatoria para visores";
       }
-      if (!form.visor_url.trim()) {
-        return "La URL es obligatoria para visores";
-      }
     }
 
-    if (currentDefinition.fileField && !form.file) {
+    if ((currentDefinition.fileField || currentDefinition.uploadField) && !form.file) {
       return "Debes cargar un archivo antes de crear este recurso";
     }
 
@@ -384,6 +381,25 @@ export default function CreateResource() {
   const buildPayload = (fileId) => {
     const encodedMainTitle = encodeMarkedFromHtml(richFields.title);
     const encodedDescription = encodeMarkedFromHtml(richFields.description);
+
+    if (currentDefinition.uploadField) {
+      const formData = new FormData();
+      formData.append("title", encodedMainTitle.trim());
+
+      if (encodedDescription.trim()) {
+        formData.append("description", encodedDescription);
+      }
+
+      formData.append(currentDefinition.uploadField, form.file);
+
+      if (Array.isArray(form.role_ids) && form.role_ids.length > 0) {
+        form.role_ids.forEach((roleId) => {
+          formData.append("role_ids", String(roleId));
+        });
+      }
+
+      return formData;
+    }
 
     const basePayload = {
       title: encodedMainTitle.trim(),
@@ -396,10 +412,6 @@ export default function CreateResource() {
 
     if (encodedDescription.trim()) {
       basePayload.description = encodedDescription;
-    }
-
-    if (form.resourceType === "visor") {
-      basePayload.visor_url = form.visor_url.trim();
     }
 
     if (currentDefinition.fileField && fileId) {
@@ -422,7 +434,7 @@ export default function CreateResource() {
     : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
-  const previewType = form.resourceType === "visor" ? "VISOR" : "PDF";
+  const previewType = form.resourceType === "visor" || form.resourceType === "simulator" ? "ZIP" : "PDF";
   const previewMainTitleEncoded = encodeMarkedFromHtml(richFields.title).trim() || "Titulo principal";
   const previewDescriptionEncoded = encodeMarkedFromHtml(richFields.description).trim() ||
     "Aqui veras una vista previa de la descripcion del recurso.";
@@ -553,22 +565,7 @@ export default function CreateResource() {
             </p>
           )}
 
-          {form.resourceType === "visor" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">URL del visor *</label>
-                <input
-                  type="url"
-                  value={form.visor_url}
-                  onChange={(e) => updateField("visor_url", e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  disabled={submitting}
-                />
-              </div>
-            </>
-          )}
-
-          {currentDefinition.fileField && (
+          {(currentDefinition.fileField || currentDefinition.uploadField) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {currentDefinition.fileLabel} *
@@ -580,7 +577,9 @@ export default function CreateResource() {
                 disabled={submitting}
               />
               <p className="text-xs text-gray-500 mt-1">
-                El archivo se carga primero y luego se enlaza al recurso durante la creacion.
+                {currentDefinition.uploadField
+                  ? "Carga el ZIP de la aplicacion para construir el visor o simulador."
+                  : "El archivo se carga primero y luego se enlaza al recurso durante la creacion."}
               </p>
             </div>
           )}

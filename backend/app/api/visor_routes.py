@@ -5,18 +5,29 @@ from app.services.relations.visor_data_source_relation import VisorDataSourceRel
 from app.services.relations.role_visor_relation import RoleVisorRelation
 from app.domain.exceptions import UnauthorizedError, SchemaValidationError
 from app.schemas.visor_schema import VisorCreateRequest, VisorUpdateRequest
-from app.middleware import schema_validator
 from app.api.utils.check_roles import AccessChecker, assert_admin
-from app.api.utils.resource_urls import build_resource_url
+from app.api.utils.resource_urls import build_resource_url, delete_resource_file
+from app.api.utils.validate_schema import validate_schema
 from app.api.utils.serializers import serialize_resource_with_roles
 from app.services.role_service import RoleService
 
 visor_bp = Blueprint("visor", __name__, url_prefix="/visor")
 
 
+def _get_visor_payload(schema_class):
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict(flat=True)
+        role_ids = request.form.getlist("role_ids")
+        if role_ids:
+            data["role_ids"] = role_ids
+
+    return validate_schema(data, schema_class).model_dump(exclude_unset=True)
+
+
 @visor_bp.post("")
 @jwt_required()
-@schema_validator(VisorCreateRequest)
 def create_visor():
     """Create a new visor.
     
@@ -35,7 +46,11 @@ def create_visor():
     assert_admin("El usuario no tiene permiso para crear visores")
 
     visor_service = VisorService()
-    visor_data = request.validated_data.dict()
+    visor_data = _get_visor_payload(VisorCreateRequest)
+    r_program = request.files.get("r_program")
+    if r_program is None:
+        raise SchemaValidationError("Debes adjuntar el archivo r_program")
+
     role_ids = visor_data.pop("role_ids", [])
     selected_role_ids = list({int(role_id) for role_id in role_ids})
     admin_role = RoleService.get_by_name("Administrador")
@@ -44,7 +59,10 @@ def create_visor():
         RoleService.get_by_id(role_id)
 
     visor = visor_service.create(**visor_data)
-    visor_service.update(visor.id, visor_url=build_resource_url("visor", visor.id))
+
+    visor_url = build_resource_url(r_program, visor.id, "visor")
+    visor_service.update(visor.id, visor_url=visor_url)
+
     visor = visor_service.get_by_id(visor.id)
     
     # Grant admin role access to the newly created visor
@@ -99,11 +117,10 @@ def get_visor_by_id(visor_id):
 
 @visor_bp.patch("/<int:visor_id>")
 @jwt_required()
-@schema_validator(VisorUpdateRequest)
 def update_visor(visor_id):
     assert_admin("El usuario no tiene permiso para actualizar este visor")
 
-    update_data = request.validated_data.dict(exclude_unset=True)
+    update_data = _get_visor_payload(VisorUpdateRequest)
     role_ids = update_data.pop("role_ids", None)
 
     if not update_data and role_ids is None:
@@ -112,7 +129,10 @@ def update_visor(visor_id):
     if update_data:
         VisorService.update(visor_id, **update_data)
 
-    VisorService.update(visor_id, visor_url=build_resource_url("visor", visor_id))
+    r_program = request.files.get("r_program")
+    if r_program is not None:
+        visor_url = build_resource_url(r_program, visor_id, "visor")
+        VisorService.update(visor_id, visor_url=visor_url)
 
     if role_ids is not None:
         selected_role_ids = list({int(role_id) for role_id in role_ids})
@@ -219,10 +239,13 @@ def delete_visor(visor_id):
     if cascade:
         VisorDataSourceRelation.remove_all_b_for_a(visor_id)
         RoleVisorRelation.remove_all_a_for_b(visor_id)
-        
+    
+    # Delete resource files
+    delete_resource_file(visor_id, "visor")
+    
     VisorService.delete(visor_id)
 
-    return "" , 204
+    return "", 204
 
 
 

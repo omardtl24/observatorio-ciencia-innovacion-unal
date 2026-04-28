@@ -55,6 +55,8 @@ class Config:
     # --- PROD ----
     POPULATE = os.getenv("POPULATE", "false").lower() == "true"
 
+    SHINY_CONTAINER_NAME = os.getenv("SHINY_CONTAINER_NAME", "app_shiny_dev")
+
 
 class TestingConfig(Config):
     """Configuration for testing."""

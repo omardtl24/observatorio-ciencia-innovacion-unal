@@ -22,7 +22,7 @@ function renderVisor(fileSrc) {
       {fileSrc && (
         <iframe
           src={fileSrc}
-          title="BI Resource"
+          title="Visor"
           width="100%"
           height="100%"
           frameBorder="0"
@@ -38,7 +38,7 @@ function renderSimulator(fileSrc) {
       {fileSrc && (
         <iframe
           src={fileSrc}
-          title="Simulator Resource"
+          title="Simulador"
           width="100%"
           height="100%"
           frameBorder="0"

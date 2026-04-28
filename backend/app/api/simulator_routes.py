@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request # type: ignore
 from flask_jwt_extended import get_jwt_identity, jwt_required # type: ignore
 
 from app.api.utils.check_roles import AccessChecker, assert_admin
-from app.api.utils.resource_urls import build_resource_url
+from app.api.utils.resource_urls import build_resource_url, delete_resource_file
 from app.api.utils.serializers import serialize_resource_with_roles
 from app.api.utils.validate_schema import validate_schema
 from app.domain.exceptions import SchemaValidationError, UnauthorizedError
@@ -46,9 +46,10 @@ def create_simulator():
         RoleService.get_by_id(role_id)
 
     simulator = SimulatorService.create(**simulator_data)
+    simulator_url = build_resource_url(r_program, simulator.id, "simulator")
     SimulatorService.update(
         simulator.id,
-        simulator_url=build_resource_url(r_program),
+        simulator_url=simulator_url,
     )
     simulator = SimulatorService.get_by_id(simulator.id)
 
@@ -111,7 +112,8 @@ def update_simulator(simulator_id):
         SimulatorService.update(simulator_id, **update_data)
 
     if r_program is not None:
-        SimulatorService.update(simulator_id, simulator_url=build_resource_url(r_program))
+        simulator_url = build_resource_url(r_program, simulator_id, "simulator")
+        SimulatorService.update(simulator_id, simulator_url=simulator_url)
 
     simulator = SimulatorService.get_by_id(simulator_id)
 
@@ -208,6 +210,9 @@ def delete_simulator(simulator_id):
         SimulatorDataSourceRelation.remove_all_b_for_a(simulator_id)
         RoleSimulatorRelation.remove_all_a_for_b(simulator_id)
 
+    # Delete resource files
+    delete_resource_file(simulator_id, "simulator")
+    
     SimulatorService.delete(simulator_id)
 
     return "", 204
