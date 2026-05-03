@@ -103,7 +103,7 @@ export default function ResourceDisplay({
                         </button>
                     </div>
                 )}
-                {renderDisplayableContent(type, fileSrc)}
+                {renderDisplayableContent(type, fileSrc, {}, id)}
             </div>
 
             {isFullscreenOpen && (
@@ -126,7 +126,7 @@ export default function ResourceDisplay({
                             Cerrar
                         </button>
                         <div className="h-full w-full p-4 pt-16">
-                            {renderDisplayableContent(type, fileSrc, { isFullscreen: true })}
+                            {renderDisplayableContent(type, fileSrc, { isFullscreen: true }, id)}
                         </div>
                     </div>
                 </div>

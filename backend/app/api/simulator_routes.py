@@ -82,6 +82,17 @@ def get_simulators():
     return jsonify(payload), 200
 
 
+@simulator_bp.get("/access/<int:simulator_id>")
+@jwt_required()
+def validate_simulator_access(simulator_id):
+    user_email = get_jwt_identity()
+    has_access = AccessChecker.check_access(user_email, simulator_id, "simulator")
+    if not has_access:
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este simulador")
+
+    return "", 200
+
+
 @simulator_bp.get("/<int:simulator_id>")
 @jwt_required()
 def get_simulator_by_id(simulator_id):

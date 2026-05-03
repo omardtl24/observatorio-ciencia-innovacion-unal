@@ -96,6 +96,17 @@ def get_visor():
     payload = [serialize_resource_with_roles(visor) for visor in visors]
     return jsonify(payload), 200
 
+
+@visor_bp.get("/access/<int:visor_id>")
+@jwt_required()
+def validate_visor_access(visor_id):
+    user_email = get_jwt_identity()
+    has_access = AccessChecker.check_access(user_email, visor_id, "visor")
+    if not has_access:
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este visor")
+
+    return "", 200
+
 @visor_bp.get("/<int:visor_id>")
 #@jwt_required()
 def get_visor_by_id(visor_id):

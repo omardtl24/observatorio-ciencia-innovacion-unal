@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from app.api.auth_routes import auth_bp, test_auth_bp
 from app.api.visor_routes import visor_bp
+from app.api.access_routes import access_bp
 from app.api.file_routes import file_bp
 from app.api.report_routes import report_bp
 from app.api.simulator_routes import simulator_bp
@@ -10,7 +11,6 @@ from app.api.documents_presentation_routes import documents_presentation_bp
 from app.api.permission_routes import permission_bp
 from app.api.role_routes import role_bp
 from app.api.data_source_routes import data_source_bp
-from app.api.resource_routes import resource_bp
 from app.models.base import db
 from app.config import Config, TestingConfig
 from app.error_handlers import (
@@ -87,6 +87,7 @@ def create_app(config_name="production"):
     app.register_blueprint(auth_bp)
     app.logger.info(f"TEST MODE: {is_test_mode}")
     app.register_blueprint(visor_bp)
+    app.register_blueprint(access_bp)
     app.register_blueprint(file_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(simulator_bp)
@@ -94,7 +95,6 @@ def create_app(config_name="production"):
     app.register_blueprint(permission_bp)
     app.register_blueprint(role_bp)
     app.register_blueprint(data_source_bp)
-    app.register_blueprint(resource_bp)
     
     populate = app.config.get("POPULATE") is True
     if populate:
