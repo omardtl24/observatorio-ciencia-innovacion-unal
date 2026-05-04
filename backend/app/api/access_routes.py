@@ -7,7 +7,7 @@ from app.domain.exceptions import UnauthorizedError
 access_bp = Blueprint("access", __name__, url_prefix="/access")
 
 
-@access_bp.get("/simulator/<int:simulator_id>")
+@access_bp.get("/simulator/<int:simulator_id>/")
 @jwt_required()
 def check_simulator_access(simulator_id):
     user_email = get_jwt_identity()
@@ -20,7 +20,7 @@ def check_simulator_access(simulator_id):
     return "", 200
 
 
-@access_bp.get("/visor/<int:visor_id>")
+@access_bp.get("/visor/<int:visor_id>/")
 @jwt_required()
 def check_visor_access(visor_id):
     user_email = get_jwt_identity()

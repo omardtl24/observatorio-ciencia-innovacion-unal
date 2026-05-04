@@ -1,7 +1,7 @@
 import { isPdfResource } from "./resourceModels";
 import { fetchFileWithAuth } from "./resourcesServices";
-import { useEffect, useState } from "react";
-import { getToken } from "./authService";
+import { useEffect } from "react";
+import { getItem } from "./localStorageManager";
 
 function renderPdf(fileSrc, options = {}) {
   const height = options.isFullscreen ? "100%" : "600";
@@ -20,101 +20,20 @@ function renderPdf(fileSrc, options = {}) {
   );
 }
 
-function VisorFrame({ fileSrc, id, options = {} }) {
+function ShinyFrame({ fileSrc, title, options = {} }) {
   const containerClassName = options.isFullscreen ? "w-full h-full" : "w-full h-[600px]";
-  const [allowed, setAllowed] = useState(null);
 
   useEffect(() => {
-    let active = true;
-    const checkAccess = async () => {
-      if (!id) {
-        setAllowed(false);
-        return;
-      }
-      try {
-        const token = getToken();
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const resp = await fetch(`${apiUrl}/access/visor/${id}`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!active) return;
-        setAllowed(resp.ok);
-      } catch (err) {
-        if (!active) return;
-        setAllowed(false);
-      }
-    };
-
-    checkAccess();
-    return () => {
-      active = false;
-    };
-  }, [id]);
+    const accessToken = getItem("access_token");
+    if (accessToken) {
+      document.cookie = `user_jwt=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax`;
+    }
+  }, []);
 
   return (
     <div className={containerClassName}>
-      {allowed === null && <div />}
-      {allowed === true && fileSrc && (
-        <iframe src={fileSrc} title="Visor" width="100%" height="100%" frameBorder="0" />
-      )}
-      {allowed === false && (
-        <div className="w-full h-[600px] flex items-center justify-center">
-          <p className="text-lg text-gray-600">No tienes permiso para ver este visor.</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SimulatorFrame({ fileSrc, id, options = {} }) {
-  const containerClassName = options.isFullscreen ? "w-full h-full" : "w-full h-[600px]";
-  const [allowed, setAllowed] = useState(null);
-
-  useEffect(() => {
-    let active = true;
-    const checkAccess = async () => {
-      if (!id) {
-        setAllowed(false);
-        return;
-      }
-      try {
-        const token = getToken();
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const resp = await fetch(`${apiUrl}/access/simulator/${id}`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!active) return;
-        setAllowed(resp.ok);
-      } catch (err) {
-        if (!active) return;
-        setAllowed(false);
-      }
-    };
-
-    checkAccess();
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
-  return (
-    <div className={containerClassName}>
-      {allowed === null && <div />}
-      {allowed === true && fileSrc && (
-        <iframe src={fileSrc} title="Simulador" width="100%" height="100%" frameBorder="0" />
-      )}
-      {allowed === false && (
-        <div className="w-full h-[600px] flex items-center justify-center">
-          <p className="text-lg text-gray-600">No tienes permiso para ver este simulador.</p>
-        </div>
+      {fileSrc && (
+        <iframe src={fileSrc} title={title} width="100%" height="100%" frameBorder="0" />
       )}
     </div>
   );
@@ -147,7 +66,7 @@ export function getDisplayableKind(type) {
   return "unsupported";
 }
 
-export function renderDisplayableContent(type, fileSrc, options = {}, id = null) {
+export function renderDisplayableContent(type, fileSrc, options = {}) {
   const kind = getDisplayableKind(type);
 
   if (kind === "pdf") {
@@ -155,11 +74,11 @@ export function renderDisplayableContent(type, fileSrc, options = {}, id = null)
   }
 
   if (kind === "visor") {
-    return <VisorFrame fileSrc={fileSrc} id={id} options={options} />;
+    return <ShinyFrame fileSrc={fileSrc} title="Visor" options={options} />;
   }
 
   if (kind === "simulator") {
-    return <SimulatorFrame fileSrc={fileSrc} id={id} options={options} />;
+    return <ShinyFrame fileSrc={fileSrc} title="Simulador" options={options} />;
   }
 
   return renderUnsupported();
