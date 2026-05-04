@@ -174,8 +174,6 @@ def download(file_id):
     if not AccessChecker.check_access(user_email, resource_id, resource_origin):
         raise UnauthorizedError("El usuario no tiene permiso para acceder a este recurso")
     
-    #TODO: validate that resource is linked to the file
-    
     file = FileService.get_by_id(file_id)
     file_path = file.storage_path
 

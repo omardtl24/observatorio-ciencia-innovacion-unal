@@ -123,6 +123,7 @@ def update_simulator(simulator_id):
         SimulatorService.update(simulator_id, **update_data)
 
     if r_program is not None:
+        delete_resource_file(simulator_id, "simulator")
         simulator_url = build_resource_url(r_program, simulator_id, "simulator")
         SimulatorService.update(simulator_id, simulator_url=simulator_url)
 

@@ -108,13 +108,17 @@ def validate_visor_access(visor_id):
     return "", 200
 
 @visor_bp.get("/<int:visor_id>")
-#@jwt_required()
+@jwt_required()
 def get_visor_by_id(visor_id):
     """Retreive specific information of visor by id
     Returns:
     """
+    user_email = get_jwt_identity()
+    has_access = AccessChecker.check_access(user_email, visor_id, "visor")
 
-    #TODO: validate user permissions to retreive visor
+    if not has_access:
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a este visor")
+
 
     visor = VisorService.get_by_id(visor_id)
     response = visor.to_dict(include=["id",
@@ -142,6 +146,7 @@ def update_visor(visor_id):
 
     r_program = request.files.get("r_program")
     if r_program is not None:
+        delete_resource_file(visor_id, "visor")
         visor_url = build_resource_url(r_program, visor_id, "visor")
         VisorService.update(visor_id, visor_url=visor_url)
 
