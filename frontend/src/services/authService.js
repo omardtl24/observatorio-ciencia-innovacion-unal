@@ -176,7 +176,13 @@ export function openAuthPopup() {
       console.log("Received postMessage data:", event.data);
       
       // Validate origin for security
-      const expectedOrigin = new URL(apiUrl).origin;
+      // Support relative `VITE_API_URL` (e.g. "/api") by resolving against current origin
+      let expectedOrigin;
+      try {
+        expectedOrigin = new URL(apiUrl, window.location.origin).origin;
+      } catch (e) {
+        expectedOrigin = window.location.origin;
+      }
       console.log("Expected origin:", expectedOrigin);
       
       if (event.origin !== expectedOrigin) {

@@ -1,79 +1,123 @@
-# =========================
-# WEBSOCKETS (Shiny handoff)
-# =========================
-map $http_upgrade $connection_upgrade {
-    default upgrade;
-    '' close;
+worker_processes auto;
+
+events {
+    worker_connections 1024;
 }
 
-# =========================
-# DOCKER LOG FORMAT
-# =========================
-log_format docker_pretty
-'$remote_addr - [$time_local] '
-'"$request" $status '
-'route=$route '
-'upstream=$upstream_addr '
-'time=$request_time '
-'rt=$upstream_response_time '
-'uri=$request_uri '
-'upgrade=$http_upgrade '
-'ua="$http_user_agent"';
+http {
+    lua_package_path "/etc/nginx/lua/?.lua;/etc/nginx/lua/?/init.lua;;";
 
-server {
-    listen 80;
-    server_name _;
-    resolver 127.0.0.11 valid=30s;
+    include       mime.types;
+    default_type  application/octet-stream;
 
-    access_log /dev/stdout docker_pretty;
-    error_log /dev/stderr warn;
+    log_format docker_pretty
+        '$remote_addr - [$time_local] '
+        '"$request" $status '
+        'route=$route '
+        'upstream=$upstream_addr '
+        'time=$request_time '
+        'rt=$upstream_response_time '
+        'uri=$request_uri '
+        'upgrade=$http_upgrade '
+        'ua="$http_user_agent"';
 
-    # =========================
-    # HEALTHCHECKS
-    # =========================
-    location = /health {
-        access_log off;
-        default_type text/plain;
-        return 200 "ok\n";
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        '' close;
     }
 
-    location = /ping {
-        access_log off;
-        default_type text/plain;
-        return 200 "running\n";
-    }
+    server {
+        listen 80;
+        server_name _;
+        resolver 127.0.0.11 valid=30s ipv6=off;
 
-    # =========================
-    # FRONTEND (/)
-    # =========================
-    location / {
-        access_log off;
-        set $route "frontend";
+        access_log /dev/stdout docker_pretty;
+        error_log /dev/stderr warn;
 
+        client_max_body_size 350M;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_connect_timeout 10s;
+
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Cookie $http_cookie;
 
-        proxy_pass ${NGINX_FRONTEND_URL};
-    }
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
 
-    # =========================
-    # BACKEND (/api)
-    # =========================
+        rewrite_by_lua_block {
+            local uri = ngx.var.uri
+            local uri = ngx.var.uri
+            local normalized = ngx.re.gsub(uri, [[^/(server/)?(simulator|visor)/(\d+)$]], "$1$2/$3/", "jo")
+            if normalized and normalized ~= uri then
+                ngx.req.set_uri(normalized, false)
+            end
+        }
+
+        location = /health {
+            access_log off;
+            default_type text/plain;
+            return 200 "ok\n";
+        }
+
+        location = /ping {
+            access_log off;
+            default_type text/plain;
+            return 200 "running\n";
+        }
+
     location /api/ {
-        access_log off;
         set $route "backend";
 
         proxy_http_version 1.1;
+
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
 
-        rewrite ^/api/?(.*)$ /$1 break;
+        rewrite ^/api/(.*)$ /$1 break;
 
-        proxy_pass ${NGINX_BACKEND_URL};
+        proxy_pass http://backend:5000;
+    }
+
+        location / {
+            set $route "frontend";
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_pass http://frontend:5173;
+        }
+
+        location ~ ^/server/(?<route>simulator|visor)/(?<resource_id>\d+)(?<resource_path>/.*)?$ {
+            access_by_lua_block {
+                local access_control = require("access_control")
+                local resource_type = ngx.var.route
+                local resource_id = ngx.var.resource_id
+                local jwt = ngx.var.cookie_user_jwt
+
+                if jwt then
+                    jwt = ngx.unescape_uri(jwt)
+                end
+
+                local ok, status_code, message = access_control.validate_access(resource_type, resource_id, jwt)
+                if not ok then
+                    ngx.status = status_code or ngx.HTTP_FORBIDDEN
+                    ngx.header["Content-Type"] = "text/plain; charset=utf-8"
+                    ngx.say(message or "access denied")
+                    return ngx.exit(ngx.status)
+                end
+            }
+
+            proxy_set_header Host shinyserver:3838;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_hide_header X-Frame-Options;
+            proxy_hide_header Content-Security-Policy;
+            proxy_pass http://shinyserver:3838/$route/$resource_id$resource_path$is_args$args;
+        }
     }
 }

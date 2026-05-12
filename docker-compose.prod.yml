@@ -14,6 +14,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - private_net
 
   backend:
     build: ./backend
@@ -31,6 +33,8 @@ services:
     volumes:
       - ./shared_files:/srv/resources
     command: ["gunicorn", "-b", "0.0.0.0:5000", "wsgi:app"]
+    networks:
+      - private_net
 
   frontend:
     build: ./frontend
@@ -41,6 +45,8 @@ services:
     expose:
       - "5173"
     command: ["sh", "-c", "npm run build && npm run preview -- --host 0.0.0.0 --port 5173"]
+    networks:
+      - private_net
 
   shinyserver:
     build: ./shiny
@@ -56,21 +62,31 @@ services:
     volumes:
       - ./shared_files:/srv/resources
       - renv_cache_prod:/renv/cache
+    networks:
+      - private_net
 
-  gateway:
-    build: ./gateway
-    container_name: app_gateway_prod
+  nginx_app:
+    build: ./nginx
+    container_name: app_nginx_app_prod
     restart: unless-stopped
-    env_file:
-      - ./gateway/.env.prod
     depends_on:
       - backend
+      - frontend
       - shinyserver
     ports:
-      - "80:8000"
+      - "80:80"
+    networks:
+      - private_net
+      - public_net
 
 volumes:
   postgres_data_prod:
     driver: local
   renv_cache_prod:
     driver: local
+
+networks:
+  private_net:
+    driver: bridge
+  public_net:
+    driver: bridge

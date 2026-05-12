@@ -332,8 +332,12 @@ export default function Dashboard() {
         setSelectedRoleId((prev) => prev || String(roles[0]?.id || ""));
       } catch (error) {
         if (active) {
-          setRoleManagerMessage(error?.message || "No fue posible cargar el gestor de roles.");
-          setRoleManagerMessageType("error");
+          const message = error?.message || "No fue posible cargar el gestor de roles.";
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+          }
+          setRoleManagerMessage("");
+          setRoleManagerMessageType("");
         }
       } finally {
         if (active) {
@@ -417,8 +421,9 @@ export default function Dashboard() {
 
   const handleAssignRole = async () => {
     if (!selectedUserEmail || !selectedRoleId) {
-      setRoleManagerMessage("Selecciona un usuario y un rol.");
-      setRoleManagerMessageType("error");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message: "Selecciona un usuario y un rol." } }));
+      }
       return;
     }
 
@@ -432,8 +437,10 @@ export default function Dashboard() {
       setRoleManagerMessage("Rol asignado correctamente.");
       setRoleManagerMessageType("success");
     } catch (error) {
-      setRoleManagerMessage(error?.message || "No fue posible asignar el rol.");
-      setRoleManagerMessageType("error");
+      const message = error?.message || "No fue posible asignar el rol.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
     } finally {
       setRoleActionLoading(false);
     }
@@ -441,8 +448,9 @@ export default function Dashboard() {
 
   const handleRemoveRole = async () => {
     if (!selectedUserEmail || !selectedRoleId) {
-      setRoleManagerMessage("Selecciona un usuario y un rol.");
-      setRoleManagerMessageType("error");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message: "Selecciona un usuario y un rol." } }));
+      }
       return;
     }
 
@@ -456,8 +464,10 @@ export default function Dashboard() {
       setRoleManagerMessage("Rol retirado correctamente.");
       setRoleManagerMessageType("success");
     } catch (error) {
-      setRoleManagerMessage(error?.message || "No fue posible retirar el rol.");
-      setRoleManagerMessageType("error");
+      const message = error?.message || "No fue posible retirar el rol.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
     } finally {
       setRoleActionLoading(false);
     }
@@ -471,7 +481,10 @@ export default function Dashboard() {
     }
 
     if (!resourceId) {
-      setActionMessage("No fue posible identificar el recurso a eliminar.");
+      const message = "No fue posible identificar el recurso a eliminar.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
       return;
     }
 
@@ -507,7 +520,10 @@ export default function Dashboard() {
 
       setRefreshCounter((value) => value + 1);
     } catch (error) {
-      setActionMessage(error?.message || "No fue posible eliminar el recurso.");
+      const message = error?.message || "No fue posible eliminar el recurso.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
     } finally {
       setDeletingKey(null);
     }
@@ -528,7 +544,10 @@ export default function Dashboard() {
       setActionMessage("Fuente de datos eliminada correctamente.");
       setRefreshCounter((value) => value + 1);
     } catch (error) {
-      setActionMessage(error?.message || "No fue posible eliminar la fuente de datos.");
+      const message = error?.message || "No fue posible eliminar la fuente de datos.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
     } finally {
       setDeletingKey(null);
     }
@@ -546,8 +565,10 @@ export default function Dashboard() {
       setRoleManagerMessage("Rol eliminado correctamente.");
       setRoleManagerMessageType("success");
     } catch (error) {
-      setRoleManagerMessage(error?.message || "No fue posible eliminar el rol.");
-      setRoleManagerMessageType("error");
+      const message = error?.message || "No fue posible eliminar el rol.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
     }
   };
 

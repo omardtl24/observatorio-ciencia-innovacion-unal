@@ -44,6 +44,8 @@ def create_app(config_name="production"):
         app.config.from_object(TestingConfig)
     else:
         app.config.from_object(Config)
+
+    app.url_map.strict_slashes = False
     
     app.secret_key = app.config.get("FLASK_SECRET_KEY", "dev-secret-key")
 

@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - app_net
+      - private_net
 
   adminer:
     image: adminer:latest
@@ -26,7 +26,7 @@ services:
     depends_on:
       - db
     networks:
-      - app_net
+      - private_net
 
   backend:
     build: ./backend
@@ -45,7 +45,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: ["python", "run.py"]
     networks:
-      - app_net
+      - private_net
 
   frontend:
     build: ./frontend
@@ -53,14 +53,14 @@ services:
     restart: unless-stopped
     env_file:
       - ./frontend/.env.dev
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     command: ["npm", "run", "dev"]
     networks:
-      - app_net
+      - private_net
 
   shinyserver:
     build: ./shiny
@@ -75,21 +75,21 @@ services:
       - renv_cache_dev:/renv/cache
       - r_libs_dev:/usr/local/lib/R/site-library
     networks:
-      - app_net
+      - private_net
 
-  gateway:
-    build: ./gateway
-    container_name: app_gateway_dev
+  nginx_app:
+    build: ./nginx
+    container_name: app_nginx_app_dev
     restart: unless-stopped
-    env_file:
-      - ./gateway/.env.dev
     depends_on:
       - backend
+      - frontend
       - shinyserver
     ports:
-      - "80:8000"
+      - "80:80"
     networks:
-      - app_net
+      - private_net
+      - public_net
 
 volumes:
   renv_cache_dev:
@@ -101,5 +101,7 @@ volumes:
 
 
 networks:
-  app_net:
+  private_net:
+    driver: bridge
+  public_net:
     driver: bridge

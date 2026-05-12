@@ -102,6 +102,15 @@ function isMultipartPayload(payload) {
     return typeof FormData !== "undefined" && payload instanceof FormData;
 }
 
+function buildApiUrl(...parts) {
+    const base = (import.meta.env.VITE_API_URL || "").replace(/\/+$/g, "");
+    const cleaned = parts
+        .map((p) => String(p || "").replace(/^\/+|\/+$/g, ""))
+        .filter(Boolean)
+        .join("/");
+    return cleaned ? `${base}/${cleaned}` : base;
+}
+
 export async function fetchFromUrl(url) {
     const token = getToken();
     let response;
@@ -484,6 +493,9 @@ export async function uploadResourceFile(file) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, "No fue posible cargar el archivo");
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 
@@ -529,6 +541,9 @@ export async function createResource(type, payload, updatedDate = null) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, `No fue posible crear el recurso de tipo ${type}`);
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 
@@ -574,6 +589,9 @@ export async function updateResource(type, id, payload, updatedDate = null) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, `No fue posible actualizar el recurso de tipo ${type}`);
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 
@@ -614,7 +632,9 @@ export async function updateResourceRoles(type, id, roleIds = []) {
 export async function deleteResource(type, id, cascade = true) {
     const query = cascade ? "?cascade=true" : "";
     const endpoint = normalizeApiEndpoint(type);
-    const deleteUrl = `${import.meta.env.VITE_API_URL}/${endpoint}/${id}${query}`;
+    const base = (import.meta.env.VITE_API_URL || "").replace(/\/+$/g, "");
+    const ep = String(endpoint || "").replace(/^\/+|\/+$/g, "");
+    const deleteUrl = `${base}/${ep}/${id}${query}`;
     const token = getToken();
 
     let response;
@@ -635,6 +655,9 @@ export async function deleteResource(type, id, cascade = true) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, `No fue posible eliminar el recurso ${type} con id ${id}`);
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 }
@@ -661,6 +684,9 @@ export async function deleteFileById(fileId) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, `No fue posible eliminar el archivo ${fileId}`);
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 }
@@ -689,6 +715,9 @@ export async function createDataSource(payload) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, "No fue posible crear la fuente de datos");
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 
@@ -719,6 +748,9 @@ export async function updateDataSource(dataSourceId, payload) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, "No fue posible actualizar la fuente de datos");
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 
@@ -747,6 +779,9 @@ export async function deleteDataSource(dataSourceId) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, "No fue posible eliminar la fuente de datos");
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
         throw new Error(message);
     }
 }

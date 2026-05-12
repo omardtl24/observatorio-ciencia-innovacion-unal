@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import UserProfile from "../components/UserProfile";
 import { isAuthenticated } from "../services/authService";
+import ErrorPopup from "../components/ErrorPopup";
 
 export default function Layout({
   children,
@@ -14,6 +15,7 @@ export default function Layout({
   const BgSVG = backgroundSVGImage;
   const [hasVisibleErrorPopup, setHasVisibleErrorPopup] = useState(false);
   const [hasVisibleResourceFullscreen, setHasVisibleResourceFullscreen] = useState(false);
+  const [globalError, setGlobalError] = useState(null);
 
   useEffect(() => {
     const handleErrorPopupVisibility = (event) => {
@@ -22,8 +24,16 @@ export default function Layout({
 
     window.addEventListener("error-popup-visibility", handleErrorPopupVisibility);
 
+    const handleShowErrorPopup = (event) => {
+      const message = event?.detail?.message || event?.detail?.error || null;
+      if (message) setGlobalError(message);
+    };
+
+    window.addEventListener("show-error-popup", handleShowErrorPopup);
+
     return () => {
       window.removeEventListener("error-popup-visibility", handleErrorPopupVisibility);
+      window.removeEventListener("show-error-popup", handleShowErrorPopup);
     };
   }, []);
 
@@ -84,6 +94,7 @@ export default function Layout({
       <main className="relative z-10 flex-1 mb-32">
         {children}
       </main>
+      <ErrorPopup error={globalError} onClose={() => setGlobalError(null)} />
     </div>
   );
 }
