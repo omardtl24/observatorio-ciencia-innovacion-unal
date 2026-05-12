@@ -262,6 +262,14 @@ export async function getAccessToken() {
     
     // Store token in memory only (never in URLs)
     localStorage.setItem(TOKEN_KEY, data.access_token);
+    // Also set cookies used by legacy code and iframe proxy
+    try {
+      setCookie(TOKEN_KEY, data.access_token);
+      setCookie("user_jwt", data.access_token, { sameSite: "Lax" });
+    } catch (e) {
+      // non-fatal: continue even if cookie write fails
+      console.warn("No se pudo establecer cookie user_jwt:", e);
+    }
     
     // Get the intended destination and clear it
     const origin = sessionStorage.getItem("auth_origin_redirect");
@@ -287,8 +295,13 @@ export function saveTokensFromUrlParams(params) {
 
 export function saveTokensFromPayload(payload) {
   if (!payload || !payload.access_token) return false;
-
   setCookie(TOKEN_KEY, payload.access_token);
+  // Keep user_jwt in sync for iframe/Nginx proxy
+  try {
+    setCookie("user_jwt", payload.access_token, { sameSite: "Lax" });
+  } catch (e) {
+    console.warn("No se pudo establecer cookie user_jwt:", e);
+  }
   return true;
 }
 
@@ -325,6 +338,12 @@ export function isAuthenticated() {
 export function expired() {
   localStorage.removeItem(TOKEN_KEY);
   deleteCookie(TOKEN_KEY);
+  // Remove proxy cookie used by iframe/proxy
+  try {
+    deleteCookie("user_jwt");
+  } catch (e) {
+    console.warn("No se pudo eliminar cookie user_jwt:", e);
+  }
   sessionStorage.removeItem(IMAGE_ID_KEY);
   sessionStorage.removeItem(ROLES_KEY);
   clearProfileImageBlobCache();
@@ -334,6 +353,12 @@ export function expired() {
 export function logout(origin = null, navigate = null) {
   localStorage.removeItem(TOKEN_KEY);
   deleteCookie(TOKEN_KEY);
+  // Also remove cookie used by iframe proxy
+  try {
+    deleteCookie("user_jwt");
+  } catch (e) {
+    console.warn("No se pudo eliminar cookie user_jwt:", e);
+  }
   sessionStorage.removeItem(IMAGE_ID_KEY);
   sessionStorage.removeItem(ROLES_KEY);
   clearProfileImageBlobCache();
