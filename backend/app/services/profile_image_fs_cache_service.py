@@ -18,7 +18,7 @@ class ProfileImageFsCacheService:
 
     @staticmethod
     def _cache_root() -> str:
-        from flask import current_app
+        from flask import current_app # type: ignore
 
         root = current_app.config.get("PROFILE_IMAGE_CACHE_DIR")
         os.makedirs(root, exist_ok=True)

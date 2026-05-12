@@ -1,5 +1,5 @@
-from flask import Blueprint, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, current_app # type: ignore
+from flask_jwt_extended import jwt_required, get_jwt_identity # type: ignore
 from app.api.utils.check_roles import AccessChecker
 from app.domain.exceptions import UnauthorizedError
 

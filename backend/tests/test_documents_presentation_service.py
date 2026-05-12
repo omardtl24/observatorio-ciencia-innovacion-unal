@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from datetime import datetime
 from app.models.documents_presentation import DocumentPresentation
 from app.services.documents_presentation_service import DocumentPresentationService

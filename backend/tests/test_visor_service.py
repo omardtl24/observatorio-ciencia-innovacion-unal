@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from datetime import datetime
 from app.models.visor import Visor
 from app.services.visor_service import VisorService

@@ -1,6 +1,6 @@
 """Unit tests for RoleVisorRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.role_visor_relation import RoleVisorRelation
 from app.services.role_service import RoleService
 from app.services.visor_service import VisorService

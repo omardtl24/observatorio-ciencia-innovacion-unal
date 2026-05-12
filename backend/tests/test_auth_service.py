@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from unittest.mock import Mock, patch, MagicMock
 from app.services.auth_service import AuthService
 from app.domain.exceptions import NotFoundError, IllegalOperationError

@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from datetime import datetime
 from app.models.report import Report
 from app.services.report_service import ReportService

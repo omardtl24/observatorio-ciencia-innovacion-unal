@@ -5,7 +5,7 @@ import tempfile
 import threading
 import zipfile
 
-from flask import current_app
+from flask import current_app # type: ignore
 
 from app.domain.exceptions import IllegalOperationError, NotFoundError
 

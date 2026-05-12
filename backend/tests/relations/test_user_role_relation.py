@@ -1,6 +1,6 @@
 """Unit tests for UserRoleRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.user_role_relation import UserRoleRelation
 from app.services.user_service import UserService
 from app.services.role_service import RoleService

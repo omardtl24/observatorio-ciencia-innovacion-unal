@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field # type: ignore
 
 
 class PermissionRefreshTokenUpdateRequest(BaseModel):

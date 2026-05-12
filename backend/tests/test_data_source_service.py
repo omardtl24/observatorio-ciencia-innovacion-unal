@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from datetime import datetime
 from app.models.data_source import DataSource
 from app.services.data_source_service import DataSourceService

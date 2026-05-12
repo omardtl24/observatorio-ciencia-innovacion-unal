@@ -1,8 +1,8 @@
 import os
 from uuid import uuid4
-from flask import Blueprint, jsonify, current_app, send_file, request
-from werkzeug.utils import secure_filename
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, current_app, send_file, request # type: ignore
+from werkzeug.utils import secure_filename # type: ignore
+from flask_jwt_extended import jwt_required, get_jwt_identity # type: ignore
 from app.services.file_service import FileService
 from app.domain.exceptions import IllegalOperationError, SchemaValidationError, UnauthorizedError
 from app.api.utils.check_roles import AccessChecker, assert_admin

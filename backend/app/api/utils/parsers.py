@@ -1,6 +1,6 @@
 """Parser utilities for extracting and validating request data."""
 
-from flask import request
+from flask import request # type: ignore
 from app.domain.exceptions import SchemaValidationError
 from app.api.utils.check_roles import AccessChecker
 

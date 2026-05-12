@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app # type: ignore
 from app.services.user_service import UserService
 from app.services.role_service import RoleService
 from app.domain.exceptions import NotFoundError

@@ -1,7 +1,7 @@
 
-import pytest
+import pytest # type: ignore
 import os
-from flask import Flask
+from flask import Flask # type: ignore
 from app.models.base import db
 from app import create_app
 from app.services.file_service import FileService

@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from datetime import datetime
 from app.models.user import User
 from app.services.user_service import UserService

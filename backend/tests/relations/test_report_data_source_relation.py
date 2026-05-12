@@ -1,6 +1,6 @@
 """Unit tests for ReportDataSourceRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.report_data_source_relation import ReportDataSourceRelation
 from app.services.report_service import ReportService
 from app.services.data_source_service import DataSourceService

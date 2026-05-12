@@ -6,7 +6,7 @@ from app.services.relations.role_data_source_relation import RoleDataSourceRelat
 from app.services.relations.role_visor_relation import RoleVisorRelation
 from app.services.role_service import RoleService
 from app.domain.exceptions import NotFoundError, UnauthorizedError
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity # type: ignore
 
 
 class AccessChecker:

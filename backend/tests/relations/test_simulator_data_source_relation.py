@@ -1,6 +1,6 @@
 """Unit tests for SimulatorDataSourceRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.simulator_data_source_relation import SimulatorDataSourceRelation
 from app.services.simulator_service import SimulatorService
 from app.services.data_source_service import DataSourceService

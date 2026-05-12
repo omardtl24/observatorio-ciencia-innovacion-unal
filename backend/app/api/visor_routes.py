@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, request # type: ignore
+from flask_jwt_extended import jwt_required, get_jwt_identity # type: ignore
 from app.services.visor_service import VisorService
 from app.services.relations.visor_data_source_relation import VisorDataSourceRelation
 from app.services.relations.role_visor_relation import RoleVisorRelation

@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request
+from flask import request # type: ignore
 from app.api.utils.validate_schema import validate_schema
 from app.domain.exceptions import SchemaValidationError
 

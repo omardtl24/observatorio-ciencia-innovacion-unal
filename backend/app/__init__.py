@@ -1,6 +1,6 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask import Flask, jsonify # type: ignore
+from flask_cors import CORS # type: ignore
+from flask_jwt_extended import JWTManager # type: ignore
 from app.api.auth_routes import auth_bp, test_auth_bp
 from app.api.visor_routes import visor_bp
 from app.api.access_routes import access_bp

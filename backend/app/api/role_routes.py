@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask import Blueprint, jsonify, request # type: ignore
+from flask_jwt_extended import get_jwt_identity, jwt_required # type: ignore
 
 from app.api.utils.check_roles import AccessChecker, assert_admin
 from app.api.utils.serializers import serialize_user

@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify, current_app, request, send_file
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, current_app, request, send_file # type: ignore
+from flask_jwt_extended import jwt_required, get_jwt_identity # type: ignore
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService
 from app.services.profile_image_fs_cache_service import ProfileImageFsCacheService

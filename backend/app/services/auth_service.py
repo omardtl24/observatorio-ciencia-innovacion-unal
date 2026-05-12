@@ -1,10 +1,10 @@
 import secrets
 
-from flask import current_app, session
-from authlib.integrations.flask_client import OAuth
-from itsdangerous import URLSafeTimedSerializer, BadSignature
+from flask import current_app, session # type: ignore
+from authlib.integrations.flask_client import OAuth # type: ignore
+from itsdangerous import URLSafeTimedSerializer, BadSignature # type: ignore
 from app.models import db
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token # type: ignore
 from app.services.user_service import UserService
 from app.services.role_service import RoleService
 from app.services.relations.user_role_relation import UserRoleRelation

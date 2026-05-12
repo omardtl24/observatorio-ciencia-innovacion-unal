@@ -1,6 +1,6 @@
 """Unit tests for VisorDataSourceRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.visor_data_source_relation import VisorDataSourceRelation
 from app.services.visor_service import VisorService
 from app.services.data_source_service import DataSourceService

@@ -1,6 +1,6 @@
 """Unit tests for RoleDataSourceRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.role_data_source_relation import RoleDataSourceRelation
 from app.services.role_service import RoleService
 from app.services.data_source_service import DataSourceService

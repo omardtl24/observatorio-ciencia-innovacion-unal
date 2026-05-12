@@ -1,6 +1,6 @@
 """Unit tests for DocumentPresentationRoleRelation."""
 
-import pytest
+import pytest # type: ignore
 from app.services.relations.document_presentation_role_relation import DocumentPresentationRoleRelation
 from app.services.documents_presentation_service import DocumentPresentationService
 from app.services.role_service import RoleService

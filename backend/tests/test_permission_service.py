@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-import pytest
+import pytest # type: ignore
 
 from app.domain.exceptions import IllegalOperationError, UnauthorizedError
 from app.services.permission_service import PermissionService

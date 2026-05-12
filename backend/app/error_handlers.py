@@ -1,5 +1,5 @@
-from flask import jsonify, request
-from werkzeug.exceptions import HTTPException
+from flask import jsonify, request # type: ignore
+from werkzeug.exceptions import HTTPException # type: ignore
 
 from app.domain.exceptions import DomainError
 

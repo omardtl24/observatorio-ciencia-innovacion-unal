@@ -1,5 +1,5 @@
 """Schema validation utility for request payloads."""
-from pydantic import ValidationError, BaseModel
+from pydantic import ValidationError, BaseModel # type: ignore
 from app.domain.exceptions import SchemaValidationError
 
 

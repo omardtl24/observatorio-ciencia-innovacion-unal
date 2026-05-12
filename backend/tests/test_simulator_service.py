@@ -1,5 +1,5 @@
 
-import pytest
+import pytest # type: ignore
 from datetime import datetime
 from app.models.simulator import Simulator
 from app.services.simulator_service import SimulatorService
