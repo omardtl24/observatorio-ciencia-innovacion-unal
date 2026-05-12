@@ -28,16 +28,16 @@ end
 
 function _M.validate_access(resource_type, resource_id, jwt)
     if not ALLOWED_RESOURCE_TYPES[resource_type] then
-        return false, ngx.HTTP_NOT_FOUND, "resource not found"
+        return false, ngx.HTTP_NOT_FOUND, "No se encontró el recurso"
     end
 
     local normalized_id = normalize_resource_id(resource_id)
     if not normalized_id then
-        return false, ngx.HTTP_NOT_FOUND, "resource not found"
+        return false, ngx.HTTP_NOT_FOUND, "No se encontró el recurso"
     end
 
     if not jwt or jwt == "" then
-        return false, ngx.HTTP_UNAUTHORIZED, "missing user_jwt cookie"
+        return false, ngx.HTTP_UNAUTHORIZED, "Falta la cookie 'user_jwt'"
     end
 
     local httpc = http.new()
@@ -61,7 +61,7 @@ function _M.validate_access(resource_type, resource_id, jwt)
 
     if not response then
         ngx.log(ngx.ERR, "access validation request failed: ", request_err or "unknown error")
-        return false, ngx.HTTP_BAD_GATEWAY, "authorization backend unavailable"
+        return false, ngx.HTTP_BAD_GATEWAY, "Servicio de autorización no disponible"
     end
 
     if response.status == ngx.HTTP_OK then
@@ -69,7 +69,7 @@ function _M.validate_access(resource_type, resource_id, jwt)
     end
 
     if response.status == ngx.HTTP_UNAUTHORIZED or response.status == ngx.HTTP_FORBIDDEN then
-        return false, response.status, "access denied"
+        return false, response.status, "Acceso denegado"
     end
 
     ngx.log(
@@ -81,7 +81,7 @@ function _M.validate_access(resource_type, resource_id, jwt)
         " resource_id=",
         normalized_id
     )
-    return false, ngx.HTTP_FORBIDDEN, "access denied"
+    return false, ngx.HTTP_FORBIDDEN, "Acceso denegado"
 end
 
 return _M

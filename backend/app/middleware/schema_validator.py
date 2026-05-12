@@ -17,7 +17,7 @@ def schema_validator(schema_class):
         @app.route('/user', methods=['POST'])
         @schema_validator(UserCreateSchema)
         def create_user():
-            return jsonify({"message": "User created"}), 201
+            return jsonify({"message": "Usuario creado"}), 201
     
     Notes:
         - Expects a JSON request body

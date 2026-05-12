@@ -107,7 +107,7 @@ http {
                 if not ok then
                     ngx.status = status_code or ngx.HTTP_FORBIDDEN
                     ngx.header["Content-Type"] = "text/plain; charset=utf-8"
-                    ngx.say(message or "access denied")
+                    ngx.say(message or "Acceso denegado")
                     return ngx.exit(ngx.status)
                 end
             }

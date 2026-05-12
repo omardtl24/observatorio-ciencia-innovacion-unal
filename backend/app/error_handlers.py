@@ -27,18 +27,38 @@ def register_jwt_error_handlers(jwt, app):
     @jwt.unauthorized_loader
     def handle_jwt_missing_token(reason):
         app.logger.error(f"JWT unauthorized: {reason}")
+
+        msg = "Debes iniciar sesión para continuar"
+        if reason:
+            low = str(reason).lower()
+            if "missing" in low and "authorization" in low:
+                msg = "Falta la cabecera 'Authorization'. Incluye 'Authorization: Bearer <token>'"
+            elif "missing" in low and "cookie" in low:
+                msg = "Falta la cookie de sesión. Inicia sesión para continuar."
+            elif "query" in low or "param" in low:
+                msg = "Falta un parámetro requerido en la URL."
+
         return jsonify({
             "code": "unauthorized",
-            "message": "Debes iniciar sesión para continuar",
+            "message": msg,
             "details": None,
         }), 401
 
     @jwt.invalid_token_loader
     def handle_jwt_invalid_token(reason):
         app.logger.error(f"JWT invalid: {reason}")
+
+        msg = "La sesión no es válida. Inicia sesión nuevamente"
+        if reason:
+            low = str(reason).lower()
+            if "signature" in low or "invalid" in low or "decode" in low:
+                msg = "Token inválido o manipulado. Inicia sesión nuevamente."
+            elif "expired" in low:
+                msg = "La sesión expiró. Inicia sesión nuevamente."
+
         return jsonify({
             "code": "invalid_token",
-            "message": "La sesión no es válida. Inicia sesión nuevamente",
+            "message": msg,
             "details": None,
         }), 401
 
@@ -77,11 +97,22 @@ def register_api_error_handlers(app):
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(error):
+        # Map common HTTP statuses to friendlier Spanish messages
+        status = error.code or 500
+        if status == 404:
+            message = "No se encontró el recurso solicitado"
+        elif status == 403:
+            message = "No tienes permiso para acceder a este recurso"
+        elif status == 401:
+            message = "No estás autorizado. Autentícate para continuar"
+        else:
+            message = error.description or "Ocurrió un error al procesar la solicitud"
+
         return jsonify({
             "code": "http_error",
-            "message": error.description or "Ocurrió un error al procesar la solicitud",
+            "message": message,
             "details": None,
-        }), error.code or 500
+        }), status
 
     @app.errorhandler(Exception)
     def handle_unexpected_exception(error):

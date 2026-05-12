@@ -77,7 +77,7 @@ def create_app(config_name="production"):
 
     @app.route("/", methods=["GET"])
     def index():
-        return jsonify({"status": "ok", "message": "Backend is running"}), 200
+        return jsonify({"status": "ok", "message": "El backend está en funcionamiento"}), 200
 
     # Include all blueprints (API routes)
     # Register mock auth routes if and only if test mode is explicitly enabled.
