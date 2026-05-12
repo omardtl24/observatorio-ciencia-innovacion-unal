@@ -2,11 +2,69 @@ import os
 import shutil
 import subprocess
 import tempfile
+import threading
 import zipfile
 
 from flask import current_app
 
 from app.domain.exceptions import IllegalOperationError, NotFoundError
+
+
+def _run_restore_app_async(resource_id: str, resource_type: str) -> None:
+    """Run the restore_app.sh script asynchronously in a background thread.
+    
+    Args:
+        resource_id: The unique identifier for the resource
+        resource_type: The type of resource (e.g., 'simulator', 'visor')
+    """
+    # Capture the app object while in the application context
+    app = current_app._get_current_object()
+    
+    def run_restore():
+        # Create an application context for the background thread
+        with app.app_context():
+            try:
+                # Construct the container name based on environment
+                container_name = app.config.get('SHINY_CONTAINER_NAME', 'app_shiny_dev')
+                
+                # Run the restore_app.sh script inside the container
+                cmd = [
+                    'docker', 'exec', container_name,
+                    'bash', 'scripts/restore_app.sh', str(resource_type), str(resource_id)
+                ]
+                
+                result = subprocess.run(
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=1800  # 30 minute timeout for background tasks
+                )
+                
+                app.logger.info(
+                    f"restore_app.sh executed for {resource_type}/{resource_id}: {result.stdout}"
+                )
+            except subprocess.TimeoutExpired:
+                app.logger.error(
+                    f"restore_app.sh timeout for {resource_type}/{resource_id}: "
+                    f"Processing took longer than 30 minutes"
+                )
+            except subprocess.CalledProcessError as e:
+                app.logger.error(
+                    f"restore_app.sh failed for {resource_type}/{resource_id}: {e.stderr}"
+                )
+            except Exception as e:
+                app.logger.error(
+                    f"Unexpected error running restore_app.sh for {resource_type}/{resource_id}: {str(e)}"
+                )
+    
+    # Start the restore script in a background thread
+    thread = threading.Thread(
+        target=run_restore,
+        daemon=True,
+        name=f"restore_app_{resource_type}_{resource_id}"
+    )
+    thread.start()
 
 
 def build_resource_url(file, resource_id, type) -> str:
@@ -45,8 +103,8 @@ def build_resource_url(file, resource_id, type) -> str:
         except zipfile.BadZipFile:
             raise IllegalOperationError("El archivo no es un ZIP válido")
         
-        # Check for required files (renv.lock and app.R)
-        required_files = ['renv.lock', 'app.R']
+        # Check for required files (renv.lock)
+        required_files = ['renv.lock']
         found_files = []
         
         for root, dirs, files in os.walk(extract_dir):
@@ -79,36 +137,8 @@ def build_resource_url(file, resource_id, type) -> str:
             else:
                 shutil.move(src, os.path.join(target_folder, item))
         
-        # Run the restore_app.sh script in the shiny-server container
-        try:
-            # Construct the container name based on environment
-            container_name = current_app.config.get('SHINY_CONTAINER_NAME', 'app_shiny_dev')
-            
-            # Run the restore_app.sh script inside the container
-            cmd = [
-                'docker', 'exec', container_name,
-                'bash', 'scripts/restore_app.sh', str(type) , str(resource_id)
-            ]
-            
-            result = subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
-            
-            current_app.logger.info(f"restore_app.sh executed for {resource_id}: {result.stdout}")
-        except subprocess.TimeoutExpired:
-            raise IllegalOperationError("El tiempo de procesamiento de la aplicación Shiny ha excedido el límite")
-        except subprocess.CalledProcessError as e:
-            current_app.logger.error(f"restore_app.sh failed for {resource_id}: {e.stderr}")
-            raise IllegalOperationError(
-                f"Error al procesar la aplicación Shiny: {e.stderr}"
-            )
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error running restore_app.sh: {str(e)}")
-            raise IllegalOperationError("Error inesperado al procesar la aplicación Shiny")
+        # Run the restore_app.sh script asynchronously in the background
+        _run_restore_app_async(resource_id, type)
         
     return os.path.join(current_app.config['RESOURCES_BASE_URL'], type, str(resource_id),'')
 
