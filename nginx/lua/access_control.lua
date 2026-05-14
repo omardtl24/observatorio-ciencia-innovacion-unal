@@ -37,7 +37,7 @@ function _M.validate_access(resource_type, resource_id, jwt)
     end
 
     if not jwt or jwt == "" then
-        return false, ngx.HTTP_UNAUTHORIZED, "Falta la cookie 'user_jwt'"
+        return false, ngx.HTTP_UNAUTHORIZED, "El usuario no se encuentra autenticado"
     end
 
     local httpc = http.new()
