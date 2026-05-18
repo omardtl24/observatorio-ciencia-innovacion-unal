@@ -147,6 +147,9 @@ ENV/
 env.bak/
 venv.bak/
 
+#SSL certificates
+/nginx/ssl
+
 # Spyder project settings
 .spyderproject
 .spyproject

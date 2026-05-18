@@ -86,7 +86,10 @@ services:
       - frontend
       - shinyserver
     ports:
+      - "443:443"
       - "80:80"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl
     networks:
       - private_net
       - public_net

@@ -26,15 +26,35 @@ http {
         '' close;
     }
 
+    # =========================
+    # HTTP → HTTPS redirect
+    # =========================
     server {
         listen 80;
-        server_name _;
+        server_name observatorio-ciencia-innovacion;
+
+        return 301 https://$host$request_uri;
+    }
+
+    # =========================
+    # HTTPS SERVER (MAIN)
+    # =========================
+    server {
+        listen 443 ssl;
+        server_name observatorio-ciencia-innovacion;
+
         resolver 127.0.0.11 valid=30s ipv6=off;
+
+        ssl_certificate     /etc/nginx/ssl/nginx.crt;
+        ssl_certificate_key /etc/nginx/ssl/nginx.key;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
 
         access_log /dev/stdout docker_pretty;
         error_log /dev/stderr warn;
 
         client_max_body_size 350M;
+
         proxy_http_version 1.1;
         proxy_buffering off;
         proxy_request_buffering off;
@@ -44,17 +64,22 @@ http {
 
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto https;
         proxy_set_header Cookie $http_cookie;
 
         add_header X-Content-Type-Options nosniff always;
         add_header X-Frame-Options SAMEORIGIN always;
         add_header Referrer-Policy strict-origin-when-cross-origin always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
         rewrite_by_lua_block {
             local uri = ngx.var.uri
-            local uri = ngx.var.uri
-            local normalized = ngx.re.gsub(uri, [[^/(server/)?(simulator|visor)/(\d+)$]], "$1$2/$3/", "jo")
+            local normalized = ngx.re.gsub(
+                uri,
+                [[^/(server/)?(simulator|visor)/(\d+)$]],
+                "$1$2/$3/",
+                "jo"
+            )
             if normalized and normalized ~= uri then
                 ngx.req.set_uri(normalized, false)
             end
@@ -72,38 +97,45 @@ http {
             return 200 "running\n";
         }
 
-    location /api/ {
-        set $route "backend";
+        location /api/ {
+            set $route "backend";
 
-        proxy_http_version 1.1;
+            proxy_http_version 1.1;
 
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
 
-        rewrite ^/api/(.*)$ /$1 break;
+            rewrite ^/api/(.*)$ /$1 break;
 
-        proxy_pass http://backend:5000;
-    }
+            proxy_pass http://backend:5000;
+        }
 
         location / {
             set $route "frontend";
+
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Host $host;
+
             proxy_pass http://frontend:5173;
         }
 
         location ~ ^/server/(?<route>simulator|visor)/(?<resource_id>\d+)(?<resource_path>/.*)?$ {
+
             access_by_lua_block {
                 local access_control = require("access_control")
-                local resource_type = ngx.var.route
-                local resource_id = ngx.var.resource_id
-                local jwt = ngx.var.cookie_user_jwt
 
+                local jwt = ngx.var.cookie_user_jwt
                 if jwt then
                     jwt = ngx.unescape_uri(jwt)
                 end
 
-                local ok, status_code, message = access_control.validate_access(resource_type, resource_id, jwt)
+                local ok, status_code, message =
+                    access_control.validate_access(
+                        ngx.var.route,
+                        ngx.var.resource_id,
+                        jwt
+                    )
+
                 if not ok then
                     ngx.status = status_code or ngx.HTTP_FORBIDDEN
                     ngx.header["Content-Type"] = "text/plain; charset=utf-8"
@@ -115,8 +147,10 @@ http {
             proxy_set_header Host shinyserver:3838;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
+
             proxy_hide_header X-Frame-Options;
             proxy_hide_header Content-Security-Policy;
+
             proxy_pass http://shinyserver:3838/$route/$resource_id$resource_path$is_args$args;
         }
     }
