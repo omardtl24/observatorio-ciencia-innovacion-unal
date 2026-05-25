@@ -27,7 +27,7 @@ const PRESENTATION_INFO = {
   },
   report: {
     title: "¡Accede a nuestros \\(reportes\\)!",
-    text: "Otra forma que utiliza el Observatorio para presentar información relevante son los documentos digitales de texto y las presentaciones con diapositivas. Los documentos consignan procesos como la revisión de literatura y establecimiento de soportes académicos en los que se enmarcan las distintas actividades del Observatorio.\nPor otro lado, se elaboraron presentaciones visuales con el fin de comunicar, ante los actores correspondientes, los principales hallazgos y resultados para la toma de decisiones. En esta sección, usted podrá encontrar algunos de estos documentos."
+    text: "Los reportes reúnen análisis estratégicos y resultados relevantes sobre distintos procesos académicos e institucionales de la Facultad de Ciencias. A través de indicadores, visualizaciones y estudios basados en datos, estas herramientas apoyan la comprensión de fenómenos clave y facilitan la toma de decisiones informadas.\nAdemás, permiten identificar tendencias, oportunidades de mejora y aspectos prioritarios para el fortalecimiento de la comunidad universitaria."
   }
 }
 

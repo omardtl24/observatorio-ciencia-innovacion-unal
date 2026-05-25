@@ -79,12 +79,7 @@ export default function Resources() {
       coverImage: documentCoverImg,
       hoverCoverImage: documentHoveredCoverImg,
       icon: documentIcon
-    },
-    document: {
-      coverImage: documentCoverImg,
-      hoverCoverImage: documentHoveredCoverImg,
-      icon: documentIcon,
-    },
+    }
   };
 
   useEffect(() => {
@@ -132,7 +127,7 @@ export default function Resources() {
   }
   
   return (
-    <div className="min-h-screen px-8 pt-0 pb-6">
+    <div className="min-h-screen px-6 pt-0 pb-6">
       <div className="mb-10 -mx-6 w-[calc(100%+4rem)] bg-secondary-gray-soft px-12 py-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-serif italic font-bold text-primary-blue-strong">
