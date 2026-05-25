@@ -1,82 +1,82 @@
 # Observatorio de Gestión y Análisis de Indicadores para la Ciencia y la Innovación
 
-Official website for the Observatorio de Gestión y Análisis de Indicadores para la Ciencia y la Innovación, Faculty of Sciences, Universidad Nacional de Colombia. The platform combines a public web interface, an API, a PostgreSQL database, and analytic components to visualize and manage indicators related to science, technology, and innovation.
+Sitio web oficial del Observatorio de Gestión y Análisis de Indicadores para la Ciencia y la Innovación, Facultad de Ciencias, Universidad Nacional de Colombia. La plataforma combina una interfaz web pública, una API, una base de datos PostgreSQL y componentes analíticos para visualizar y administrar indicadores relacionados con ciencia, tecnología e innovación.
 
-## Project Overview
+## Resumen del Proyecto
 
-The repository is organized as a multi-service application:
+El repositorio está organizado como una aplicación de múltiples servicios:
 
-- `backend/`: Python API service built with Flask and run with Gunicorn in production.
-- `frontend/`: React application built with Vite.
-- `db/`: PostgreSQL schema and seed resources for local database setups.
-- `shiny/`: R/Shiny analytics applications and server setup.
-- `nginx/`: HTTPS reverse proxy that routes traffic to the app services.
-- `shared_files/`: shared storage used by backend and Shiny services in production.
+- `backend/`: servicio API en Python construido con Flask y ejecutado con Gunicorn en producción.
+- `frontend/`: aplicación React construida con Vite.
+- `db/`: recursos de esquema y semillas de PostgreSQL para configuraciones locales de base de datos.
+- `shiny/`: aplicaciones analíticas en R/Shiny y configuración del servidor.
+- `nginx/`: proxy inverso HTTPS que enruta el tráfico hacia los servicios de la aplicación.
+- `shared_files/`: almacenamiento compartido usado por el backend y Shiny en producción.
 
-## Environment Files with `gen_envs.py`
+## Archivos de Entorno con `gen_envs.py`
 
-The `gen_envs.py` script manages environment files across the repository.
+El script `gen_envs.py` administra los archivos de entorno del repositorio.
 
-It supports two modes:
+Soporta dos modos:
 
-- `build`: scans the repository for `.env`, `.env.dev`, and `.env.prod` files, stores the collected structure as plain JSON, and encrypts it into `config.gpg`.
-- `decrypt`: decrypts `config.gpg` and recreates the matching `.env` files in their original folders.
+- `build`: recorre el repositorio buscando archivos `.env`, `.env.dev` y `.env.prod`, guarda la estructura recopilada como JSON plano y la cifra en `config.gpg`.
+- `decrypt`: descifra `config.gpg` y recrea los archivos `.env` correspondientes en sus carpetas originales.
 
-Typical usage from the repository root:
+Uso típico desde la raíz del repositorio:
 
 ```bash
 python gen_envs.py build --root . --output config.gpg
 python gen_envs.py decrypt --root . --output config.gpg
 ```
 
-Useful options:
+Opciones útiles:
 
-- `--force-scan` with `build` ignores an existing `config.json` and rescans the filesystem.
-- `--force` with `decrypt` overwrites existing env files without prompting.
-- `--dry-run` with `decrypt` previews the files that would be written.
+- `--force-scan` con `build` ignora un `config.json` existente y vuelve a escanear el sistema de archivos.
+- `--force` con `decrypt` sobrescribe los archivos de entorno existentes sin pedir confirmación.
+- `--dry-run` con `decrypt` muestra una vista previa de los archivos que se escribirían.
 
-The script requires `gpg` to be installed and available in `PATH`.
+El script requiere que `gpg` esté instalado y disponible en `PATH`.
 
-## Run in Development
+## Ejecutar en Desarrollo
 
-Development uses [docker-compose.dev.yml](docker-compose.dev.yml). It mounts the source code, runs the frontend with Vite dev server, starts the backend in debug mode, and exposes Adminer for database inspection.
+El entorno de desarrollo usa [docker-compose.dev.yml](docker-compose.dev.yml). Monta el código fuente, ejecuta el frontend con el servidor de desarrollo de Vite, inicia el backend en modo depuración y expone Adminer para inspección de la base de datos.
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-Main services in dev:
+Servicios principales en desarrollo:
 
-- PostgreSQL database on the private Docker network.
-- Backend API on port `5000`.
-- Frontend dev server on port `5173`.
-- Shiny server for interactive analytics.
-- Nginx reverse proxy exposing the application over `80` and `443`.
-- Adminer on port `8080` for database access.
+- Base de datos PostgreSQL en la red privada de Docker.
+- API del backend en el puerto `5000`.
+- Servidor de desarrollo del frontend en el puerto `5173`.
+- Servidor Shiny para analítica interactiva.
+- Proxy inverso Nginx exponiendo la aplicación en `80` y `443`.
+- Adminer en el puerto `8080` para acceso a la base de datos.
 
-## Run in Production
+## Ejecutar en Producción
 
-Production uses [docker-compose.prod.yml](docker-compose.prod.yml). It builds the application images, runs the backend with Gunicorn, serves the frontend in preview mode after building it, and routes external traffic through Nginx. The production stack does not start a database container; the backend connects to an external PostgreSQL instance instead.
+Producción usa [docker-compose.prod.yml](docker-compose.prod.yml). Construye las imágenes de la aplicación, ejecuta el backend con Gunicorn, sirve el frontend en modo preview después de construirlo y enruta el tráfico externo a través de Nginx. El stack de producción no inicia un contenedor de base de datos; el backend se conecta a una instancia externa de PostgreSQL.
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Main differences in prod:
+Diferencias principales en producción:
 
-- Backend runs with Gunicorn instead of the Flask debug server.
-- Frontend is built before being served.
-- Shared resources are mounted from `shared_files/`.
-- Database credentials are provided for an external PostgreSQL server, not a container in the compose stack.
-- No Adminer service is included.
+- El backend se ejecuta con Gunicorn en lugar del servidor de depuración de Flask.
+- El frontend se construye antes de ser servido.
+- Los recursos compartidos se montan desde `shared_files/`.
+- Las credenciales de base de datos deben apuntar a un servidor PostgreSQL externo, no a un contenedor dentro del stack de compose.
+- No se incluye el servicio Adminer.
 
-Before starting production, make sure the backend env configuration points `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` to the external database.
+Antes de iniciar producción, asegúrate de que la configuración del backend en `backend/.env.prod` apunte `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` a la base de datos externa.
 
-## Quick Summary of Components
+## Resumen de Componentes
 
-- Backend: API and business logic.
-- Frontend: user-facing web interface.
-- Database: PostgreSQL persistence layer.
-- Shiny: data analysis and visualization apps.
-- Nginx: HTTPS entrypoint and request router.
-- Shared files: common storage for generated or uploaded assets.
+- Backend: API y lógica de negocio.
+- Frontend: interfaz web para el usuario.
+- Base de datos: capa de persistencia en PostgreSQL.
+- Shiny: aplicaciones de análisis y visualización.
+- Nginx: punto de entrada HTTPS y enrutador de solicitudes.
+- Archivos compartidos: almacenamiento común para archivos generados o cargados.
