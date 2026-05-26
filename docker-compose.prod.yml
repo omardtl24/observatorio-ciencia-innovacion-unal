@@ -1,10 +1,31 @@
 services:
+  db:
+    build: ./db
+    container_name: app_db_prod
+    restart: unless-stopped
+    env_file:
+      - ./db/.env.prod
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - private_net
+
   backend:
     build: ./backend
     container_name: app_backend_prod
     restart: unless-stopped
     env_file:
       - ./backend/.env.prod
+    depends_on:
+      db:
+        condition: service_healthy
     expose:
       - "5000"
     volumes:
@@ -37,8 +58,8 @@ services:
       - "3838"
     volumes:
       - ${SHINY_SERVER_APP_DIR_PROD}:/srv/shiny-server
-      - renv_cache_dev:/renv/cache
-      - r_libs_dev:/usr/local/lib/R/site-library
+      - renv_cache_prod:/renv/cache
+      - r_libs_prod:/usr/local/lib/R/site-library
     networks:
       - private_net
 
@@ -61,6 +82,10 @@ services:
 
 volumes:
   renv_cache_prod:
+    driver: local
+  r_libs_prod:
+    driver: local
+  postgres_data_prod:
     driver: local
 
 networks:

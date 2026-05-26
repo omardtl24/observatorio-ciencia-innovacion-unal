@@ -1,10 +1,9 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 import Layout from "../layout/Layout";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import CreateResource from "../pages/CreateResource";
 import EditResource from "../pages/EditResource";
-import Landing from "../pages/Landing";
 import Resources from "../pages/Resources";
 import Resource from "../pages/Resource";
 import DataSources from "../pages/DataSources";
@@ -52,10 +51,6 @@ const routeConfig = [
     component: EditDataSource,
     backgroundClass: "bg-gray-100",
     profileBackgroundClass: "bg-gray-100" },
-  { path: "/", 
-    component: Landing, 
-    backgroundClass: "bg-gray-100",
-    profileBackgroundClass: "bg-gray-100"},
   { path: "/connection-error",
     component: ConnectionError,
     backgroundClass: "bg-gray-100",
@@ -73,6 +68,7 @@ const routeConfig = [
 export default function AppRouter() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/resources/report" replace />} />
       {routeConfig.map((route) => {
         const { path, component: Component } = route;
 
