@@ -8,7 +8,9 @@ services:
     expose:
       - "5000"
     volumes:
-      - ./shared_files:/srv/resources
+      - ./backend:/app
+      - ${FILE_STORAGE_ROOT}:${FILE_STORAGE_ROOT}
+      - /var/run/docker.sock:/var/run/docker.sock
     command: ["gunicorn", "-b", "0.0.0.0:5000", "wsgi:app"]
     networks:
       - private_net
@@ -31,14 +33,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./shiny/.env.prod
-    environment:
-      FILE_STORAGE_ROOT: /srv/resources
-      SHINY_SERVER_APP_DIR: /srv/resources/shinny-apps
     expose:
       - "3838"
     volumes:
-      - ./shared_files:/srv/resources
-      - renv_cache_prod:/renv/cache
+      - ${SHINY_SERVER_APP_DIR}:/srv/shiny-server
+      - renv_cache_dev:/renv/cache
+      - r_libs_dev:/usr/local/lib/R/site-library
     networks:
       - private_net
 
