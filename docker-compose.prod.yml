@@ -33,8 +33,7 @@ services:
       - ${FILE_STORAGE_ROOT_PROD}:${FILE_STORAGE_ROOT_PROD}
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock
     working_dir: /app
-    command: >
-      sh -c "PYTHONPATH=/app gunicorn -b 0.0.0.0:5000 wsgi:app"
+    command: ["gunicorn", "-b", "0.0.0.0:5000", "--chdir", "/app", "wsgi:app"]
     networks:
       - private_net
 
