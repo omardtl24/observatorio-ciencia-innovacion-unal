@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import ResourceCard from "../components/ResourceCard";
 import ErrorPopup from "../components/ErrorPopup";
 import { fetchResources, parseResourcesForCards } from "../services/resourcesServices";
 import { datetoString } from "../services/stringServices.jsx";
 import { getPresentationInfo } from "../services/resourceModels";
 import { parseRichText, parseColor } from "../services/stringServices.jsx";
+import { isAuthenticated, redirectToLogin } from "../services/authService";
 import  reportCoverImg  from "../assets/cardImages/reports.png";
 import  reportHoveredCoverImg  from "../assets/cardImages/reportsHover.png";
 import  visorCoverImg  from "../assets/cardImages/visors.png";
@@ -44,6 +45,7 @@ function normalizeResourceType(resourceType) {
 
 export default function Resources() {
   const { type } = useParams();
+  const navigate = useNavigate();
   const normalizedType = normalizeResourceType(type);
   const [dataMapper, setDataMapper] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +98,12 @@ export default function Resources() {
         setError(null);
         const jsonData = await fetchResources(normalizedType);
         const parsedData = parseResourcesForCards(normalizedType, jsonData);
+
+        if (parsedData.length === 0 && !isAuthenticated()) {
+          redirectToLogin(navigate, `/resources/${type || normalizedType}`, normalizedType);
+          return;
+        }
+
         setDataMapper(parsedData);
       } catch (err) {
         const message = err?.message ? `${err.message} ${defaultErrorMessage}` : defaultErrorMessage;
@@ -106,7 +114,7 @@ export default function Resources() {
     };
 
     loadResources();
-  }, [normalizedType]);
+  }, [normalizedType, navigate, type]);
 
   if (loading) {
     return (
