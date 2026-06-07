@@ -75,7 +75,7 @@ services:
       - "443:443"
       - "80:80"
     volumes:
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/ssl:/etc/nginx/ssl:Z
     networks:
       - private_net
       - public_net
