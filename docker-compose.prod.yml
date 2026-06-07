@@ -29,7 +29,6 @@ services:
     expose:
       - "5000"
     volumes:
-      - ./backend:/app
       - ${FILE_STORAGE_ROOT_PROD}:${FILE_STORAGE_ROOT_PROD}
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock
     working_dir: /app
