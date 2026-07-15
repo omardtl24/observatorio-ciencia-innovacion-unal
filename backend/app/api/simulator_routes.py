@@ -28,6 +28,10 @@ def _get_simulator_payload(schema_class):
     return validate_schema(data, schema_class).model_dump(exclude_unset=True)
 
 
+def _get_simulator_source_url_field() -> str:
+    return "simulator_url"
+
+
 @simulator_bp.post("")
 @jwt_required()
 def create_simulator():
@@ -35,8 +39,17 @@ def create_simulator():
 
     simulator_data = _get_simulator_payload(SimulatorCreateRequest)
     r_program = request.files.get("r_program")
-    if r_program is None:
+    source_url_field = _get_simulator_source_url_field()
+    from_file = simulator_data.pop("from_file", None)
+    if from_file is None:
+        from_file = r_program is not None
+    from_file = bool(from_file)
+    simulator_data["from_file"] = from_file
+
+    if from_file and r_program is None:
         raise SchemaValidationError("Debes adjuntar el archivo r_program")
+    if not from_file and not simulator_data.get(source_url_field):
+        raise SchemaValidationError("Debes enviar la URL del simulador")
 
     role_ids = simulator_data.pop("role_ids", [])
     selected_role_ids = list({int(role_id) for role_id in role_ids})
@@ -46,11 +59,12 @@ def create_simulator():
         RoleService.get_by_id(role_id)
 
     simulator = SimulatorService.create(**simulator_data)
-    simulator_url = build_resource_url(r_program, simulator.id, "simulator")
-    SimulatorService.update(
-        simulator.id,
-        simulator_url=simulator_url,
-    )
+    if from_file:
+        simulator_url = build_resource_url(r_program, simulator.id, "simulator")
+        SimulatorService.update(
+            simulator.id,
+            simulator_url=simulator_url,
+        )
     simulator = SimulatorService.get_by_id(simulator.id)
 
     AccessChecker.grant_admin_access(simulator.id, "simulator")
@@ -60,7 +74,7 @@ def create_simulator():
 
     simulator = SimulatorService.get_by_id(simulator.id)
 
-    include = ["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"]
+    include = ["id", "title", "description", "from_file", "simulator_url", "specs_file_id", "updated_at"]
     response = simulator.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     return jsonify(response), 201
@@ -73,7 +87,7 @@ def get_simulators():
     if not full:
         payload = []
         for simulator in simulators:
-            item = simulator.to_dict(include=["id", "title", "updated_at"])
+            item = simulator.to_dict(include=["id", "title", "from_file", "updated_at"])
             item["roles"] = [role.name for role in getattr(simulator, "roles", [])]
             payload.append(item)
         return jsonify(payload), 200
@@ -102,7 +116,7 @@ def get_simulator_by_id(simulator_id):
 
     simulator = SimulatorService.get_by_id(simulator_id)
     response = simulator.to_dict(
-        include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"]
+        include=["id", "title", "description", "from_file", "simulator_url", "specs_file_id", "updated_at"]
     )
     response["roles"] = [role.name for role in getattr(simulator, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(simulator, "roles", [])]
@@ -114,24 +128,42 @@ def get_simulator_by_id(simulator_id):
 def update_simulator(simulator_id):
     assert_admin("El usuario no tiene permiso para actualizar este simulador")
 
+    existing_simulator = SimulatorService.get_by_id(simulator_id)
     update_data = _get_simulator_payload(SimulatorUpdateRequest)
     r_program = request.files.get("r_program")
-    if not update_data and r_program is None:
+    from_file = update_data.pop("from_file", None)
+    if from_file is None:
+        from_file = existing_simulator.from_file
+    from_file = bool(from_file)
+    source_url_field = _get_simulator_source_url_field()
+    resource_url = update_data.get(source_url_field)
+
+    if not update_data and r_program is None and from_file == existing_simulator.from_file:
         raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
 
+    if from_file:
+        if r_program is not None:
+            if existing_simulator.from_file:
+                delete_resource_file(simulator_id, "simulator")
+            simulator_url = build_resource_url(r_program, simulator_id, "simulator")
+            update_data[source_url_field] = simulator_url
+        elif not existing_simulator.from_file:
+            raise SchemaValidationError("Debes adjuntar el archivo r_program")
+    else:
+        if not resource_url:
+            raise SchemaValidationError("Debes enviar la URL del simulador")
+        if existing_simulator.from_file:
+            delete_resource_file(simulator_id, "simulator")
+
+    update_data["from_file"] = from_file
     if update_data:
         SimulatorService.update(simulator_id, **update_data)
-
-    if r_program is not None:
-        delete_resource_file(simulator_id, "simulator")
-        simulator_url = build_resource_url(r_program, simulator_id, "simulator")
-        SimulatorService.update(simulator_id, simulator_url=simulator_url)
 
     simulator = SimulatorService.get_by_id(simulator_id)
 
     return jsonify(
         simulator.to_dict(
-            include=["id", "title", "description", "simulator_url", "specs_file_id", "updated_at"]
+            include=["id", "title", "description", "from_file", "simulator_url", "specs_file_id", "updated_at"]
         )
     ), 200
 
@@ -216,14 +248,16 @@ def update_simulator_roles(simulator_id):
 def delete_simulator(simulator_id):
     assert_admin("El usuario no tiene permiso para eliminar simuladores")
 
+    simulator = SimulatorService.get_by_id(simulator_id)
     cascade = request.args.get("cascade", "false").lower() == "true"
 
     if cascade:
         SimulatorDataSourceRelation.remove_all_b_for_a(simulator_id)
         RoleSimulatorRelation.remove_all_a_for_b(simulator_id)
 
-    # Delete resource files
-    delete_resource_file(simulator_id, "simulator")
+    # Delete resource files only for Shiny uploads
+    if simulator.from_file:
+        delete_resource_file(simulator_id, "simulator")
     
     SimulatorService.delete(simulator_id)
 

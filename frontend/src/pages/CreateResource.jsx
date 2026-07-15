@@ -67,12 +67,14 @@ const RESOURCE_DEFINITIONS = {
     label: "Simulador",
     endpoint: "simulator",
     uploadField: "r_program",
+    urlField: "simulator_url",
     fileLabel: "Archivo de la aplicacion (ZIP)",
   },
   visor: {
     label: "Visor",
     endpoint: "visor",
     uploadField: "r_program",
+    urlField: "visor_url",
     fileLabel: "Archivo de la aplicacion (ZIP)",
   },
 };
@@ -88,6 +90,8 @@ const INITIAL_FORM = {
   title: "",
   description: "",
   visor_url: "",
+  simulator_url: "",
+  from_file: true,
   file: null,
   role_ids: [],
   data_source_ids: [],
@@ -175,6 +179,11 @@ function isSelectionInsideElement(selection, element) {
 
   const range = selection.getRangeAt(0);
   return element.contains(range.commonAncestorContainer);
+}
+
+function isShinyResource(resourceType) {
+  const definition = RESOURCE_DEFINITIONS[resourceType];
+  return Boolean(definition?.uploadField);
 }
 
 function toDateOnlyString(dateOnlyValue) {
@@ -304,6 +313,21 @@ export default function CreateResource() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const setSourceMode = (fromFile) => {
+    setForm((prev) => ({
+      ...prev,
+      from_file: fromFile,
+      file: fromFile ? prev.file : null,
+      [currentDefinition.urlField]: fromFile ? "" : prev[currentDefinition.urlField],
+    }));
+
+    if (fromFile) {
+      updateField(currentDefinition.urlField, "");
+    } else {
+      updateField("file", null);
+    }
+  };
+
   const updateRichField = (field, value) => {
     setRichFields((prev) => ({
       ...prev,
@@ -373,7 +397,18 @@ export default function CreateResource() {
       }
     }
 
-    if ((currentDefinition.fileField || currentDefinition.uploadField) && !form.file) {
+    if (isShinyResource(form.resourceType)) {
+      if (form.from_file) {
+        if (!form.file) {
+          return "Debes cargar un archivo ZIP antes de crear este recurso";
+        }
+      } else {
+        const resourceUrl = (form[currentDefinition.urlField] || "").trim();
+        if (!resourceUrl) {
+          return "Debes indicar la URL del recurso";
+        }
+      }
+    } else if (currentDefinition.fileField && !form.file) {
       return "Debes cargar un archivo antes de crear este recurso";
     }
 
@@ -384,9 +419,10 @@ export default function CreateResource() {
     const encodedMainTitle = encodeMarkedFromHtml(richFields.title);
     const encodedDescription = encodeMarkedFromHtml(richFields.description);
 
-    if (currentDefinition.uploadField) {
+    if (currentDefinition.uploadField && form.from_file) {
       const formData = new FormData();
       formData.append("title", encodedMainTitle.trim());
+      formData.append("from_file", "true");
 
       if (encodedDescription.trim()) {
         formData.append("description", encodedDescription);
@@ -405,6 +441,7 @@ export default function CreateResource() {
 
     const basePayload = {
       title: encodedMainTitle.trim(),
+      from_file: Boolean(form.from_file),
     };
 
     const normalizedUpdatedAt = toDateOnlyString(form.updated_date);
@@ -414,6 +451,10 @@ export default function CreateResource() {
 
     if (encodedDescription.trim()) {
       basePayload.description = encodedDescription;
+    }
+
+    if (currentDefinition.urlField && !form.from_file) {
+      basePayload[currentDefinition.urlField] = (form[currentDefinition.urlField] || "").trim();
     }
 
     if (currentDefinition.fileField && fileId) {
@@ -454,7 +495,9 @@ export default function CreateResource() {
     let uploadedFileId = null;
 
     try {
-      if (currentDefinition.fileField) {
+      if (currentDefinition.uploadField && form.from_file) {
+        // The ZIP is sent as the resource payload, so no pre-upload is needed.
+      } else if (currentDefinition.fileField) {
         const uploadedFile = await uploadResourceFile(form.file);
         uploadedFileId = uploadedFile?.id;
         if (!uploadedFileId) {
@@ -563,7 +606,49 @@ export default function CreateResource() {
             </p>
           )}
 
-          {(currentDefinition.fileField || currentDefinition.uploadField) && (
+          {currentDefinition.uploadField && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.from_file}
+              onClick={() => setSourceMode(!form.from_file)}
+              disabled={submitting}
+              className={`relative flex h-11 w-full items-center rounded-xl border border-gray-300 bg-primary-green-light p-1 transition-all duration-200 ${
+                submitting ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+              }`}
+            >
+              <span className="sr-only">Cambiar origen del recurso</span>
+
+              {/* Indicador */}
+              <span
+                className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow transition-transform duration-200 ${
+                  form.from_file
+                    ? "translate-x-0"
+                    : "translate-x-[calc(100%+0.25rem)]"
+                }`}
+              />
+
+              {/* Opción ZIP */}
+              <span
+                className={`relative z-10 flex w-1/2 justify-center text-sm font-semibold transition-colors duration-200 ${
+                  form.from_file ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                Archivo ZIP
+              </span>
+
+              {/* Opción URL */}
+              <span
+                className={`relative z-10 flex w-1/2 justify-center text-sm font-semibold transition-colors duration-200 ${
+                  !form.from_file ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                URL directa
+              </span>
+            </button>
+          )}
+
+          {currentDefinition.uploadField && form.from_file && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {currentDefinition.fileLabel} *
@@ -575,9 +660,26 @@ export default function CreateResource() {
                 disabled={submitting}
               />
               <p className="text-xs text-gray-500 mt-1">
-                {currentDefinition.uploadField
-                  ? "Carga el ZIP de la aplicacion para construir el visor o simulador."
-                  : "El archivo se carga primero y luego se enlaza al recurso durante la creacion."}
+                Carga el ZIP de la aplicacion para construir el visor o simulador.
+              </p>
+            </div>
+          )}
+
+          {currentDefinition.uploadField && !form.from_file && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                URL directa del recurso *
+              </label>
+              <input
+                type="url"
+                value={form[currentDefinition.urlField]}
+                onChange={(e) => updateField(currentDefinition.urlField, e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                placeholder="https://..."
+                disabled={submitting}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Pega la URL directa del visor o simulador.
               </p>
             </div>
           )}

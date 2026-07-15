@@ -26,6 +26,10 @@ def _get_visor_payload(schema_class):
     return validate_schema(data, schema_class).model_dump(exclude_unset=True)
 
 
+def _get_visor_source_url_field() -> str:
+    return "visor_url"
+
+
 @visor_bp.post("")
 @jwt_required()
 def create_visor():
@@ -48,8 +52,17 @@ def create_visor():
     visor_service = VisorService()
     visor_data = _get_visor_payload(VisorCreateRequest)
     r_program = request.files.get("r_program")
-    if r_program is None:
+    source_url_field = _get_visor_source_url_field()
+    from_file = visor_data.pop("from_file", None)
+    if from_file is None:
+        from_file = r_program is not None
+    from_file = bool(from_file)
+    visor_data["from_file"] = from_file
+
+    if from_file and r_program is None:
         raise SchemaValidationError("Debes adjuntar el archivo r_program")
+    if not from_file and not visor_data.get(source_url_field):
+        raise SchemaValidationError("Debes enviar la URL del visor")
 
     role_ids = visor_data.pop("role_ids", [])
     selected_role_ids = list({int(role_id) for role_id in role_ids})
@@ -59,9 +72,9 @@ def create_visor():
         RoleService.get_by_id(role_id)
 
     visor = visor_service.create(**visor_data)
-
-    visor_url = build_resource_url(r_program, visor.id, "visor")
-    visor_service.update(visor.id, visor_url=visor_url)
+    if from_file:
+        visor_url = build_resource_url(r_program, visor.id, "visor")
+        visor_service.update(visor.id, visor_url=visor_url)
 
     visor = visor_service.get_by_id(visor.id)
     
@@ -73,7 +86,7 @@ def create_visor():
 
     visor = visor_service.get_by_id(visor.id)
 
-    include = ["id", "title", "description", "visor_url", "updated_at"]
+    include = ["id", "title", "description", "from_file", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     return jsonify(response), 201
@@ -88,7 +101,7 @@ def get_visor():
     if not full:
         payload = []
         for visor in visors:
-            item = visor.to_dict(include=["id", "title", "type", "updated_at"])
+            item = visor.to_dict(include=["id", "title", "type", "from_file", "updated_at"])
             item["roles"] = [role.name for role in getattr(visor, "roles", [])]
             payload.append(item)
         return jsonify(payload), 200
@@ -124,6 +137,7 @@ def get_visor_by_id(visor_id):
     response = visor.to_dict(include=["id",
                                       "title",
                                       "description",
+                                      "from_file",
                                       "visor_url",
                                       "updated_at"])
     response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
@@ -135,20 +149,38 @@ def get_visor_by_id(visor_id):
 def update_visor(visor_id):
     assert_admin("El usuario no tiene permiso para actualizar este visor")
 
+    existing_visor = VisorService.get_by_id(visor_id)
     update_data = _get_visor_payload(VisorUpdateRequest)
     role_ids = update_data.pop("role_ids", None)
+    from_file = update_data.pop("from_file", None)
+    if from_file is None:
+        from_file = existing_visor.from_file
+    from_file = bool(from_file)
 
-    if not update_data and role_ids is None:
+    if not update_data and role_ids is None and from_file == existing_visor.from_file:
         raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
 
+    r_program = request.files.get("r_program")
+    source_url_field = _get_visor_source_url_field()
+    resource_url = update_data.get(source_url_field)
+
+    if from_file:
+        if r_program is not None:
+            if existing_visor.from_file:
+                delete_resource_file(visor_id, "visor")
+            visor_url = build_resource_url(r_program, visor_id, "visor")
+            update_data[source_url_field] = visor_url
+        elif not existing_visor.from_file:
+            raise SchemaValidationError("Debes adjuntar el archivo r_program")
+    else:
+        if not resource_url:
+            raise SchemaValidationError("Debes enviar la URL del visor")
+        if existing_visor.from_file:
+            delete_resource_file(visor_id, "visor")
+
+    update_data["from_file"] = from_file
     if update_data:
         VisorService.update(visor_id, **update_data)
-
-    r_program = request.files.get("r_program")
-    if r_program is not None:
-        delete_resource_file(visor_id, "visor")
-        visor_url = build_resource_url(r_program, visor_id, "visor")
-        VisorService.update(visor_id, visor_url=visor_url)
 
     if role_ids is not None:
         selected_role_ids = list({int(role_id) for role_id in role_ids})
@@ -163,7 +195,7 @@ def update_visor(visor_id):
                 RoleVisorRelation.add(role_id, visor_id)
 
     visor = VisorService.get_by_id(visor_id)
-    include = ["id", "title", "description", "visor_url", "updated_at"]
+    include = ["id", "title", "description", "from_file", "visor_url", "updated_at"]
     response = visor.to_dict(include=include)
     response["roles"] = [role.name for role in getattr(visor, "roles", [])]
     response["role_ids"] = [role.id for role in getattr(visor, "roles", [])]
@@ -250,14 +282,16 @@ def update_visor_roles(visor_id):
 def delete_visor(visor_id):
     assert_admin("El usuario no tiene permiso para eliminar visores")
 
+    visor = VisorService.get_by_id(visor_id)
     cascade = request.args.get("cascade", "false").lower() == "true"
     
     if cascade:
         VisorDataSourceRelation.remove_all_b_for_a(visor_id)
         RoleVisorRelation.remove_all_a_for_b(visor_id)
     
-    # Delete resource files
-    delete_resource_file(visor_id, "visor")
+    # Delete resource files only for Shiny uploads
+    if visor.from_file:
+        delete_resource_file(visor_id, "visor")
     
     VisorService.delete(visor_id)
 

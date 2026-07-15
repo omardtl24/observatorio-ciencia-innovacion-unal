@@ -22,6 +22,8 @@ class SimulatorCreateRequest(BaseModel):
 
     title: str = Field(..., min_length=1, description="The main title of the simulator")
     description: Optional[str] = Field(None, description="The description of the simulator")
+    from_file: bool = Field(True, description="Whether the simulator is uploaded as a Shiny app")
+    simulator_url: Optional[str] = Field(None, description="Direct URL for the simulator when not uploaded from a file")
     specs_file_id: Optional[int] = Field(None, description="The ID of the associated specs file")
     role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the simulator")
     updated_at: date = Field(..., description="The last update date of the simulator")
@@ -44,5 +46,7 @@ class SimulatorUpdateRequest(BaseModel):
 
     title: Optional[str] = Field(None, min_length=1, description="The main title of the simulator")
     description: Optional[str] = Field(None, description="The description of the simulator")
+    from_file: Optional[bool] = Field(None, description="Whether the simulator is uploaded as a Shiny app")
+    simulator_url: Optional[str] = Field(None, description="Direct URL for the simulator when not uploaded from a file")
     specs_file_id: Optional[int] = Field(None, description="The ID of the associated specs file")
     updated_at: Optional[date] = Field(None, description="The last update date of the simulator")

@@ -42,6 +42,7 @@ CREATE TABLE simulators (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
+    from_file BOOLEAN NOT NULL DEFAULT TRUE,
     simulator_url TEXT,
     specs_file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
@@ -52,6 +53,7 @@ CREATE TABLE visors (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
+    from_file BOOLEAN NOT NULL DEFAULT TRUE,
     visor_url TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at DATE NOT NULL DEFAULT CURRENT_DATE

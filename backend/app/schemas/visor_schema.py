@@ -25,6 +25,8 @@ class VisorCreateRequest(BaseModel):
     
     title: str = Field(..., min_length=1, description="The main title of the visor")
     description: str = Field(..., min_length=1, description="The description of the visor")
+    from_file: bool = Field(True, description="Whether the visor is uploaded as a Shiny app")
+    visor_url: Optional[str] = Field(None, description="Direct URL for the visor when not uploaded from a file")
     role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the visor")
     updated_at: date = Field(..., description="The last update date of the visor")
 
@@ -46,5 +48,7 @@ class VisorUpdateRequest(BaseModel):
 
     title: Optional[str] = Field(None, min_length=1, description="The main title of the visor")
     description: Optional[str] = Field(None, min_length=1, description="The description of the visor")
+    from_file: Optional[bool] = Field(None, description="Whether the visor is uploaded as a Shiny app")
+    visor_url: Optional[str] = Field(None, description="Direct URL for the visor when not uploaded from a file")
     role_ids: Optional[List[int]] = Field(None, description="Role IDs with access to the visor")
     updated_at: Optional[date] = Field(None, description="The last update date of the visor")

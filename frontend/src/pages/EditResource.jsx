@@ -70,12 +70,14 @@ const RESOURCE_DEFINITIONS = {
     label: "Simulador",
     endpoint: "simulator",
     uploadField: "r_program",
+    urlField: "simulator_url",
     fileLabel: "Archivo de la aplicacion (ZIP)",
   },
   visor: {
     label: "Visor",
     endpoint: "visor",
     uploadField: "r_program",
+    urlField: "visor_url",
     fileLabel: "Archivo de la aplicacion (ZIP)",
   },
 };
@@ -91,6 +93,8 @@ const INITIAL_FORM = {
   title: "",
   description: "",
   visor_url: "",
+  simulator_url: "",
+  from_file: true,
   file: null,
   role_ids: [],
   data_source_ids: [],
@@ -224,6 +228,11 @@ function isSelectionInsideElement(selection, element) {
   return element.contains(range.commonAncestorContainer);
 }
 
+function isShinyResource(resourceType) {
+  const definition = RESOURCE_DEFINITIONS[resourceType];
+  return Boolean(definition?.uploadField);
+}
+
 export default function EditResource() {
   const navigate = useNavigate();
   const { type, id } = useParams();
@@ -241,6 +250,7 @@ export default function EditResource() {
   const [availableDataSources, setAvailableDataSources] = useState([]);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [formatMessage, setFormatMessage] = useState("");
+  const [existingFromFile, setExistingFromFile] = useState(true);
   const [existingFileId, setExistingFileId] = useState(null);
   const [existingFileName, setExistingFileName] = useState(null);
   const mainTitleRef = useRef(null);
@@ -298,9 +308,13 @@ export default function EditResource() {
           title: data.title || "",
           description: data.description || "",
           visor_url: data.visor_url || "",
+          simulator_url: data.simulator_url || "",
+          from_file: typeof data.from_file === "boolean" ? data.from_file : true,
           role_ids: parsedRoleIds,
           updated_date: formatDateOnly(data.updated_at || data.updatedAt || data.last_update),
         }));
+
+        setExistingFromFile(typeof data.from_file === "boolean" ? data.from_file : true);
 
         if (supportsDataSources(normalizedType)) {
           const dataSources = await fetchResourceDataSources(normalizedType, id);
@@ -332,8 +346,12 @@ export default function EditResource() {
             setExistingFileId(fileId);
             setExistingFileName(`Archivo actual: ${normalizedType}`);
           }
-        } else if (RESOURCE_DEFINITIONS[normalizedType].uploadField && (data.simulator_url || data.visor_url)) {
-          setExistingFileName("Archivo actual cargado");
+        } else if (RESOURCE_DEFINITIONS[normalizedType].uploadField) {
+          if (data.from_file === false) {
+            setExistingFileName(`URL actual: ${data[RESOURCE_DEFINITIONS[normalizedType].urlField] || "No disponible"}`);
+          } else if (data[RESOURCE_DEFINITIONS[normalizedType].urlField]) {
+            setExistingFileName("Archivo actual cargado");
+          }
         }
       } catch (error) {
         if (active) {
@@ -448,6 +466,21 @@ export default function EditResource() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const setSourceMode = (fromFile) => {
+    setForm((prev) => ({
+      ...prev,
+      from_file: fromFile,
+      file: fromFile ? prev.file : null,
+      [currentDefinition.urlField]: fromFile ? "" : prev[currentDefinition.urlField],
+    }));
+
+    if (fromFile) {
+      updateField(currentDefinition.urlField, "");
+    } else {
+      updateField("file", null);
+    }
+  };
+
   const updateRichField = (field, value) => {
     setRichFields((prev) => ({
       ...prev,
@@ -516,7 +549,18 @@ export default function EditResource() {
       }
     }
 
-    if (currentDefinition.fileField && !form.file && !existingFileId) {
+    if (isShinyResource(form.resourceType)) {
+      if (form.from_file) {
+        if (!form.file && !existingFromFile) {
+          return "Debes cargar un archivo ZIP para este recurso";
+        }
+      } else {
+        const resourceUrl = (form[currentDefinition.urlField] || "").trim();
+        if (!resourceUrl) {
+          return "Debes indicar la URL del recurso";
+        }
+      }
+    } else if (currentDefinition.fileField && !form.file && !existingFileId) {
       return "Debes cargar un archivo para este recurso";
     }
 
@@ -527,9 +571,10 @@ export default function EditResource() {
     const encodedMainTitle = encodeMarkedFromHtml(richFields.title);
     const encodedDescription = encodeMarkedFromHtml(richFields.description);
 
-    if (currentDefinition.uploadField && form.file) {
+    if (currentDefinition.uploadField && form.from_file && form.file) {
       const formData = new FormData();
       formData.append("title", encodedMainTitle.trim());
+      formData.append("from_file", "true");
 
       if (encodedDescription.trim()) {
         formData.append("description", encodedDescription);
@@ -542,6 +587,7 @@ export default function EditResource() {
 
     const basePayload = {
       title: encodedMainTitle.trim(),
+      from_file: Boolean(form.from_file),
     };
 
     const normalizedUpdatedAt = toDateOnlyString(form.updated_date);
@@ -551,6 +597,10 @@ export default function EditResource() {
 
     if (encodedDescription.trim()) {
       basePayload.description = encodedDescription;
+    }
+
+    if (currentDefinition.uploadField && !form.from_file) {
+      basePayload[currentDefinition.urlField] = (form[currentDefinition.urlField] || "").trim();
     }
 
     if (currentDefinition.fileField && fileId) {
@@ -587,7 +637,6 @@ export default function EditResource() {
     let uploadedFileId = null;
 
     try {
-      // Upload new file if provided
       if (currentDefinition.fileField && form.file) {
         const uploadedFile = await uploadResourceFile(form.file);
         uploadedFileId = uploadedFile?.id;
@@ -698,7 +747,50 @@ export default function EditResource() {
             </p>
           )}
 
-          {(currentDefinition.fileField || currentDefinition.uploadField) && (
+          {currentDefinition.uploadField && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.from_file}
+              onClick={() => setSourceMode(!form.from_file)}
+              disabled={submitting}
+              className={`relative flex h-11 w-full items-center rounded-xl border border-gray-300 bg-primary-green-light p-1 transition-all duration-200 ${
+                submitting ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+              }`}
+            >
+              <span className="sr-only">Cambiar origen del recurso</span>
+
+              {/* Indicador */}
+              <span
+                className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow transition-transform duration-200 ${
+                  form.from_file
+                    ? "translate-x-0"
+                    : "translate-x-[calc(100%+0.25rem)]"
+                }`}
+              />
+
+              {/* Opción ZIP */}
+              <span
+                className={`relative z-10 flex w-1/2 justify-center text-sm font-semibold transition-colors duration-200 ${
+                  form.from_file ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                Archivo ZIP
+              </span>
+
+              {/* Opción URL */}
+              <span
+                className={`relative z-10 flex w-1/2 justify-center text-sm font-semibold transition-colors duration-200 ${
+                  !form.from_file ? "text-gray-900" : "text-gray-500"
+                }`}
+              >
+                URL directa
+              </span>
+            </button>
+          )}
+
+
+          {currentDefinition.uploadField && form.from_file && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {currentDefinition.fileLabel} (Opcional)
@@ -713,9 +805,29 @@ export default function EditResource() {
                 disabled={submitting}
               />
               <p className="text-xs text-gray-500 mt-1">
-                {currentDefinition.uploadField
-                  ? "Carga un nuevo ZIP si deseas reemplazar la aplicacion actual."
-                  : "Carga un nuevo archivo si deseas reemplazar el actual."}
+                Carga un nuevo ZIP si deseas reemplazar la aplicacion actual.
+              </p>
+            </div>
+          )}
+
+          {currentDefinition.uploadField && !form.from_file && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                URL directa del recurso
+              </label>
+              {existingFileName && (
+                <p className="text-xs text-gray-600 mb-2">{existingFileName}</p>
+              )}
+              <input
+                type="url"
+                value={form[currentDefinition.urlField]}
+                onChange={(e) => updateField(currentDefinition.urlField, e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                placeholder="https://..."
+                disabled={submitting}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Pega la URL directa del visor o simulador.
               </p>
             </div>
           )}

@@ -6,6 +6,7 @@ class Simulator(db.Model, TimestampMixin, BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
+    from_file = db.Column(db.Boolean, nullable=False, default=True)
     simulator_url = db.Column(db.Text)
 
     specs_file_id = db.Column(db.Integer, db.ForeignKey('files.id'))
