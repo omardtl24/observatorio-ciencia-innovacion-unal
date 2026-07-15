@@ -1,11 +1,12 @@
+from datetime import date, datetime
+
 from flask_sqlalchemy import SQLAlchemy # type: ignore
-from datetime import datetime
 
 db = SQLAlchemy()
 
 class TimestampMixin:
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.Date, nullable=False, default=date.today)
 
 class BaseModel:
     """Provides reusable db helper methods for all models."""

@@ -15,7 +15,7 @@ import {
   fetchAssignableRoles,
   uploadResourceFile,
 } from "../services/resourcesServices";
-import { hasAdministratorRole } from "../services/dashboardUtils";
+import { formatDate, hasAdministratorRole } from "../services/dashboardUtils";
 import { parseColor, parseRichText } from "../services/stringServices.jsx";
 import reportCoverImg from "../assets/cardImages/reports.png";
 import reportHoveredCoverImg from "../assets/cardImages/reportsHover.png";
@@ -191,20 +191,22 @@ function formatDateOnly(value) {
     return "";
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
+  if (typeof value === "string") {
+    const dateOnly = value.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+      return dateOnly;
+    }
   }
 
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 10);
+  return "";
 }
 
-function toMidnightISOString(dateOnlyValue) {
+function toDateOnlyString(dateOnlyValue) {
   if (!dateOnlyValue) {
     return null;
   }
-  return `${dateOnlyValue}T00:00:00`;
+
+  return dateOnlyValue;
 }
 
 function getTodayDateOnly() {
@@ -278,19 +280,17 @@ export default function EditResource() {
 
         const parsedRoleIds = Array.isArray(data.role_ids)
           ? data.role_ids
-          : Array.isArray(data.roles)
-            ? data.roles
-              .map((role) => {
-                if (typeof role === "number") {
-                  return role;
-                }
-                if (role && typeof role === "object") {
-                  return role.id;
-                }
-                return null;
-              })
-              .filter((roleId) => typeof roleId === "number")
-            : [];
+            .map((role) => {
+              if (typeof role === "number") {
+                return role;
+              }
+              if (role && typeof role === "object") {
+                return role.id;
+              }
+              return null;
+            })
+            .filter((roleId) => typeof roleId === "number")
+          : [];
 
         setForm((prev) => ({
           ...prev,
@@ -544,7 +544,7 @@ export default function EditResource() {
       title: encodedMainTitle.trim(),
     };
 
-    const normalizedUpdatedAt = toMidnightISOString(form.updated_date);
+    const normalizedUpdatedAt = toDateOnlyString(form.updated_date);
     if (normalizedUpdatedAt) {
       basePayload.updated_at = normalizedUpdatedAt;
     }
@@ -561,11 +561,7 @@ export default function EditResource() {
   };
 
   const previewUpdatedAt = form.updated_date
-    ? new Date(`${form.updated_date}T00:00:00`).toLocaleDateString("es-CO", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    ? formatDate(form.updated_date)
     : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
@@ -605,7 +601,7 @@ export default function EditResource() {
       const payload = buildPayload(fileIdToUse);
 
       // 1) Update base resource fields.
-      await updateResource(currentDefinition.endpoint, id, payload, toMidnightISOString(form.updated_date));
+      await updateResource(currentDefinition.endpoint, id, payload, toDateOnlyString(form.updated_date));
 
       // 2) Update resource roles in a dedicated request.
       await updateResourceRoles(currentDefinition.endpoint, id, form.role_ids);

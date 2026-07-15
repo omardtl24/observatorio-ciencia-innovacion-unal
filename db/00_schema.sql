@@ -7,7 +7,7 @@ CREATE TABLE roles (
     name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE users (
@@ -16,7 +16,7 @@ CREATE TABLE users (
     last_names VARCHAR(120) NOT NULL,
     last_login_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 
@@ -45,7 +45,7 @@ CREATE TABLE simulators (
     simulator_url TEXT,
     specs_file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE visors (
@@ -54,7 +54,7 @@ CREATE TABLE visors (
     description TEXT,
     visor_url TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE reports (
@@ -63,7 +63,7 @@ CREATE TABLE reports (
     description TEXT,
     document_file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE documents_presentations (
@@ -72,7 +72,7 @@ CREATE TABLE documents_presentations (
     description TEXT,
     file_id INTEGER REFERENCES files(id),
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 
@@ -86,7 +86,7 @@ CREATE TABLE data_sources (
     description TEXT,
     file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE RESTRICT,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 -- data sources used by reports
@@ -149,3 +149,6 @@ CREATE TABLE role_documents_presentations (
     documents_presentation_id INTEGER REFERENCES documents_presentations(id),
     PRIMARY KEY (role_id, documents_presentation_id)
 );
+
+ALTER DATABASE observatorio
+SET timezone TO 'America/Bogota';

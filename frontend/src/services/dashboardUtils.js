@@ -1,5 +1,20 @@
 import { fetchFromUrl, fetchResources } from "./resourcesServices";
 
+const MONTH_NAMES_ES = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
 export const RESOURCE_TABLES = [
   {
     key: "report",
@@ -55,16 +70,18 @@ export function formatDate(value) {
     return "No disponible";
   }
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "No disponible";
+  if (typeof value === "string") {
+    const dateOnly = value.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+      const [year, month, day] = dateOnly.split("-");
+      const monthName = MONTH_NAMES_ES[Number(month) - 1];
+      if (monthName) {
+        return `${Number(day)} de ${monthName} de ${year}`;
+      }
+    }
   }
 
-  return date.toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return "No disponible";
 }
 
 export function getItemLastUpdate(item) {
@@ -87,9 +104,11 @@ export function getItemLastUpdate(item) {
       continue;
     }
 
-    const parsed = new Date(candidate);
-    if (!Number.isNaN(parsed.getTime())) {
-      return candidate;
+    if (typeof candidate === "string") {
+      const dateOnly = candidate.slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+        return dateOnly;
+      }
     }
   }
 
@@ -104,7 +123,7 @@ export function getMostRecentDate(items) {
   return items
     .map((item) => getItemLastUpdate(item))
     .filter(Boolean)
-    .sort((a, b) => new Date(b) - new Date(a))[0] || null;
+    .sort((a, b) => String(b).localeCompare(String(a)))[0] || null;
 }
 
 export async function fetchFirstAvailableResource(endpointCandidates) {

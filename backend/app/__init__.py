@@ -1,6 +1,9 @@
+from datetime import date, datetime
+
 from flask import Flask, jsonify # type: ignore
 from flask_cors import CORS # type: ignore
 from flask_jwt_extended import JWTManager # type: ignore
+from flask.json.provider import DefaultJSONProvider # type: ignore
 from app.api.auth_routes import auth_bp, test_auth_bp
 from app.api.visor_routes import visor_bp
 from app.api.access_routes import access_bp
@@ -29,6 +32,17 @@ from datetime import timedelta
 
 jwt = JWTManager()
 
+
+class ISODateJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return super().default(obj)
+
+        if isinstance(obj, date):
+            return obj.isoformat()
+
+        return super().default(obj)
+
 def create_app(config_name="production"):
     """Create and configure the Flask app.
     
@@ -39,6 +53,8 @@ def create_app(config_name="production"):
         Flask: The configured Flask application instance.
     """
     app = Flask(__name__, instance_relative_config=True)
+    app.json_provider_class = ISODateJSONProvider
+    app.json = app.json_provider_class(app)
     
     if config_name == "testing":
         app.config.from_object(TestingConfig)

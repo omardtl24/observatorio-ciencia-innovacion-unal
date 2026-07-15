@@ -7,4 +7,10 @@ export default defineConfig({
     react(),
     svgr(),
   ],
+  server: {
+    host: true,
+    hmr: {
+      protocol: "wss",
+    },
+  },
 });

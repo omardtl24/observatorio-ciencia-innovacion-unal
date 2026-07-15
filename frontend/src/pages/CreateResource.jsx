@@ -12,7 +12,7 @@ import {
   syncResourceDataSources,
   uploadResourceFile,
 } from "../services/resourcesServices";
-import { hasAdministratorRole } from "../services/dashboardUtils";
+import { formatDate, hasAdministratorRole } from "../services/dashboardUtils";
 import { parseColor, parseRichText } from "../services/stringServices.jsx";
 import reportCoverImg from "../assets/cardImages/reports.png";
 import reportHoveredCoverImg from "../assets/cardImages/reportsHover.png";
@@ -177,11 +177,12 @@ function isSelectionInsideElement(selection, element) {
   return element.contains(range.commonAncestorContainer);
 }
 
-function toMidnightISOString(dateOnlyValue) {
+function toDateOnlyString(dateOnlyValue) {
   if (!dateOnlyValue) {
     return null;
   }
-  return `${dateOnlyValue}T00:00:00`;
+
+  return dateOnlyValue;
 }
 
 function getTodayDateOnly() {
@@ -342,13 +343,14 @@ export default function CreateResource() {
       return;
     }
 
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !isSelectionInsideElement(selection, input)) {
-      setFormatMessage("Selecciona un texto dentro del campo para aplicar negrilla.");
+    if (typeof value === "string") {
+      const dateOnly = value.slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+        return dateOnly;
+      }
       return;
     }
-
-    document.execCommand("bold");
+    return "";
     updateRichField(field, input.innerHTML);
     setFormatMessage("Formato en negrilla aplicado.");
 
@@ -405,7 +407,7 @@ export default function CreateResource() {
       title: encodedMainTitle.trim(),
     };
 
-    const normalizedUpdatedAt = toMidnightISOString(form.updated_date);
+    const normalizedUpdatedAt = toDateOnlyString(form.updated_date);
     if (normalizedUpdatedAt) {
       basePayload.updated_at = normalizedUpdatedAt;
     }
@@ -426,11 +428,7 @@ export default function CreateResource() {
   };
 
   const previewUpdatedAt = form.updated_date
-    ? new Date(`${form.updated_date}T00:00:00`).toLocaleDateString("es-CO", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    ? formatDate(form.updated_date)
     : "No disponible";
 
   const previewMainTitle = getPlainFromHtml(richFields.title).trim() || "Titulo principal";
@@ -468,7 +466,7 @@ export default function CreateResource() {
       const createdResource = await createResource(
         currentDefinition.endpoint,
         payload,
-        toMidnightISOString(form.updated_date)
+        toDateOnlyString(form.updated_date)
       );
 
       if (supportsDataSources(currentDefinition.endpoint) && createdResource?.id) {

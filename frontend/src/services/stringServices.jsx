@@ -5,10 +5,28 @@ export function capitalize(text){
 };
 
 export function datetoString(date){
-    return new Date(date).toLocaleDateString("es-ES", {
-                year: "numeric",
-                month: "long",
-            }).replace(/^\w/, (c) => c.toUpperCase())
+    if (typeof date !== "string") return "";
+
+    const dateOnly = date.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) return "";
+
+    const [year, month] = dateOnly.split("-");
+    const months = [
+      "enero",
+      "febrero",
+      "marzo",
+      "abril",
+      "mayo",
+      "junio",
+      "julio",
+      "agosto",
+      "septiembre",
+      "octubre",
+      "noviembre",
+      "diciembre",
+    ];
+
+    return `${months[Number(month) - 1]} de ${year}`.replace(/^\w/, (c) => c.toUpperCase())
 }
 
 export function stripColorMarkers(text) {

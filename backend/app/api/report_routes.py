@@ -23,7 +23,7 @@ def create_report():
         title (str, required): The main title of the report.
         description (str, optional): The description of the report.
         document_file_id (int, optional): The ID of the associated document file.
-        updated_at (datetime, required): The last update timestamp.
+        updated_at (date, required): The last update date.
     
     Returns:
         dict: The created report with status code 201.
@@ -125,7 +125,7 @@ def update_report(report_id):
         title (str, optional): The main title of the report.
         description (str, optional): The description of the report.
         document_file_id (int, optional): The ID of the associated document file.
-        updated_at (datetime, optional): The last update timestamp.
+        updated_at (date, optional): The last update date.
     
     Returns:
         dict: The updated report with status code 200.

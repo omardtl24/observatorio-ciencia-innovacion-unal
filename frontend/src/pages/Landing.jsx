@@ -1,4 +1,5 @@
 import ResourceCard from "../components/ResourceCard";
+import { formatDate } from "../services/dashboardUtils";
 
 export default function Landing() {
   const images = [
@@ -10,13 +11,13 @@ export default function Landing() {
     {
       mainTitle: "Impacto del Curso de Nivelacion Matematicas Basicas en el desempeno de los estudiantes en la asignatura Calculo Diferencial",
       type: "PDF",
-      updatedAt: "2024-06-01T00:00:00Z",
+      updatedAt: "2024-06-01",
       resourceType: "visor",
     },
     {
       mainTitle: "Impacto del Curso de Nivelacion Matematicas Basicas en el desempeno de los estudiantes en la asignatura Calculo Diferencial",
       type: "PDF",
-      updatedAt: "2024-10-01T00:00:00Z",
+      updatedAt: "2024-10-01",
       resourceType: "simulator",
     }
     
@@ -30,13 +31,7 @@ export default function Landing() {
             key={index}
             mainTitle={item.mainTitle}
             type={item.type}
-            updatedAt={new Date(item.updatedAt)
-                    .toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "long",
-                    })
-                    .replace(/^\w/, (c) => c.toUpperCase())
-                }
+            updatedAt={formatDate(item.updatedAt)}
             coverImage={images[index % images.length]}
             resourceType={item.resourceType}
           />

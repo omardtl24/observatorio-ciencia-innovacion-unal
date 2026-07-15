@@ -1,5 +1,5 @@
+from datetime import date
 from typing import List, Optional
-from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict # type: ignore
 
 
@@ -9,7 +9,7 @@ class VisorCreateRequest(BaseModel):
     Attributes:
         title: The main title of the visor (required).
         description: The description of the visor (required).
-        updated_at: The last update timestamp of the visor (required).
+        updated_at: The last update date of the visor (required).
     """
     model_config = ConfigDict(
         extra='forbid',  
@@ -18,7 +18,7 @@ class VisorCreateRequest(BaseModel):
             "example": {
                 "title": "Main Visor title",
                 "description": "Primary data visualization visor",
-                "updated_at": "2026-02-14T21:01:51"
+                "updated_at": "2026-02-14"
             }
         }
     )
@@ -26,7 +26,7 @@ class VisorCreateRequest(BaseModel):
     title: str = Field(..., min_length=1, description="The main title of the visor")
     description: str = Field(..., min_length=1, description="The description of the visor")
     role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the visor")
-    updated_at: datetime = Field(..., description="The last update timestamp of the visor")
+    updated_at: date = Field(..., description="The last update date of the visor")
 
 
 class VisorUpdateRequest(BaseModel):
@@ -39,7 +39,7 @@ class VisorUpdateRequest(BaseModel):
             "example": {
                 "title": "Main Visor title updated",
                 "description": "Updated visor description",
-                "updated_at": "2026-02-15T00:00:00"
+                "updated_at": "2026-02-15"
             }
         }
     )
@@ -47,4 +47,4 @@ class VisorUpdateRequest(BaseModel):
     title: Optional[str] = Field(None, min_length=1, description="The main title of the visor")
     description: Optional[str] = Field(None, min_length=1, description="The description of the visor")
     role_ids: Optional[List[int]] = Field(None, description="Role IDs with access to the visor")
-    updated_at: Optional[datetime] = Field(None, description="The last update timestamp of the visor")
+    updated_at: Optional[date] = Field(None, description="The last update date of the visor")

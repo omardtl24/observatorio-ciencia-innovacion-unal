@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field # type: ignore
@@ -15,7 +15,7 @@ class SimulatorCreateRequest(BaseModel):
                 "title": "Simulador de demanda",
                 "description": "Simulador de proyeccion de demanda",
                 "specs_file_id": 7,
-                "updated_at": "2026-03-26T10:00:00",
+                "updated_at": "2026-03-26",
             }
         },
     )
@@ -24,7 +24,7 @@ class SimulatorCreateRequest(BaseModel):
     description: Optional[str] = Field(None, description="The description of the simulator")
     specs_file_id: Optional[int] = Field(None, description="The ID of the associated specs file")
     role_ids: List[int] = Field(default_factory=list, description="Role IDs with access to the simulator")
-    updated_at: datetime = Field(..., description="The last update timestamp of the simulator")
+    updated_at: date = Field(..., description="The last update date of the simulator")
 
 
 class SimulatorUpdateRequest(BaseModel):
@@ -37,7 +37,7 @@ class SimulatorUpdateRequest(BaseModel):
             "example": {
                 "title": "Simulador de demanda actualizado",
                 "description": "Nueva descripcion",
-                "updated_at": "2026-03-27T08:30:00",
+                "updated_at": "2026-03-27",
             }
         },
     )
@@ -45,4 +45,4 @@ class SimulatorUpdateRequest(BaseModel):
     title: Optional[str] = Field(None, min_length=1, description="The main title of the simulator")
     description: Optional[str] = Field(None, description="The description of the simulator")
     specs_file_id: Optional[int] = Field(None, description="The ID of the associated specs file")
-    updated_at: Optional[datetime] = Field(None, description="The last update timestamp of the simulator")
+    updated_at: Optional[date] = Field(None, description="The last update date of the simulator")
