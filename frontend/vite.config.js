@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
-  base: "./",
+  base: env.VITE_APP_BASE || "/",
 
   plugins: [
     react(),
