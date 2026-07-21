@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
-    base: env.VITE_APP_BASE || "/",
+    base: `${env.VITE_APP_BASE}/`,
 
     plugins: [
       react(),
@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
 
     server: {
       host: true,
+      allowedHosts: true,
       hmr: {
         protocol: "wss",
       },
