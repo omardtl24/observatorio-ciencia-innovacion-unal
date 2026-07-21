@@ -1,24 +1,19 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+export default defineConfig({
+  base: "./",
 
-  return {
-    base: `${env.VITE_APP_BASE}/`,
+  plugins: [
+    react(),
+    svgr(),
+  ],
 
-    plugins: [
-      react(),
-      svgr(),
-    ],
-
-    server: {
-      host: true,
-      allowedHosts: true,
-      hmr: {
-        protocol: "wss",
-      },
+  server: {
+    host: true,
+    hmr: {
+      protocol: "wss",
     },
-  };
+  },
 });
