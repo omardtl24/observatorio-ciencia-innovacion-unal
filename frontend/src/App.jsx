@@ -1,7 +1,13 @@
 import AppRouter from "./router/AppRouter";
-
+import NavigationInitializer from "./components/NavigationInitializer";
+  
 function App() {
-  return <AppRouter />;
+  return (
+    <>
+      <NavigationInitializer />
+      <AppRouter />
+    </>
+  );
 }
 
 export default App;

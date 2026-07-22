@@ -1,5 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import { setCookie, getCookie, deleteCookie } from "./cookiesManager";
+import { navigateTo } from "../navigation";
+
 
 const TOKEN_KEY = "access_token";
 const IMAGE_ID_KEY = "profile_image_id";
@@ -347,7 +349,9 @@ export function expired() {
   sessionStorage.removeItem(IMAGE_ID_KEY);
   sessionStorage.removeItem(ROLES_KEY);
   clearProfileImageBlobCache();
-  window.location.href = "/login?error=session_expired";
+  navigateTo("/login?error=session_expired", {
+        replace: true,
+    });
 }
 
 export function logout(origin = null, navigate = null) {
@@ -497,22 +501,6 @@ export function redirectToLogin(navigate, customOrigin = null, resourceType = nu
 }
 
 /**
- * Redirect to login for non-component contexts (fallback).
- * Prefer redirectToLogin(navigate) when in a React component.
- * 
- * @param {string} customOrigin - Optional custom origin to redirect to after login
- * @param {string|null} resourceType - Optional resource type context
- */
-export function redirectToLoginFallback(customOrigin = null, resourceType = null) {
-  const origin = customOrigin || window.location.pathname;
-  const params = new URLSearchParams({ origin });
-  if (resourceType) {
-    params.set("resourceType", resourceType);
-  }
-  window.location.href = `/login?${params.toString()}`;
-}
-
-/**
  * Determine the appropriate logout destination based on current page.
  * If on a resource detail page (/resource/type/id), redirect to the resources list (/resources/type).
  * Otherwise, return null to trigger page reload (allows UI to update with session cleared).
@@ -565,7 +553,7 @@ export async function startLogin(origin = "/") {
     const result = await getAccessToken();
     
     // Redirect to origin after successful authentication
-    window.location.href = result.redirectTo;
+    navigateTo(result.redirectTo);
   } catch (error) {
     console.error("Login error:", error);
     if (error?.message?.includes("closed by user")) {
