@@ -587,8 +587,11 @@ export default function EditResource() {
 
     const basePayload = {
       title: encodedMainTitle.trim(),
-      from_file: Boolean(form.from_file),
     };
+
+    if (currentDefinition.uploadField) {
+      basePayload.from_file = Boolean(form.from_file);
+    }
 
     const normalizedUpdatedAt = toDateOnlyString(form.updated_date);
     if (normalizedUpdatedAt) {
@@ -828,6 +831,31 @@ export default function EditResource() {
               />
               <p className="text-xs text-gray-500 mt-1">
                 Pega la URL directa del visor o simulador.
+              </p>
+            </div>
+          )}
+
+          {currentDefinition.fileField && !currentDefinition.uploadField && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {currentDefinition.fileLabel} (Opcional)
+              </label>
+              {existingFileName && (
+                <p className="text-xs text-gray-600 mb-2">{existingFileName}</p>
+              )}
+              <input
+                type="file"
+                onChange={(e) => updateField("file", e.target.files?.[0] || null)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                disabled={submitting}
+              />
+              {form.file && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Nuevo archivo seleccionado: <strong>{form.file.name}</strong>
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Carga un nuevo archivo si deseas reemplazar el actual.
               </p>
             </div>
           )}

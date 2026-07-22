@@ -367,14 +367,13 @@ export default function CreateResource() {
       return;
     }
 
-    if (typeof value === "string") {
-      const dateOnly = value.slice(0, 10);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-        return dateOnly;
-      }
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !isSelectionInsideElement(selection, input)) {
+      setFormatMessage("Selecciona el texto que deseas resaltar dentro del campo.");
       return;
     }
-    return "";
+
+    document.execCommand("bold");
     updateRichField(field, input.innerHTML);
     setFormatMessage("Formato en negrilla aplicado.");
 
@@ -441,8 +440,11 @@ export default function CreateResource() {
 
     const basePayload = {
       title: encodedMainTitle.trim(),
-      from_file: Boolean(form.from_file),
     };
+
+    if (currentDefinition.uploadField) {
+      basePayload.from_file = Boolean(form.from_file);
+    }
 
     const normalizedUpdatedAt = toDateOnlyString(form.updated_date);
     if (normalizedUpdatedAt) {
@@ -681,6 +683,25 @@ export default function CreateResource() {
               <p className="text-xs text-gray-500 mt-1">
                 Pega la URL directa del visor o simulador.
               </p>
+            </div>
+          )}
+
+          {currentDefinition.fileField && !currentDefinition.uploadField && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {currentDefinition.fileLabel} *
+              </label>
+              <input
+                type="file"
+                onChange={(e) => updateField("file", e.target.files?.[0] || null)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                disabled={submitting}
+              />
+              {form.file && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Archivo seleccionado: <strong>{form.file.name}</strong>
+                </p>
+              )}
             </div>
           )}
 
