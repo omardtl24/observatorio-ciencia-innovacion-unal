@@ -4,9 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
+const basename = import.meta.env.VITE_APP_BASE || "";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter basename="/app-observatorio-analisis-indicadores">
+    <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
   </React.StrictMode>
