@@ -27,6 +27,7 @@ import {
   removeRoleFromUser,
   fetchDataSources,
   deleteDataSource,
+  triggerOrphanedFilesCleanup,
 } from "../services/resourcesServices";
 import { parseColor } from "../services/stringServices.jsx";
 
@@ -223,6 +224,7 @@ export default function Dashboard() {
   const [tablesLoading, setTablesLoading] = useState(true);
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
+  const [cleaningOrphanedFiles, setCleaningOrphanedFiles] = useState(false);
   const [deletingKey, setDeletingKey] = useState(null);
   const [actionMessage, setActionMessage] = useState("");
   const [roleManagerLoading, setRoleManagerLoading] = useState(true);
@@ -409,6 +411,35 @@ export default function Dashboard() {
       return;
     }
     setRefreshCounter((value) => value + 1);
+  };
+
+  const handleCleanupOrphanedFiles = async () => {
+    const confirmed = window.confirm(
+      "¿Seguro que deseas eliminar los archivos huérfanos (no vinculados a ningún recurso)? Esta acción no se puede deshacer."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setCleaningOrphanedFiles(true);
+    setActionMessage("");
+
+    try {
+      const result = await triggerOrphanedFilesCleanup();
+      const removed = result?.removed ?? 0;
+      setActionMessage(
+        removed > 0
+          ? `Limpieza completada: se eliminaron ${removed} archivo(s) huérfano(s).`
+          : "Limpieza completada: no se encontraron archivos huérfanos."
+      );
+    } catch (error) {
+      const message = error?.message || "No fue posible ejecutar la limpieza de archivos huérfanos.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+      }
+    } finally {
+      setCleaningOrphanedFiles(false);
+    }
   };
 
   const updateUserInRoleState = (updatedUser) => {
@@ -649,16 +680,28 @@ export default function Dashboard() {
             <h2 className="text-2xl font-semibold text-secondary-cyan-strong">Resumen de recursos</h2>
             <p className="text-sm text-gray-600 mt-1">Recursos disponibles por categoria para administradores.</p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={tablesLoading}
-            className="bg-secondary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {tablesLoading ? "Actualizando..." : "Actualizar datos"}
-          </button>
-          <p className="text-xs text-gray-600 md:text-right">
-            Ultima actualizacion: {lastRefreshLabel}
-          </p>
+          <div className="flex flex-col md:flex-row gap-3 md:items-center">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                disabled={tablesLoading}
+                className="bg-secondary-cyan-strong text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {tablesLoading ? "Actualizando..." : "Actualizar datos"}
+              </button>
+              <button
+                onClick={handleCleanupOrphanedFiles}
+                disabled={cleaningOrphanedFiles}
+                title="Elimina archivos que ya no están vinculados a ningún recurso"
+                className="border border-red-300 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cleaningOrphanedFiles ? "Limpiando..." : "Limpiar archivos huérfanos"}
+              </button>
+            </div>
+            <p className="text-xs text-gray-600 md:text-right">
+              Ultima actualizacion: {lastRefreshLabel}
+            </p>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

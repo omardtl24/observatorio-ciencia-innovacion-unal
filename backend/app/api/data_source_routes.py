@@ -135,6 +135,32 @@ def get_data_source_file_history(data_source_id):
     return jsonify(payload), 200
 
 
+@data_source_bp.delete("/<int:data_source_id>/files/<int:file_id>")
+@jwt_required()
+def delete_data_source_file_version(data_source_id, file_id):
+    """Permanently delete one historic file version from a data source.
+
+    Path Parameters:
+        data_source_id (int): The ID of the data source.
+        file_id (int): The ID of the historic file to remove.
+
+    Returns:
+        Empty response with status 204 (No Content).
+
+    Raises:
+        400: If the user is not an administrator, or the file is the
+            currently published version.
+        401: If not authenticated (when JWT is enabled).
+        404: If data_source_id does not exist, or file_id is not part of its history.
+    """
+
+    assert_admin("El usuario no tiene permiso para eliminar versiones de fuentes de datos")
+
+    DataSourceService.delete_file_version(data_source_id, file_id)
+
+    return "", 204
+
+
 @data_source_bp.delete("/<int:data_source_id>")
 @jwt_required()
 def delete_data_source(data_source_id):

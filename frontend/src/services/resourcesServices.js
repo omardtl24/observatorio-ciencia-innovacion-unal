@@ -717,6 +717,37 @@ export async function deleteFileById(fileId) {
     }
 }
 
+export async function triggerOrphanedFilesCleanup() {
+    const url = `${import.meta.env.VITE_API_URL}/file/gc`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible ejecutar la limpieza de archivos huérfanos");
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
+        throw new Error(message);
+    }
+
+    return response.json();
+}
+
 export async function createDataSource(payload) {
     const url = `${import.meta.env.VITE_API_URL}/data-source`;
     const token = getToken();
@@ -805,6 +836,35 @@ export async function deleteDataSource(dataSourceId) {
 
     if (!response.ok) {
         const message = await getErrorMessage(response, "No fue posible eliminar la fuente de datos");
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
+        }
+        throw new Error(message);
+    }
+}
+
+export async function deleteDataSourceFileVersion(dataSourceId, fileId) {
+    const url = `${import.meta.env.VITE_API_URL}/data-source/${dataSourceId}/files/${fileId}`;
+    const token = getToken();
+
+    let response;
+    try {
+        response = await fetchWithTimeout(url, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible eliminar esta versión de la fuente de datos");
         if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("show-error-popup", { detail: { message } }));
         }

@@ -1,5 +1,6 @@
 from datetime import date, datetime
 
+import click # type: ignore
 from flask import Flask, jsonify # type: ignore
 from flask_cors import CORS # type: ignore
 from flask_jwt_extended import JWTManager # type: ignore
@@ -22,6 +23,10 @@ from app.error_handlers import (
     register_jwt_error_handlers,
 )
 from app.services.bootstrap_service import BootstrapService
+from app.services.file_garbage_collector_service import (
+    FileGarbageCollectorService,
+    start_orphaned_files_cleanup_daemon,
+)
 from app.services.profile_image_fs_cache_service import (
     ProfileImageFsCacheService,
     start_profile_image_cleanup_daemon,
@@ -128,7 +133,29 @@ def create_app(config_name="production"):
         removed = ProfileImageFsCacheService.cleanup_expired_images(ttl_seconds=ttl_seconds)
         app.logger.info(f"Removed {removed} expired profile images")
 
+    @app.cli.command("cleanup-orphaned-files")
+    @click.option(
+        "--grace-period-seconds",
+        default=0,
+        type=int,
+        help=(
+            "Minimum age, in seconds, an unlinked/untracked file must have "
+            "before this command will remove it. This is a manually-run "
+            "command, not the automated sweep, so it defaults to 0 (no "
+            "grace period) - pass this to keep a safety margin instead."
+        ),
+    )
+    def cleanup_orphaned_files_command(grace_period_seconds):
+        result = FileGarbageCollectorService.collect(
+            grace_period_seconds=grace_period_seconds, logger=app.logger
+        )
+        app.logger.info(
+            f"Removed {result['orphaned_file_records']} orphaned file record(s) and "
+            f"{result['untracked_disk_files']} untracked file(s) ({result['removed']} total)"
+        )
+
     if not is_test_mode:
         start_profile_image_cleanup_daemon(app)
+        start_orphaned_files_cleanup_daemon(app)
 
     return app

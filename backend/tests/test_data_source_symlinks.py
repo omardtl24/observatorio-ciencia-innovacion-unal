@@ -4,7 +4,7 @@ import os
 
 import pytest # type: ignore
 
-from app.domain.exceptions import NotFoundError
+from app.domain.exceptions import IllegalOperationError, NotFoundError
 from app.services.data_source_service import DataSourceService
 from app.services.file_service import FileService
 
@@ -250,3 +250,117 @@ class TestDataSourceDeleteSymlinkCleanup:
             assert os.path.exists(preserved.storage_path)
             with open(preserved.storage_path, "rb") as f:
                 assert f.read() == b"version one content"
+
+
+class TestDataSourceDeleteFileVersion:
+    def test_deletes_historic_version_from_history(self, app, file_v1, file_v2):
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+            DataSourceService.publish_file_version(data_source.id, file_v2.id)
+
+            DataSourceService.delete_file_version(data_source.id, file_v1.id)
+
+            history = DataSourceService.get_file_history(data_source.id)
+            assert [entry.file_id for entry in history] == [file_v2.id]
+
+    def test_deletes_the_underlying_file_best_effort(self, app, file_v1, file_v2):
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+            DataSourceService.publish_file_version(data_source.id, file_v2.id)
+            storage_path = file_v1.storage_path
+
+            DataSourceService.delete_file_version(data_source.id, file_v1.id)
+
+            with pytest.raises(NotFoundError):
+                FileService.get_by_id(file_v1.id)
+            assert not os.path.exists(storage_path)
+
+    def test_cannot_delete_the_currently_published_version(self, app, file_v1, file_v2):
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+            DataSourceService.publish_file_version(data_source.id, file_v2.id)
+
+            with pytest.raises(IllegalOperationError):
+                DataSourceService.delete_file_version(data_source.id, file_v2.id)
+
+            history = DataSourceService.get_file_history(data_source.id)
+            assert {entry.file_id for entry in history} == {file_v1.id, file_v2.id}
+
+    def test_only_version_in_history_is_also_protected(self, app, file_v1):
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+
+            with pytest.raises(IllegalOperationError):
+                DataSourceService.delete_file_version(data_source.id, file_v1.id)
+
+    def test_raises_not_found_for_file_outside_this_data_sources_history(self, app, file_v1, file_v2):
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+
+            with pytest.raises(NotFoundError):
+                DataSourceService.delete_file_version(data_source.id, file_v2.id)
+
+    def test_raises_not_found_for_missing_data_source(self, app, file_v1):
+        with app.app_context():
+            with pytest.raises(NotFoundError):
+                DataSourceService.delete_file_version(9999, file_v1.id)
+
+
+class TestDataSourceDeleteFileVersionRoute:
+    def test_route_deletes_historic_version(self, app, monkeypatch, file_v1, file_v2):
+        from app.api import data_source_routes
+
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+            DataSourceService.publish_file_version(data_source.id, file_v2.id)
+            data_source_id = data_source.id
+
+        monkeypatch.setattr("app.api.data_source_routes.assert_admin", lambda message: None)
+
+        with app.test_request_context(
+            f"/data-source/{data_source_id}/files/{file_v1.id}", method="DELETE"
+        ):
+            response, code = _unwrap(data_source_routes.delete_data_source_file_version)(
+                data_source_id, file_v1.id
+            )
+
+        assert code == 204
+
+        with app.app_context():
+            history = DataSourceService.get_file_history(data_source_id)
+            assert [entry.file_id for entry in history] == [file_v2.id]
+
+    def test_route_requires_admin(self, app, monkeypatch, file_v1, file_v2):
+        from app.api import data_source_routes
+
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+            DataSourceService.publish_file_version(data_source.id, file_v2.id)
+            data_source_id = data_source.id
+
+        monkeypatch.setattr(
+            "app.api.data_source_routes.assert_admin",
+            lambda message: (_ for _ in ()).throw(IllegalOperationError(message)),
+        )
+
+        with pytest.raises(IllegalOperationError):
+            with app.test_request_context(
+                f"/data-source/{data_source_id}/files/{file_v1.id}", method="DELETE"
+            ):
+                _unwrap(data_source_routes.delete_data_source_file_version)(data_source_id, file_v1.id)
+
+    def test_route_rejects_deleting_current_version(self, app, monkeypatch, file_v1, file_v2):
+        from app.api import data_source_routes
+
+        with app.app_context():
+            data_source = DataSourceService.create(name="Source", file_id=file_v1.id)
+            DataSourceService.publish_file_version(data_source.id, file_v2.id)
+            data_source_id = data_source.id
+
+        monkeypatch.setattr("app.api.data_source_routes.assert_admin", lambda message: None)
+
+        with pytest.raises(IllegalOperationError):
+            with app.test_request_context(
+                f"/data-source/{data_source_id}/files/{file_v2.id}", method="DELETE"
+            ):
+                _unwrap(data_source_routes.delete_data_source_file_version)(data_source_id, file_v2.id)

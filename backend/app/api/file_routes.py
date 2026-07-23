@@ -1,8 +1,10 @@
 import os
+from datetime import datetime
 from uuid import uuid4
 from flask import Blueprint, jsonify, current_app, send_file, request # type: ignore
 from werkzeug.utils import secure_filename # type: ignore
 from flask_jwt_extended import jwt_required, get_jwt_identity # type: ignore
+from app.services.file_garbage_collector_service import FileGarbageCollectorService
 from app.services.file_service import FileService
 from app.domain.exceptions import IllegalOperationError, SchemaValidationError, UnauthorizedError
 from app.api.utils.check_roles import AccessChecker, assert_admin
@@ -259,3 +261,102 @@ def delete(file_id):
         os.remove(storage_path)
 
     return "", 204
+
+
+@file_bp.get("/orphaned")
+@jwt_required()
+def preview_orphaned_files():
+    """List files that would be removed by POST /file/gc, without deleting anything.
+
+    Covers both kinds of orphan: File records not linked to any entity, and
+    files sitting directly under FILE_STORAGE_ROOT (not in subfolders) with no
+    File record at all.
+
+    The grace period only applies to the automated background sweep, which
+    can't tell an orphan from a file mid-upload. A human explicitly asking to
+    preview/run this gets an immediate answer instead - no grace period by
+    default. Pass grace_period_seconds to opt into one anyway.
+
+    Query Parameters:
+        grace_period_seconds (int, optional): Minimum age, in seconds, below
+            which an unlinked/untracked file is excluded from the results.
+            Defaults to 0 (no grace period) for this manually-triggered route.
+
+    Returns:
+        dict: {
+            "orphaned_file_records": [{id, filename, file_type, size_bytes, uploaded_at}, ...],
+            "untracked_disk_files": [{path, size_bytes, modified_at}, ...],
+        } (status 200).
+
+    Raises:
+        401: If not authenticated (when JWT is enabled).
+        400: If the user is not an administrator.
+    """
+
+    assert_admin("El usuario no tiene permiso para ver los archivos huérfanos")
+
+    grace_period_seconds = request.args.get("grace_period_seconds", default=0, type=int)
+
+    orphaned = FileGarbageCollectorService.find_orphaned_files(grace_period_seconds=grace_period_seconds)
+    untracked = FileGarbageCollectorService.find_untracked_disk_files(grace_period_seconds=grace_period_seconds)
+
+    payload = {
+        "orphaned_file_records": [
+            {
+                **file.to_dict(include=["id", "filename", "file_type", "size_bytes"]),
+                "uploaded_at": file.uploaded_at.isoformat() if file.uploaded_at else None,
+            }
+            for file in orphaned
+        ],
+        "untracked_disk_files": [
+            {
+                "path": path,
+                "size_bytes": os.path.getsize(path) if os.path.exists(path) else None,
+                "modified_at": datetime.fromtimestamp(os.lstat(path).st_mtime).isoformat(),
+            }
+            for path in untracked
+        ],
+    }
+
+    return jsonify(payload), 200
+
+
+@file_bp.post("/gc")
+@jwt_required()
+def collect_orphaned_files():
+    """Trigger the orphaned-files garbage collector.
+
+    Deletes files (database record and on-disk content) that are not linked
+    to any report, simulator, document/presentation, or data source - as well
+    as any files sitting directly under FILE_STORAGE_ROOT (not in subfolders)
+    with no File record at all. Uses the same underlying cleanup as the
+    `flask cleanup-orphaned-files` CLI command and the background daemon.
+
+    Unlike the background daemon, this is a human explicitly asking for
+    cleanup right now, so it does not wait out the configured grace period by
+    default - any orphan, however recent, is removed. Pass
+    grace_period_seconds to keep a safety margin instead.
+
+    Query Parameters:
+        grace_period_seconds (int, optional): Minimum age, in seconds, an
+            unlinked/untracked file must have before this route will remove
+            it. Defaults to 0 (no grace period) for this manually-triggered route.
+
+    Returns:
+        dict: {"orphaned_file_records": int, "untracked_disk_files": int, "removed": int}
+            with status 200.
+
+    Raises:
+        401: If not authenticated (when JWT is enabled).
+        400: If the user is not an administrator.
+    """
+
+    assert_admin("El usuario no tiene permiso para ejecutar la limpieza de archivos huérfanos")
+
+    grace_period_seconds = request.args.get("grace_period_seconds", default=0, type=int)
+
+    result = FileGarbageCollectorService.collect(
+        grace_period_seconds=grace_period_seconds, logger=current_app.logger
+    )
+
+    return jsonify(result), 200

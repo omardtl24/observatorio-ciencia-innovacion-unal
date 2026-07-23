@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from flask import current_app # type: ignore
 
-from app.domain.exceptions import IllegalOperationError
+from app.domain.exceptions import IllegalOperationError, NotFoundError
 from app.models.base import db
 from app.models.data_source import DataSource
 from app.models.data_source_file import DataSourceFile
@@ -71,6 +71,44 @@ class DataSourceService(BaseService):
 
         target_path = os.readlink(current.storage_path)
         return File.query.filter_by(storage_path=target_path).first()
+
+    @classmethod
+    def delete_file_version(cls, data_source_id, file_id):
+        """Permanently delete one historic (non-current) file version of a data source.
+
+        The currently published version can never be deleted this way - publish
+        a different version first if it needs to go. The file itself is removed
+        best-effort right away (DB record and on-disk content); if something
+        else still legitimately references it, that delete is simply skipped
+        and the orphaned-files garbage collector will handle it once eligible.
+        """
+        cls.get_by_id(data_source_id)
+
+        entry = DataSourceFile.query.filter_by(
+            data_source_id=data_source_id, file_id=file_id
+        ).first()
+        if entry is None:
+            raise NotFoundError(
+                f"El archivo {file_id} no hace parte del historial de la fuente de datos {data_source_id}"
+            )
+
+        current_file = cls.get_current_file(data_source_id)
+        if current_file is not None and current_file.id == file_id:
+            raise IllegalOperationError(
+                "No puedes eliminar la versión actualmente publicada. "
+                "Publica otra versión antes de eliminar esta."
+            )
+
+        entry.delete()
+
+        try:
+            file_record = FileService.get_by_id(file_id)
+            storage_path = file_record.storage_path
+            FileService.delete(file_id)
+            if os.path.lexists(storage_path):
+                os.remove(storage_path)
+        except Exception:
+            pass
 
     @classmethod
     def delete(cls, resource_id):

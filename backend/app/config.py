@@ -43,6 +43,12 @@ class Config:
     PROFILE_IMAGE_CACHE_TTL_SECONDS = int(os.getenv("PROFILE_IMAGE_CACHE_TTL_SECONDS", "86400"))
     PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = int(os.getenv("PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS", "900"))
 
+    # Grace period before an unlinked file is considered orphaned (protects files
+    # mid-upload-flow, not yet attached to their owning entity) and how often the
+    # background job checks for them.
+    ORPHANED_FILES_GRACE_PERIOD_SECONDS = int(os.getenv("ORPHANED_FILES_GRACE_PERIOD_SECONDS", "86400"))
+    ORPHANED_FILES_CLEANUP_INTERVAL_SECONDS = int(os.getenv("ORPHANED_FILES_CLEANUP_INTERVAL_SECONDS", "3600"))
+
     # ---- SECURITY ----
     RESTRICTED_EMAIL_DOMAIN = os.getenv("RESTRICTED_EMAIL_DOMAIN")
     FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
@@ -66,5 +72,7 @@ class TestingConfig(Config):
     JWT_SECRET_KEY = "test-secret-key"
     PROFILE_IMAGE_CACHE_TTL_SECONDS = 60
     PROFILE_IMAGE_CLEANUP_INTERVAL_SECONDS = 60
+    ORPHANED_FILES_GRACE_PERIOD_SECONDS = 60
+    ORPHANED_FILES_CLEANUP_INTERVAL_SECONDS = 60
     OAUTH_STATE_TTL_SECONDS = 300
     SESSION_LIFETIME_SECONDS = 7200

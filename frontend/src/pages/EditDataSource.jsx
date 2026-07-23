@@ -8,6 +8,7 @@ import {
   fetchFileWithAuth,
   updateDataSource,
   uploadResourceFile,
+  deleteDataSourceFileVersion,
 } from "../services/resourcesServices";
 import { hasAdministratorRole } from "../services/dashboardUtils";
 
@@ -36,6 +37,7 @@ export default function EditDataSource() {
   const [selectedVersionFileId, setSelectedVersionFileId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingVersionFileId, setDeletingVersionFileId] = useState(null);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [error, setError] = useState(null);
@@ -116,6 +118,36 @@ export default function EditDataSource() {
     } catch (err) {
       setMessage(err?.message || "No fue posible descargar esta versión.");
       setMessageType("error");
+    }
+  };
+
+  const handleDeleteVersion = async (version) => {
+    const confirmed = window.confirm(
+      `¿Seguro que deseas eliminar permanentemente la versión "${version.filename || `versión ${version.file_id}`}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage("");
+    setMessageType("");
+    setDeletingVersionFileId(version.file_id);
+
+    try {
+      await deleteDataSourceFileVersion(id, version.file_id);
+
+      setVersions((prev) => prev.filter((v) => v.file_id !== version.file_id));
+      if (selectedVersionFileId === version.file_id) {
+        setSelectedVersionFileId(null);
+      }
+
+      setMessage("Versión eliminada correctamente.");
+      setMessageType("success");
+    } catch (err) {
+      setMessage(err?.message || "No fue posible eliminar esta versión.");
+      setMessageType("error");
+    } finally {
+      setDeletingVersionFileId(null);
     }
   };
 
@@ -209,7 +241,7 @@ export default function EditDataSource() {
     );
   }
 
-  const busy = submitting || uploading;
+  const busy = submitting || uploading || deletingVersionFileId != null;
   const currentVersion = versions.find((v) => v.is_current);
   const pendingLabel = file
     ? `Nuevo archivo: ${file.name}`
@@ -297,6 +329,7 @@ export default function EditDataSource() {
               <ul className="border border-gray-200 rounded-lg divide-y divide-gray-200 max-h-64 overflow-y-auto">
                 {versions.map((version) => {
                   const isSelected = selectedVersionFileId === version.file_id;
+                  const isDeletingThis = deletingVersionFileId === version.file_id;
                   return (
                     <li
                       key={version.file_id}
@@ -327,7 +360,7 @@ export default function EditDataSource() {
                         <button
                           type="button"
                           onClick={() => handleDownloadVersion(version)}
-                          disabled={busy}
+                          disabled={busy || isDeletingThis}
                           className="text-xs border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Descargar
@@ -336,10 +369,21 @@ export default function EditDataSource() {
                           <button
                             type="button"
                             onClick={() => handleSelectVersion(version.file_id)}
-                            disabled={busy}
+                            disabled={busy || isDeletingThis}
                             className="text-xs bg-secondary-cyan-strong text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Publicar esta versión
+                          </button>
+                        )}
+                        {!version.is_current && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteVersion(version)}
+                            disabled={busy || isDeletingThis}
+                            title="Eliminar esta versión permanentemente"
+                            className="text-xs border border-red-300 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isDeletingThis ? "Eliminando..." : "Eliminar"}
                           </button>
                         )}
                       </div>

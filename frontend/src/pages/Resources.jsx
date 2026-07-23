@@ -104,7 +104,13 @@ export default function Resources() {
           return;
         }
 
-        setDataMapper(parsedData);
+        const sortedData = [...parsedData].sort((a, b) => {
+          const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return timeB - timeA;
+        });
+
+        setDataMapper(sortedData);
       } catch (err) {
         const message = err?.message ? `${err.message} ${defaultErrorMessage}` : defaultErrorMessage;
         setError(message);
