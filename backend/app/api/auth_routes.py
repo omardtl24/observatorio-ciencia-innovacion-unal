@@ -100,6 +100,11 @@ def callback():
         response = current_app.make_response(html_response)
         return response, exc.code
     except Exception as exc:
+        current_app.logger.exception(
+            "Unexpected error during Auth0 callback | state=%s | code_present=%s",
+            request.args.get("state"),
+            request.args.get("code") is not None,
+        )
         message_data = {
             "status": "error",
             "error_code": "internal_error",
