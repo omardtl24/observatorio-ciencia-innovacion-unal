@@ -107,7 +107,7 @@ export default function Resources() {
         const sortedData = [...parsedData].sort((a, b) => {
           const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
           const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-          return timeB - timeA;
+          return timeA - timeB;
         });
 
         setDataMapper(sortedData);
