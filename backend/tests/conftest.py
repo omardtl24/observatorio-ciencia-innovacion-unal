@@ -9,11 +9,12 @@ from app.services.role_service import RoleService
 
 
 @pytest.fixture(scope="session")
-def app():
+def app(tmp_path_factory):
     """Create and configure a Flask app for testing."""
     os.environ["TESTING"] = "True"
     app = create_app(config_name="testing")
-    
+    app.config["FILE_STORAGE_ROOT"] = str(tmp_path_factory.mktemp("file_storage"))
+
     with app.app_context():
         db.create_all()
         yield app

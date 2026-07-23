@@ -6,7 +6,6 @@ import CreateResource from "../pages/CreateResource";
 import EditResource from "../pages/EditResource";
 import Resources from "../pages/Resources";
 import Resource from "../pages/Resource";
-import DataSources from "../pages/DataSources";
 import CreateDataSource from "../pages/CreateDataSource";
 import EditDataSource from "../pages/EditDataSource";
 import ConnectionError from "../pages/ConnectionError";
@@ -39,10 +38,6 @@ const routeConfig = [
     component: Resource, 
     backgroundClass: "bg-secondary-gray-soft",
     profileBackgroundClass: "bg-secondary-gray-soft" },
-  { path: "/data-sources",
-    component: DataSources,
-    backgroundClass: "bg-white",
-    profileBackgroundClass: "bg-white" },
   { path: "/data-sources/create",
     component: CreateDataSource,
     backgroundClass: "bg-primary-blue-soft",

@@ -10,6 +10,13 @@ class DataSource(db.Model, TimestampMixin, BaseModel):
     file_id = db.Column(db.Integer, db.ForeignKey('files.id'), nullable=False)
     file = db.relationship("File")
 
+    file_versions = db.relationship(
+        "DataSourceFile",
+        back_populates="data_source",
+        order_by="DataSourceFile.published_at.desc()",
+        cascade="all, delete-orphan"
+    )
+
     reports = db.relationship(
         "Report",
         secondary="report_data_sources",

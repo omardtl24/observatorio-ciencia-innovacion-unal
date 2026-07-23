@@ -72,9 +72,9 @@ export default function CreateDataSource() {
       setMessage("Fuente de datos creada correctamente.");
       setMessageType("success");
 
-      // Redirect to data sources page after 1 second
+      // Redirect to dashboard after 1 second
       setTimeout(() => {
-        navigate("/data-sources");
+        navigate("/dashboard");
       }, 1000);
     } catch (err) {
       setMessage(err?.message || "No fue posible crear la fuente de datos.");
@@ -189,7 +189,7 @@ export default function CreateDataSource() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/data-sources")}
+              onClick={() => navigate("/dashboard")}
               disabled={submitting || uploading}
               className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >

@@ -1,23 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getUserInfo, isAuthenticated, redirectToLogin } from "../services/authService";
 import ErrorPopup from "../components/ErrorPopup";
-import { fetchDataSources, updateDataSource, uploadResourceFile, fetchFromUrl } from "../services/resourcesServices";
+import {
+  fetchResource,
+  fetchDataSourceFileHistory,
+  fetchFileWithAuth,
+  updateDataSource,
+  uploadResourceFile,
+} from "../services/resourcesServices";
 import { hasAdministratorRole } from "../services/dashboardUtils";
+
+function formatDate(isoString) {
+  if (!isoString) return "";
+  try {
+    return new Date(isoString).toLocaleString();
+  } catch {
+    return isoString;
+  }
+}
 
 export default function EditDataSource() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const fileInputRef = useRef(null);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     name: "",
     description: "",
-    file_id: null,
   });
+  const [versions, setVersions] = useState([]);
   const [file, setFile] = useState(null);
-  const [fileName, setFileName] = useState(null);
+  const [selectedVersionFileId, setSelectedVersionFileId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -43,32 +59,17 @@ export default function EditDataSource() {
       try {
         setLoading(true);
         setError(null);
-        const dataSources = await fetchDataSources();
-        const dataSource = dataSources.find((ds) => ds.id === Number(id));
 
-        if (!dataSource) {
-          setError("No se encontró la fuente de datos.");
-          return;
-        }
+        const [dataSource, history] = await Promise.all([
+          fetchResource("data-source", id),
+          fetchDataSourceFileHistory(id),
+        ]);
 
         setForm({
           name: dataSource.name || "",
           description: dataSource.description || "",
-          file_id: dataSource.file_id || null,
         });
-
-        // Fetch file metadata if file_id exists
-        if (dataSource.file_id) {
-          try {
-            const fileMetadata = await fetchFromUrl(
-              `${import.meta.env.VITE_API_URL}/file/metadata/${dataSource.file_id}`
-            );
-            setFileName(fileMetadata.filename || null);
-          } catch {
-            // If metadata fetch fails, just skip it
-            setFileName(null);
-          }
-        }
+        setVersions(history);
       } catch (err) {
         setError(err?.message || "No fue posible cargar la fuente de datos.");
       } finally {
@@ -81,6 +82,41 @@ export default function EditDataSource() {
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0] || null);
+    setSelectedVersionFileId(null);
+  };
+
+  const handleSelectVersion = (fileId) => {
+    setSelectedVersionFileId(fileId);
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedVersionFileId(null);
+  };
+
+  const handleDownloadVersion = async (version) => {
+    try {
+      const downloadUrl = `${import.meta.env.VITE_API_URL}/file/download/${version.file_id}`;
+      const objectUrl = await fetchFileWithAuth(downloadUrl, {
+        resource: "data_source",
+        id,
+        display: "false",
+      });
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.setAttribute("download", version.filename || `version-${version.file_id}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setMessage(err?.message || "No fue posible descargar esta versión.");
+      setMessageType("error");
+    }
   };
 
   const handleInputChange = (e) => {
@@ -98,12 +134,11 @@ export default function EditDataSource() {
     setSubmitting(true);
 
     try {
-      let payload = {
+      const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
       };
 
-      // Upload new file if provided
       if (file) {
         setUploading(true);
         try {
@@ -112,19 +147,25 @@ export default function EditDataSource() {
         } finally {
           setUploading(false);
         }
-      } else {
-        // Keep existing file if not changing
-        payload.file_id = form.file_id;
+      } else if (selectedVersionFileId != null) {
+        payload.file_id = selectedVersionFileId;
       }
 
-      // Update data source
       await updateDataSource(Number(id), payload);
+
+      const history = await fetchDataSourceFileHistory(id);
+      setVersions(history);
+      setFile(null);
+      setSelectedVersionFileId(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
       setMessage("Fuente de datos actualizada correctamente.");
       setMessageType("success");
 
-      // Redirect to data sources page after 1 second
       setTimeout(() => {
-        navigate("/data-sources");
+        navigate("/dashboard");
       }, 1000);
     } catch (err) {
       setMessage(err?.message || "No fue posible actualizar la fuente de datos.");
@@ -163,10 +204,18 @@ export default function EditDataSource() {
     return (
       <ErrorPopup
         error={error}
-        onClose={() => navigate("/data-sources")}
+        onClose={() => navigate("/dashboard")}
       />
     );
   }
+
+  const busy = submitting || uploading;
+  const currentVersion = versions.find((v) => v.is_current);
+  const pendingLabel = file
+    ? `Nuevo archivo: ${file.name}`
+    : selectedVersionFileId != null
+      ? `Se publicará: ${versions.find((v) => v.file_id === selectedVersionFileId)?.filename || `versión ${selectedVersionFileId}`}`
+      : null;
 
   return (
     <div className="p-10 flex flex-col items-center">
@@ -204,7 +253,7 @@ export default function EditDataSource() {
               onChange={handleInputChange}
               placeholder="Ej: Base de datos COVID-19"
               required
-              disabled={submitting || uploading}
+              disabled={busy}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
           </div>
@@ -220,36 +269,113 @@ export default function EditDataSource() {
               onChange={handleInputChange}
               placeholder="Describe brevemente esta fuente de datos..."
               rows="4"
-              disabled={submitting || uploading}
+              disabled={busy}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
           </div>
 
-          {/* FILE */}
+          {/* CURRENT VERSION */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Archivo (opcional)
+              Versión publicada actualmente
+            </label>
+            <p className="text-sm text-gray-600">
+              {currentVersion
+                ? currentVersion.filename || `Archivo #${currentVersion.file_id}`
+                : "Sin archivo publicado"}
+            </p>
+          </div>
+
+          {/* VERSION HISTORY */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Historial de versiones
+            </label>
+            {versions.length === 0 ? (
+              <p className="text-sm text-gray-500">No hay versiones registradas todavía.</p>
+            ) : (
+              <ul className="border border-gray-200 rounded-lg divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                {versions.map((version) => {
+                  const isSelected = selectedVersionFileId === version.file_id;
+                  return (
+                    <li
+                      key={version.file_id}
+                      className={`flex items-center justify-between gap-3 px-4 py-3 ${
+                        isSelected ? "bg-secondary-cyan-strong/10" : ""
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {version.filename || `Archivo #${version.file_id}`}
+                          {version.is_current && (
+                            <span className="ml-2 inline-block rounded-full bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5">
+                              Actual
+                            </span>
+                          )}
+                          {isSelected && !version.is_current && (
+                            <span className="ml-2 inline-block rounded-full bg-secondary-cyan-strong/20 text-secondary-cyan-strong text-xs font-semibold px-2 py-0.5">
+                              Seleccionada
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Publicada: {formatDate(version.published_at)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadVersion(version)}
+                          disabled={busy}
+                          className="text-xs border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Descargar
+                        </button>
+                        {!version.is_current && (
+                          <button
+                            type="button"
+                            onClick={() => handleSelectVersion(version.file_id)}
+                            disabled={busy}
+                            className="text-xs bg-secondary-cyan-strong text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Publicar esta versión
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          {/* NEW FILE */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Subir nueva versión (opcional)
             </label>
             <input
+              ref={fileInputRef}
               type="file"
               onChange={handleFileChange}
-              disabled={submitting || uploading}
+              disabled={busy}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-secondary-cyan-strong focus:ring-1 focus:ring-secondary-cyan-strong disabled:bg-gray-100"
             />
-            {file && (
-              <p className="text-sm text-gray-600 mt-2">
-                Nuevo archivo: <strong>{file.name}</strong>
-              </p>
-            )}
-            {form.file_id && !file && fileName && (
-              <p className="text-sm text-gray-600 mt-2">
-                Archivo actual: <strong>{fileName}</strong>
-              </p>
-            )}
-            {form.file_id && !file && !fileName && (
-              <p className="text-sm text-gray-600 mt-2">
-                Archivo actual disponible
-              </p>
+            {pendingLabel && (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-sm text-gray-600">{pendingLabel}</p>
+                {selectedVersionFileId != null && (
+                  <button
+                    type="button"
+                    onClick={handleClearSelection}
+                    disabled={busy}
+                    className="text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
+                  >
+                    Cancelar selección
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -257,17 +383,17 @@ export default function EditDataSource() {
           <div className="flex items-center gap-4">
             <button
               type="submit"
-              disabled={submitting || uploading || !form.name.trim()}
+              disabled={busy || !form.name.trim()}
               className="bg-secondary-cyan-strong text-white px-6 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {uploading && "Cargando archivo..."}
               {submitting && !uploading && "Actualizando..."}
-              {!submitting && !uploading && "Actualizar fuente de datos"}
+              {!busy && "Actualizar fuente de datos"}
             </button>
             <button
               type="button"
-              onClick={() => navigate("/data-sources")}
-              disabled={submitting || uploading}
+              onClick={() => navigate("/dashboard")}
+              disabled={busy}
               className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar

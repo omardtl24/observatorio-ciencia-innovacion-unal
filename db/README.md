@@ -20,7 +20,7 @@ Relationship / join tables are intentionally omitted here for clarity and are de
 | **visors** | Represents data visualization tools, including name, description, type and an optional external URL. |
 | **reports** | Represents reports with name, description, and an optional reference to a document file. |
 | **documents_presentations** | Stores general documents or presentations, linked to a single stored file. |
-| **data_sources** | Represents data sources used by reports, visors, and simulators; each data source references exactly one stored file and includes timestamps. |
+| **data_sources** | Represents data sources used by reports, visors, and simulators; `file_id` points to the currently published file version and includes timestamps. |
 
 ---
 
@@ -44,7 +44,10 @@ Many-to-many relationships are implemented using join tables in the database but
   - a report may reference one document file  
   - a simulator may reference one specifications file  
   - a document/presentation references exactly one file  
-  - a data source references exactly one file  
+  - a data source references exactly one file as its **current published version** (`data_sources.file_id`, one-to-many: one file may be the current version of many data sources)  
+
+- **Files ↔ Data sources (history)**  
+  `data_source_files` is a many-to-many join table tracking every file ever published under a data source, each with a `published_at` timestamp. It records the full historic of versions, while `data_sources.file_id` always points to the current one.
 
 - **Data sources ↔ Resources**  
   Data sources can be reused across the system:

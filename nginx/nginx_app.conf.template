@@ -115,9 +115,12 @@ http {
 
             proxy_http_version 1.1;
 
-            # Apache already stripped the app prefix — put it back
-            # before forwarding to Vite, since Vite's `base` expects it.
-            rewrite ^/(.*)$ /app-observatorio-analisis-indicadores/$1 break;
+            # In prod, an upstream Apache strips the app prefix before the
+            # request reaches this nginx, so it must be added back here
+            # since Vite's `base` expects it. In dev, this nginx is hit
+            # directly and the prefix is already present — only add it
+            # when it's missing, so the same rule works in both setups.
+            rewrite ^/(?!app-observatorio-analisis-indicadores(?:/|$))(.*)$ /app-observatorio-analisis-indicadores/$1 break;
 
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-Host $host;

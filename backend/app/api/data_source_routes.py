@@ -3,10 +3,11 @@ from flask_jwt_extended import get_jwt_identity, jwt_required # type: ignore
 
 from app.api.utils.check_roles import AccessChecker, assert_admin
 from app.api.utils.serializers import serialize_data_source
-from app.domain.exceptions import UnauthorizedError
+from app.domain.exceptions import SchemaValidationError, UnauthorizedError
 from app.middleware import schema_validator
-from app.schemas.data_source_schema import DataSourceCreateRequest
+from app.schemas.data_source_schema import DataSourceCreateRequest, DataSourceUpdateRequest
 from app.services.data_source_service import DataSourceService
+from app.services.file_service import FileService
 from app.services.report_service import ReportService
 from app.services.simulator_service import SimulatorService
 from app.services.visor_service import VisorService
@@ -52,6 +53,86 @@ def get_data_source_by_id(data_source_id):
 
     data_source = DataSourceService.get_by_id(data_source_id)
     return jsonify(serialize_data_source(data_source)), 200
+
+
+@data_source_bp.put("/<int:data_source_id>")
+@jwt_required()
+@schema_validator(DataSourceUpdateRequest)
+def update_data_source(data_source_id):
+    """Update a data source, optionally publishing a new file version.
+
+    Path Parameters:
+        data_source_id (int): The ID of the data source to update.
+
+    Payload:
+        name (str, optional): The data source name.
+        description (str, optional): The data source description.
+        file_id (int, optional): The ID of the file to publish as the current
+            version. The previous file remains available in the data
+            source's history.
+
+    Returns:
+        dict: The updated data source (status 200).
+
+    Raises:
+        400: If validation fails or the payload is empty.
+        401: If not authenticated (when JWT is enabled).
+        404: If data_source_id or file_id does not exist.
+    """
+
+    assert_admin("El usuario no tiene permiso para actualizar fuentes de datos")
+
+    update_data = request.validated_data.model_dump(exclude_unset=True)
+    if not update_data:
+        raise SchemaValidationError("Debes enviar al menos un campo para actualizar")
+
+    if "file_id" in update_data:
+        FileService.get_by_id(update_data["file_id"])
+
+    DataSourceService.update(data_source_id, **update_data)
+    data_source = DataSourceService.get_by_id(data_source_id)
+
+    return jsonify(serialize_data_source(data_source)), 200
+
+
+@data_source_bp.get("/<int:data_source_id>/files")
+@jwt_required()
+def get_data_source_file_history(data_source_id):
+    """Get the historic of every file ever published under a data source.
+
+    Path Parameters:
+        data_source_id (int): The ID of the data source.
+
+    Returns:
+        list: File history entries (file_id, filename, file_type, size_bytes,
+            published_at, is_current), most recent first (status 200).
+
+    Raises:
+        401: If not authenticated (when JWT is enabled).
+        403: If the user does not have access to this data source.
+        404: If data_source_id does not exist.
+    """
+
+    user_email = get_jwt_identity()
+    if not AccessChecker.check_access(user_email, data_source_id, "data_source"):
+        raise UnauthorizedError("El usuario no tiene permiso para acceder a esta fuente de datos")
+
+    history = DataSourceService.get_file_history(data_source_id)
+    current_file = DataSourceService.get_current_file(data_source_id)
+    current_file_id = current_file.id if current_file else None
+
+    payload = [
+        {
+            "file_id": entry.file_id,
+            "filename": entry.file.filename if entry.file else None,
+            "file_type": entry.file.file_type if entry.file else None,
+            "size_bytes": entry.file.size_bytes if entry.file else None,
+            "published_at": entry.published_at.isoformat() if entry.published_at else None,
+            "is_current": entry.file_id == current_file_id,
+        }
+        for entry in history
+    ]
+    return jsonify(payload), 200
 
 
 @data_source_bp.delete("/<int:data_source_id>")

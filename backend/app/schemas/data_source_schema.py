@@ -24,3 +24,28 @@ class DataSourceCreateRequest(BaseModel):
     description: Optional[str] = Field(None, description="The data source description")
     file_id: int = Field(..., description="The ID of the associated file")
     updated_at: Optional[date] = Field(None, description="The last update date")
+
+
+class DataSourceUpdateRequest(BaseModel):
+    """Schema for updating an existing data source.
+
+    All fields are optional. Only the provided fields will be updated.
+    Setting `file_id` to a different file publishes it as the new current
+    version while keeping the previous one in the data source's history.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_default=True,
+        json_schema_extra={
+            "example": {
+                "name": "Fuente CSV de indicadores",
+                "description": "Datos para tableros de seguimiento",
+                "file_id": 15,
+            }
+        },
+    )
+
+    name: Optional[str] = Field(None, min_length=1, description="The data source name")
+    description: Optional[str] = Field(None, description="The data source description")
+    file_id: Optional[int] = Field(None, description="The ID of the file to publish as the current version")

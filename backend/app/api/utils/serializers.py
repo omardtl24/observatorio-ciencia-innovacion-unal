@@ -52,4 +52,11 @@ def serialize_data_source(data_source):
     payload["report_ids"] = [report.id for report in getattr(data_source, "reports", [])]
     payload["visor_ids"] = [visor.id for visor in getattr(data_source, "visors", [])]
     payload["simulator_ids"] = [simulator.id for simulator in getattr(data_source, "simulators", [])]
+    payload["file_history"] = [
+        {
+            "file_id": version.file_id,
+            "published_at": version.published_at.isoformat() if version.published_at else None,
+        }
+        for version in getattr(data_source, "file_versions", [])
+    ]
     return payload

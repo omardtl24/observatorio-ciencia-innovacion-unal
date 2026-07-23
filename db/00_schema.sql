@@ -86,9 +86,18 @@ CREATE TABLE data_sources (
     id SERIAL PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     description TEXT,
-    file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE RESTRICT,
+    file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE RESTRICT,  -- currently published version
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+-- historic of every file ever published under a data source (many-to-many)
+CREATE TABLE data_source_files (
+    id SERIAL PRIMARY KEY,
+    data_source_id INTEGER NOT NULL REFERENCES data_sources(id) ON DELETE CASCADE,
+    file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE RESTRICT,
+    published_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE (data_source_id, file_id)
 );
 
 -- data sources used by reports

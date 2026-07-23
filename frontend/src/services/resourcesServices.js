@@ -240,6 +240,32 @@ export async function fetchDataSources() {
     return response.json();
 }
 
+export async function fetchDataSourceFileHistory(dataSourceId) {
+    const fetchUrl = `${import.meta.env.VITE_API_URL}/data-source/${dataSourceId}/files`;
+    const token = getToken();
+    let response;
+    try {
+        response = await fetchWithTimeout(fetchUrl, {
+            credentials: "include",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+    } catch (err) {
+        if (isBackendUnavailableError(err)) {
+            redirectToConnectionError();
+        }
+        throw err;
+    }
+    if (!response.ok) {
+        const message = await getErrorMessage(response, "No fue posible consultar el historial de versiones de la fuente de datos");
+        throw new Error(message);
+    }
+
+    const payload = await response.json();
+    return Array.isArray(payload) ? payload : [];
+}
+
 export async function fetchResourceDataSources(type, id) {
     if (!supportsDataSources(type)) {
         return [];
