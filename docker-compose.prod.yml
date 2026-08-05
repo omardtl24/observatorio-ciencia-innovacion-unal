@@ -30,7 +30,7 @@ services:
       - "5000"
     volumes:
       - ${FILE_STORAGE_ROOT_PROD}:${FILE_STORAGE_ROOT_PROD}:Z
-      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:Z
     working_dir: /app
     command: ["gunicorn", "-b", "0.0.0.0:5000", "--chdir", "/app", "wsgi:app"]
     networks:
