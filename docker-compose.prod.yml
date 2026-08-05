@@ -74,6 +74,8 @@ services:
       - backend
       - frontend
       - shinyserver
+    env_file:
+      - ./nginx/.env.prod
     ports:
       - "443:443"
       - "80:80"
