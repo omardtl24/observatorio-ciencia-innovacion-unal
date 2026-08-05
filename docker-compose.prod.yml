@@ -58,6 +58,7 @@ services:
       - "3838"
     volumes:
       - ${SHINY_SERVER_APP_DIR_PROD}:/srv/shiny-server
+      - ${FILE_STORAGE_ROOT}:${FILE_STORAGE_ROOT}
       - renv_cache_prod:/renv/cache
       - r_libs_prod:/usr/local/lib/R/site-library
     networks:

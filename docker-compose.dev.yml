@@ -73,6 +73,7 @@ services:
     volumes:
       - ${SHINY_SERVER_APP_DIR}:/srv/shiny-server
       - renv_cache_dev:/renv/cache
+      - ${FILE_STORAGE_ROOT}:${FILE_STORAGE_ROOT}
       - r_libs_dev:/usr/local/lib/R/site-library
     networks:
       - private_net
