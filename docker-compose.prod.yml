@@ -29,7 +29,7 @@ services:
     expose:
       - "5000"
     volumes:
-      - ${FILE_STORAGE_ROOT_PROD}:${FILE_STORAGE_ROOT_PROD}:Z
+      - ${FILE_STORAGE_ROOT_PROD}:${FILE_STORAGE_ROOT_PROD}
       - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock
     security_opt:
       - label=disable
