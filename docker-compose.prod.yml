@@ -59,8 +59,8 @@ services:
     expose:
       - "3838"
     volumes:
-      - ${SHINY_SERVER_APP_DIR_PROD}:/srv/shiny-server
-      - ${FILE_STORAGE_ROOT}:${FILE_STORAGE_ROOT}
+      - ${SHINY_SERVER_APP_DIR_PROD}:/srv/shiny-server:z
+      - ${FILE_STORAGE_ROOT_PROD}:${FILE_STORAGE_ROOT_PROD}:z
       - renv_cache_prod:/renv/cache
       - r_libs_prod:/usr/local/lib/R/site-library
     networks:
