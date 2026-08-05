@@ -8,6 +8,7 @@ import {
   redirectToLogin,
 } from "../services/authService";
 import ErrorPopup from "../components/ErrorPopup";
+import Pagination from "../components/Pagination";
 import {
   RESOURCE_TABLES,
   NON_RESOURCE_TABLES,
@@ -30,6 +31,8 @@ import {
   triggerOrphanedFilesCleanup,
 } from "../services/resourcesServices";
 import { parseColor } from "../services/stringServices.jsx";
+
+const PAGE_SIZE = 5;
 
 const RESOURCE_FILE_ID_KEYS = {
   report: ["document_file_id", "documentFileId"],
@@ -82,7 +85,7 @@ function RoleManagementTable({ roles, onDelete }) {
           onClick={() => navigate("/create-role")}
           className="border border-primary-blue text-primary-blue px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-50 transition"
         >
-          Create New Role
+          Crear Nuevo Rol
         </button>
       </div>
 
@@ -220,7 +223,9 @@ export default function Dashboard() {
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [resourcesByType, setResourcesByType] = useState({});
+  const [resourcePages, setResourcePages] = useState({});
   const [dataSources, setDataSources] = useState([]);
+  const [dataSourcesPage, setDataSourcesPage] = useState(1);
   const [tablesLoading, setTablesLoading] = useState(true);
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
@@ -275,6 +280,8 @@ export default function Dashboard() {
 
     const loadResources = async () => {
       setTablesLoading(true);
+      setResourcePages({});
+      setDataSourcesPage(1);
 
       const entries = await Promise.all(
         [...NON_RESOURCE_TABLES, ...RESOURCE_TABLES].map(async (resourceTable) => {
@@ -292,7 +299,7 @@ export default function Dashboard() {
       // Load data sources
       try {
         const dataSourcesData = await fetchDataSources();
-        setDataSources(Array.isArray(dataSourcesData) ? dataSourcesData.slice(0, 5) : []);
+        setDataSources(Array.isArray(dataSourcesData) ? dataSourcesData : []);
       } catch {
         setDataSources([]);
       }
@@ -618,6 +625,12 @@ export default function Dashboard() {
   const lastName = userInfo?.lastNames || "";
   const email = userInfo?.email || "desconocido";
 
+  const dataSourcesTotalPages = Math.max(1, Math.ceil(dataSources.length / PAGE_SIZE));
+  const dataSourcesPageRows = dataSources.slice(
+    (dataSourcesPage - 1) * PAGE_SIZE,
+    dataSourcesPage * PAGE_SIZE
+  );
+
   const summaryRows = [...RESOURCE_TABLES, ...NON_RESOURCE_TABLES].map((resource) => {
     const resourceResult = resourcesByType[resource.key];
     const data = resourceResult?.data || [];
@@ -748,6 +761,9 @@ export default function Dashboard() {
         const resourceResult = resourcesByType[resource.key];
         const rows = resourceResult?.data || [];
         const resourceType = resource.endpointCandidates[0];
+        const currentPage = resourcePages[resource.key] || 1;
+        const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+        const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
         return (
           <div
@@ -757,7 +773,9 @@ export default function Dashboard() {
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-800">{resource.title}</h3>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500">Ultimos 5 registros</span>
+                <span className="text-sm text-gray-500">
+                  {tablesLoading ? "Cargando..." : `${rows.length} registro${rows.length === 1 ? "" : "s"}`}
+                </span>
                 <button
                   onClick={() => navigate(`/resources/create?type=${resource.endpointCandidates[0]}`)}
                   className="border border-primary-blue text-primary-blue px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-50 transition"
@@ -785,7 +803,7 @@ export default function Dashboard() {
                     </tr>
                   )}
 
-                  {(tablesLoading ? [] : rows.slice(0, 5)).map((row) => (
+                  {(tablesLoading ? [] : pageRows).map((row) => (
                     <tr key={row.id} className="border-t border-gray-100">
                       <td className="px-6 py-3 text-gray-900 font-medium">
                         {row.title
@@ -874,6 +892,15 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+            {!tablesLoading && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) =>
+                  setResourcePages((prev) => ({ ...prev, [resource.key]: page }))
+                }
+              />
+            )}
           </div>
         );
       })}
@@ -883,7 +910,9 @@ export default function Dashboard() {
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-800">Fuentes de Datos</h3>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Ultimos 5 registros</span>
+            <span className="text-sm text-gray-500">
+              {tablesLoading ? "Cargando..." : `${dataSources.length} registro${dataSources.length === 1 ? "" : "s"}`}
+            </span>
             <button
               onClick={() => navigate("/data-sources/create")}
               className="border border-primary-blue text-primary-blue px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-50 transition"
@@ -911,7 +940,7 @@ export default function Dashboard() {
                 </tr>
               )}
 
-              {(tablesLoading ? [] : dataSources).map((dataSource) => (
+              {(tablesLoading ? [] : dataSourcesPageRows).map((dataSource) => (
                 <tr key={dataSource.id} className="border-t border-gray-100">
                   <td className="px-6 py-3 text-gray-900 font-medium">
                     {dataSource.name
@@ -983,6 +1012,13 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+        {!tablesLoading && (
+          <Pagination
+            currentPage={dataSourcesPage}
+            totalPages={dataSourcesTotalPages}
+            onPageChange={(page) => setDataSourcesPage(page)}
+          />
+        )}
       </div>
 
       {/* ROLE */}
