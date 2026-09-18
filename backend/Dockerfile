@@ -18,4 +18,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "--chdir", "/app", "wsgi:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "--chdir", "/app", "--timeout", "120", "wsgi:app"]

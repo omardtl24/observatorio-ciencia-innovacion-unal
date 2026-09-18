@@ -34,7 +34,7 @@ services:
     security_opt:
       - label=disable
     working_dir: /app
-    command: ["gunicorn", "-b", "0.0.0.0:5000", "--chdir", "/app", "wsgi:app"]
+    command: ["gunicorn", "-b", "0.0.0.0:5000", "--chdir", "/app", "--timeout", "120", "wsgi:app"]
     networks:
       - private_net
 
