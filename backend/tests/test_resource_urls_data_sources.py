@@ -137,7 +137,19 @@ class TestBuildResourceUrlEndToEnd:
         return buffer
 
     def test_build_resource_url_extracts_and_links_data_source(self, app, monkeypatch, simulator):
-        monkeypatch.setattr(resource_urls, "_run_restore_app_async", lambda *a, **k: None)
+        monkeypatch.setattr(resource_urls, "_restore_app", lambda *a, **k: None)
+
+        # The data-source extraction now runs in a background thread; run it
+        # synchronously here so assertions right after build_resource_url are
+        # deterministic.
+        class ImmediateThread:
+            def __init__(self, target=None, daemon=None, name=None):
+                self._target = target
+
+            def start(self):
+                self._target()
+
+        monkeypatch.setattr(resource_urls.threading, "Thread", ImmediateThread)
 
         zip_bytes = self._make_zip_bytes({
             "myapp/renv.lock": b"{}",

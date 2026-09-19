@@ -120,59 +120,82 @@ def _extract_data_sources_from_app(target_folder, resource_id, resource_type):
             _link_data_source_to_resource(resource_type, resource_id, data_source_id)
 
 
-def _run_restore_app_async(resource_id: str, resource_type: str) -> None:
-    """Run the restore_app.sh script asynchronously in a background thread.
-    
+def _restore_app(app, resource_id: str, resource_type: str) -> None:
+    """Run the restore_app.sh script inside the shiny-server container.
+
+    Must be called with an active application context (the caller is
+    responsible for that, since this also runs from background threads).
+
     Args:
+        app: The real Flask app object (not the `current_app` proxy).
         resource_id: The unique identifier for the resource
         resource_type: The type of resource (e.g., 'simulator', 'visor')
     """
+    try:
+        # Construct the container name based on environment
+        container_name = app.config.get('SHINY_CONTAINER_NAME', 'app_shiny_dev')
+
+        # Run the restore_app.sh script inside the container
+        cmd = [
+            'docker', 'exec', container_name,
+            'bash', 'scripts/restore_app.sh', str(resource_type), str(resource_id)
+        ]
+
+        result = subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=1800  # 30 minute timeout for background tasks
+        )
+
+        app.logger.info(
+            f"restore_app.sh executed for {resource_type}/{resource_id}: {result.stdout}"
+        )
+    except subprocess.TimeoutExpired:
+        app.logger.error(
+            f"restore_app.sh timeout for {resource_type}/{resource_id}: "
+            f"Processing took longer than 30 minutes"
+        )
+    except subprocess.CalledProcessError as e:
+        app.logger.error(
+            f"restore_app.sh failed for {resource_type}/{resource_id}: {e.stderr}"
+        )
+    except Exception as e:
+        app.logger.error(
+            f"Unexpected error running restore_app.sh for {resource_type}/{resource_id}: {str(e)}"
+        )
+
+
+def _process_resource_data_async(target_folder: str, resource_id: str, resource_type: str) -> None:
+    """Extract data sources from the app folder and restore its R environment
+    in a background thread.
+
+    Both steps are slow (hashing every data file in the app, and installing R
+    packages via renv::restore) and don't need to complete before the caller
+    can save the resource's DB record and return the resource URL, so they
+    run in a single background thread, in order, after the shiny project
+    files have already been moved into place.
+    """
     # Capture the app object while in the application context
     app = current_app._get_current_object()
-    
-    def run_restore():
+
+    def run():
         # Create an application context for the background thread
         with app.app_context():
             try:
-                # Construct the container name based on environment
-                container_name = app.config.get('SHINY_CONTAINER_NAME', 'app_shiny_dev')
-                
-                # Run the restore_app.sh script inside the container
-                cmd = [
-                    'docker', 'exec', container_name,
-                    'bash', 'scripts/restore_app.sh', str(resource_type), str(resource_id)
-                ]
-                
-                result = subprocess.run(
-                    cmd,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                    timeout=1800  # 30 minute timeout for background tasks
-                )
-                
-                app.logger.info(
-                    f"restore_app.sh executed for {resource_type}/{resource_id}: {result.stdout}"
-                )
-            except subprocess.TimeoutExpired:
-                app.logger.error(
-                    f"restore_app.sh timeout for {resource_type}/{resource_id}: "
-                    f"Processing took longer than 30 minutes"
-                )
-            except subprocess.CalledProcessError as e:
-                app.logger.error(
-                    f"restore_app.sh failed for {resource_type}/{resource_id}: {e.stderr}"
-                )
+                _extract_data_sources_from_app(target_folder, resource_id, resource_type)
             except Exception as e:
                 app.logger.error(
-                    f"Unexpected error running restore_app.sh for {resource_type}/{resource_id}: {str(e)}"
+                    f"Error extracting data sources for {resource_type}/{resource_id}: {str(e)}"
                 )
-    
-    # Start the restore script in a background thread
+                return
+            _restore_app(app, resource_id, resource_type)
+
     thread = threading.Thread(
-        target=run_restore,
+        target=run,
         daemon=True,
-        name=f"restore_app_{resource_type}_{resource_id}"
+        name=f"process_resource_data_{resource_type}_{resource_id}"
     )
     thread.start()
 
@@ -184,11 +207,16 @@ def build_resource_url(file, resource_id, type) -> str:
     1. Extracts the zip file to a temporary directory
     2. Validates that the extracted content has required files (renv.lock and app.R)
     3. Moves the unzipped content to the shared resources folder
-    4. Replaces any csv/xlsx/parquet/RData/rda/rds file found in the app with a
-       data source (reusing an existing one if its checksum already matches),
-       symlinked back at its original path and linked to this resource
-    5. Runs the restore_app.sh script in the shiny-server container
-    6. Returns the resource URL
+    4. Returns the resource URL
+    5. In the background (after returning): replaces any csv/xlsx/parquet/RData/
+       rda/rds file found in the app with a data source (reusing an existing one
+       if its checksum already matches), symlinked back at its original path and
+       linked to this resource, then runs the restore_app.sh script in the
+       shiny-server container
+
+    Steps 1-4 are the only parts the caller waits on, so a DB record can be
+    created/updated with the resource URL right away instead of blocking on the
+    checksum pass over the app's data files or the R environment restore.
     
     Args:
         file: The uploaded zip file object
@@ -251,12 +279,11 @@ def build_resource_url(file, resource_id, type) -> str:
                 shutil.move(src, os.path.join(target_folder, item))
 
         # Replace known data-file formats with data sources (deduplicated by
-        # checksum) linked to this resource, symlinking them back in place.
-        _extract_data_sources_from_app(target_folder, resource_id, type)
+        # checksum) and restore the app's R environment in the background,
+        # so this call doesn't block on hashing data files or installing R
+        # packages.
+        _process_resource_data_async(target_folder, resource_id, type)
 
-        # Run the restore_app.sh script asynchronously in the background
-        _run_restore_app_async(resource_id, type)
-        
     return os.path.join(current_app.config['RESOURCES_BASE_URL'], type, str(resource_id),'')
 
 
